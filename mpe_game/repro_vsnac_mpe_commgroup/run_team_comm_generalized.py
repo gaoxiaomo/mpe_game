@@ -140,9 +140,9 @@ def _scenario_spec(case: TeamCommGeneralCase, quick: bool) -> GeneralTeamCommSce
         swap_threshold=5.0 if n_e > 1 else 1.0e9,
         max_switch_worsening=0.0,
         evader_motion_mode="scripted",
-        evader_script_amp=(12.0, 10.0, 4.0) if n_e > 1 else (12.0, 10.0, 5.0),
-        evader_script_omega=0.35 if n_e > 1 else 0.50,
-        evader_script_decay=0.025 if n_e > 1 else 0.040,
+        evader_script_amp=(14.0, 12.0, 5.0) if n_e > 1 else (13.0, 11.0, 5.0),
+        evader_script_omega=0.45 if n_e > 1 else 0.55,
+        evader_script_decay=0.018 if n_e > 1 else 0.030,
         evader_script_mix=1.0,
         swap_lookahead_time=0.5 if n_e > 1 else 0.0,
         comm_windows_per_group=1 if quick else 2,
@@ -296,6 +296,9 @@ def _run_single_case(job: dict[str, Any]) -> dict[str, Any]:
             train,
             case_dir / "fig_convergence_diagnostics.png",
             f"{case.name} convergence diagnostics",
+            dt=learning.dt,
+            rollout_steps=int(learning.rollout_steps),
+            rollouts_per_iter=rpi,
         )
         plot_comm_comparison(
             eval_full,
@@ -304,13 +307,14 @@ def _run_single_case(job: dict[str, Any]) -> dict[str, Any]:
             case_dir / "fig_comm_comparison.png",
             f"{case.name} full comm vs dropout",
         )
-        plot_multiteam_trajectory_gif(
-            eval_result,
-            learning.dt,
-            case_dir / "trajectory.gif",
-            f"{case.name} pursuit-evasion",
-            capture_radius=float(scenario.capture_radius),
-        )
+        # GIF disabled for speed — uncomment to re-enable:
+        # plot_multiteam_trajectory_gif(
+        #     eval_result,
+        #     learning.dt,
+        #     case_dir / "trajectory.gif",
+        #     f"{case.name} pursuit-evasion",
+        #     capture_radius=float(scenario.capture_radius),
+        # )
 
     switch_times = _switch_times(eval_result.assignment_history, learning.dt, scenario.initial_assignment)
     train_iterations = int(train.weight_norm_history.shape[0] - 1)
@@ -353,7 +357,7 @@ def _run_single_case(job: dict[str, Any]) -> dict[str, Any]:
             "final_delta": np.round(train.delta_history[-1], 8).tolist() if train.delta_history.size else [],
             "final_residual": np.round(train.residual_history[-1], 8).tolist() if train.residual_history.size else [],
             "final_weight_norms": np.round(train.weight_norm_history[-1], 8).tolist(),
-            "validation_history": np.round(train.validation_history[:, 0], 6).tolist(),
+            "validation_history": np.round(train.validation_history[:, 0], 6).tolist() if train.validation_history.size else [],
         },
         "runtime": {
             "wall_time_s": float(wall_s),

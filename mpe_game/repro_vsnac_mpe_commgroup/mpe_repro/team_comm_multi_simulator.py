@@ -232,11 +232,12 @@ class MultiTeamCommunicationSimulator:
         omega = float(self.scenario.evader_script_omega)
         decay = float(self.scenario.evader_script_decay)
         phase = 0.9 * float(evader_idx)
+        # Two-frequency evasion: primary sinusoid + secondary harmonic for richer motion
         u = np.array(
             [
-                amp[0] * np.sin(omega * t + phase),
-                amp[1] * np.sin(1.1 * omega * t + phase + 0.8),
-                amp[2] * np.sin(0.9 * omega * t + phase + 1.6),
+                amp[0] * (np.sin(omega * t + phase) + 0.35 * np.sin(2.3 * omega * t + phase + 2.0)),
+                amp[1] * (np.sin(1.1 * omega * t + phase + 0.8) + 0.30 * np.cos(1.9 * omega * t - phase)),
+                amp[2] * (np.sin(0.9 * omega * t + phase + 1.6) + 0.40 * np.sin(2.7 * omega * t + phase + 1.0)),
             ],
             dtype=float,
         )
@@ -405,18 +406,12 @@ class MultiTeamCommunicationSimulator:
                 float(step_idx * self.learning.dt),
                 visibility_mode,
             )
-            estimate_errors[evader_idx] = float(
-                np.mean([np.linalg.norm(team_estimates[j] - true_team_state) for j in range(team_estimates.shape[0])])
-            )
+            estimate_errors[evader_idx] = float(np.mean(np.linalg.norm(team_estimates - true_team_state, axis=1)))
 
         evader_u_applied = self._applied_evader_inputs(step_idx, evader_u_virtual)
 
-        next_p = pursuer_states.copy()
-        next_e = evader_states.copy()
-        for pursuer_idx in range(self.scenario.n_pursuers):
-            next_p[pursuer_idx] = self.dynamics.rk4_step(pursuer_states[pursuer_idx], pursuer_u[pursuer_idx], self.learning.dt)
-        for evader_idx in range(self.scenario.n_evaders):
-            next_e[evader_idx] = self.dynamics.rk4_step(evader_states[evader_idx], evader_u_applied[evader_idx], self.learning.dt)
+        next_p = self.dynamics.rk4_step_batch(pursuer_states, pursuer_u, self.learning.dt)
+        next_e = self.dynamics.rk4_step_batch(evader_states, evader_u_applied, self.learning.dt)
 
         for evader_idx in range(self.scenario.n_evaders):
             controller = self.group_controllers[evader_idx]
@@ -454,45 +449,6 @@ class MultiTeamCommunicationSimulator:
             communication_matrices=communication_matrices,
         )
         return next_p, next_e, record
-
-    def _validation_metric(
-        self,
-        weights: list[np.ndarray],
-        *,
-        visibility_mode: str,
-        dynamic_graph: bool,
-        horizon_s: float | None = None,
-    ) -> float:
-        p = self.scenario.pursuer_init.copy()
-        e = self.scenario.evader_init.copy()
-        graph = self._new_graph()
-        rng = np.random.default_rng(0)
-        self.schedule = self._make_schedule(rng, randomize_episode=(visibility_mode == "dropout"))
-
-        if horizon_s is None:
-            horizon_s = min(25.0, max(12.0, 0.18 * float(self.scenario.t_final)))
-        horizon_steps = min(int(horizon_s / self.learning.dt), int(self.scenario.t_final / self.learning.dt))
-        accum = 0.0
-        for step_idx in range(horizon_steps):
-            p, e, step = self._step(
-                pursuer_states=p,
-                evader_states=e,
-                graph=graph,
-                weights=weights,
-                rng=rng,
-                exploration_std=0.0,
-                dynamic_graph=dynamic_graph,
-                visibility_mode=visibility_mode,
-                step_idx=step_idx,
-            )
-            accum += float(step.total_team_error)
-            if float(np.max(step.assigned_errors)) <= self.scenario.capture_radius:
-                capture_time = float(step_idx + 1) * self.learning.dt
-                mean_error = accum / float(step_idx + 1)
-                return capture_time + 1.0e-3 * mean_error
-
-        mean_error = accum / float(max(horizon_steps, 1))
-        return horizon_s + 5.0e-3 * mean_error + 1.0e-2 * float(step.total_team_error)
 
     def train_policy(
         self,
@@ -537,7 +493,6 @@ class MultiTeamCommunicationSimulator:
         residual_history: list[np.ndarray] = []
         sample_history: list[np.ndarray] = []
         exploration_history: list[float] = []
-        validation_history: list[np.ndarray] = []
 
         total_iters = self.learning.policy_iterations
         curriculum_iters = max(1, int(np.ceil(0.55 * total_iters)))
@@ -547,28 +502,8 @@ class MultiTeamCommunicationSimulator:
                 return visibility_mode
             return "full" if iteration < curriculum_iters else "dropout"
 
-        current_validation_mode = rollout_mode_for_iteration(0)
-        current_metric = self._validation_metric(
-            weights,
-            visibility_mode=current_validation_mode,
-            dynamic_graph=dynamic_graph,
-        )
-        validation_history.append(np.array([current_metric], dtype=float))
-        best_weights = [w.copy() for w in weights]
-        best_iteration = 0
-        best_metric = float("inf")
-        selection_mode = "dropout" if visibility_mode == "curriculum" else current_validation_mode
-        if current_validation_mode == selection_mode:
-            best_metric = float(current_metric)
         for iteration in range(total_iters):
             iter_visibility_mode = rollout_mode_for_iteration(iteration)
-            if iter_visibility_mode != current_validation_mode:
-                current_validation_mode = iter_visibility_mode
-                current_metric = self._validation_metric(
-                    weights,
-                    visibility_mode=current_validation_mode,
-                    dynamic_graph=dynamic_graph,
-                )
             frac = 1.0 if total_iters == 1 else iteration / (total_iters - 1)
             explore = self.learning.exploration_std_start + frac * (
                 self.learning.exploration_std_end - self.learning.exploration_std_start
@@ -638,42 +573,22 @@ class MultiTeamCommunicationSimulator:
             residual_history.append(residual_row)
             sample_history.append(sample_row)
 
-            # Periodic validation for best-weight selection
-            _val_interval = max(3, total_iters // 8)
-            _do_val = (iteration % _val_interval == 0) or (iteration == total_iters - 1)
-            if _do_val:
-                current_metric = self._validation_metric(
-                    weights,
-                    visibility_mode=current_validation_mode,
-                    dynamic_graph=dynamic_graph,
-                )
-            validation_history.append(np.array([current_metric], dtype=float))
-
-            if current_validation_mode == selection_mode and current_metric < best_metric - 1.0e-9:
-                best_metric = float(current_metric)
-                best_weights = [w.copy() for w in weights]
-                best_iteration = int(len(weight_history) - 1)
-
             min_iters_before_stop = curriculum_iters if visibility_mode == "curriculum" else 8
             if iteration + 1 >= min_iters_before_stop and float(np.nanmax(deltas)) < self.learning.convergence_tol and np.all(
                 sample_row >= self.learning.min_samples_per_evader
             ):
                 break
 
-        if best_metric == float("inf"):
-            best_weights = [w.copy() for w in weights]
-            best_iteration = int(len(weight_history) - 1)
-
         return TeamCommMultiTrainResult(
-            weights=[w.copy() for w in best_weights],
+            weights=[w.copy() for w in weights],
             weight_history=weight_history,
             weight_norm_history=np.asarray(weight_norm_history, dtype=float),
             delta_history=np.asarray(delta_history, dtype=float),
             residual_history=np.asarray(residual_history, dtype=float),
             sample_history=np.asarray(sample_history, dtype=float),
             exploration_history=np.asarray(exploration_history, dtype=float),
-            validation_history=np.asarray(validation_history, dtype=float),
-            best_iteration=best_iteration,
+            validation_history=np.empty((0,), dtype=float),
+            best_iteration=int(len(weight_history) - 1),
         )
 
     def evaluate_policy(

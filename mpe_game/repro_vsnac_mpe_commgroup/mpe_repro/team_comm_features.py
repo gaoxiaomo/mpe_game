@@ -24,6 +24,12 @@ class TeamCommunicationFeatureMap:
             raise ValueError("state_scale must match block_dim")
         self.pos_scale = np.maximum(self.state_scale[:3] / 260.0, 1.0)
         self.pairs = list(combinations(range(n_pursuers), 2))
+        if self.pairs:
+            self._pair_a = np.array([a for a, _ in self.pairs], dtype=int)
+            self._pair_b = np.array([b for _, b in self.pairs], dtype=int)
+        else:
+            self._pair_a = np.empty(0, dtype=int)
+            self._pair_b = np.empty(0, dtype=int)
 
     def _split(self, team_state: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         x = np.asarray(team_state, dtype=float).reshape(self.n_pursuers, self.block_dim)
@@ -40,30 +46,16 @@ class TeamCommunicationFeatureMap:
     def phi(self, team_state: np.ndarray, visibility_mask: np.ndarray | None = None) -> np.ndarray:
         p, v = self._split(team_state)
         vis = self._resolve_visibility(visibility_mask)
-        feats: list[float] = []
-        for j in range(self.n_pursuers):
-            local = np.array(
-                [
-                    p[j, 0] * v[j, 0],
-                    p[j, 1] * v[j, 1],
-                    p[j, 2] * v[j, 2],
-                    0.5 * v[j, 0] * v[j, 0],
-                    0.5 * v[j, 1] * v[j, 1],
-                    0.5 * v[j, 2] * v[j, 2],
-                ],
-                dtype=float,
-            )
-            feats.extend((self.local_gain * vis[j] * local).tolist())
-
-        for a, b in self.pairs:
-            delta_p = p[a] - p[b]
-            delta_v = v[a] - v[b]
-            pair_vis = vis[a] * vis[b]
-            mixed = self.cross_gain * pair_vis * delta_p * delta_v
-            feats.extend(mixed.tolist())
-
-        out = np.asarray(feats, dtype=float)
-        return np.clip(out, -1.0e5, 1.0e5)
+        pv = p * v
+        vv = 0.5 * v * v
+        local = (self.local_gain * vis[:, None]) * np.column_stack([pv, vv])
+        if self.cross_feature_count == 0:
+            return np.clip(local.ravel(), -1.0e5, 1.0e5)
+        dp = p[self._pair_a] - p[self._pair_b]
+        dv = v[self._pair_a] - v[self._pair_b]
+        pair_vis = vis[self._pair_a] * vis[self._pair_b]
+        cross = self.cross_gain * pair_vis[:, None] * dp * dv
+        return np.clip(np.concatenate([local.ravel(), cross.ravel()]), -1.0e5, 1.0e5)
 
     def jacobian(self, team_state: np.ndarray, visibility_mask: np.ndarray | None = None) -> np.ndarray:
         p, v = self._split(team_state)
@@ -101,7 +93,26 @@ class TeamCommunicationFeatureMap:
         return jac
 
     def gradient(self, team_state: np.ndarray, weights: np.ndarray, visibility_mask: np.ndarray | None = None) -> np.ndarray:
-        return self.jacobian(team_state, visibility_mask=visibility_mask).T @ weights
+        p, v = self._split(team_state)
+        vis = self._resolve_visibility(visibility_mask)
+        w_local = weights[: self.local_feature_count].reshape(self.n_pursuers, 6)
+        scale = self.local_gain * vis
+        grad_pos = scale[:, None] * v / self.pos_scale[None, :] * w_local[:, :3]
+        grad_vel = scale[:, None] * (p * w_local[:, :3] + v * w_local[:, 3:])
+        grad_blocks = np.column_stack([grad_pos, grad_vel])
+        if self.cross_feature_count > 0:
+            w_cross = weights[self.local_feature_count :].reshape(-1, 3)
+            dp = p[self._pair_a] - p[self._pair_b]
+            dv = v[self._pair_a] - v[self._pair_b]
+            pair_vis = vis[self._pair_a] * vis[self._pair_b]
+            sc = self.cross_gain * pair_vis
+            pos_c = sc[:, None] * dv / self.pos_scale[None, :] * w_cross
+            vel_c = sc[:, None] * dp * w_cross
+            np.add.at(grad_blocks[:, :3], self._pair_a, pos_c)
+            np.add.at(grad_blocks[:, 3:], self._pair_a, vel_c)
+            np.add.at(grad_blocks[:, :3], self._pair_b, -pos_c)
+            np.add.at(grad_blocks[:, 3:], self._pair_b, -vel_c)
+        return grad_blocks.ravel()
 
     def block_gradient(
         self,
