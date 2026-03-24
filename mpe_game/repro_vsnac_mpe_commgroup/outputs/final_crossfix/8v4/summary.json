@@ -1,0 +1,182 @@
+{
+  "case": {
+    "name": "8v4",
+    "n_pursuers": 8,
+    "n_evaders": 4,
+    "seed": 69,
+    "assignment_mode": "shifted",
+    "layout_mode": "structured"
+  },
+  "scenario": {
+    "name": "team_comm_8v4",
+    "group_sizes": [
+      2,
+      2,
+      2,
+      2
+    ],
+    "capture_radius": 220.0,
+    "swap_threshold": 5.0,
+    "drop_windows": [
+      {
+        "group_idx": 0,
+        "start_s": 28.462499450607304,
+        "end_s": 41.74576532796575,
+        "isolated_slots": [
+          0
+        ]
+      },
+      {
+        "group_idx": 1,
+        "start_s": 20.90686610670261,
+        "end_s": 32.06093780097821,
+        "isolated_slots": [
+          0
+        ]
+      },
+      {
+        "group_idx": 2,
+        "start_s": 26.685151367449635,
+        "end_s": 41.44324559057226,
+        "isolated_slots": [
+          0,
+          1
+        ]
+      },
+      {
+        "group_idx": 3,
+        "start_s": 19.988114309692463,
+        "end_s": 33.35409621685584,
+        "isolated_slots": [
+          0,
+          1
+        ]
+      }
+    ]
+  },
+  "eval": {
+    "capture_time_s": 47.150000000000006,
+    "final_team_error": 0.0,
+    "final_max_assigned_error": 0.0,
+    "mean_assigned_error": 634.9009405746419,
+    "final_group_errors": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "final_group_comm_ratio": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "min_group_comm_ratio": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "final_group_estimate_errors": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "random_drop_windows": [
+      {
+        "group_idx": 0,
+        "start_s": 27.800735489670576,
+        "end_s": 43.77016776383985,
+        "isolated_slots": [
+          0,
+          1
+        ]
+      },
+      {
+        "group_idx": 1,
+        "start_s": 24.793294088716713,
+        "end_s": 39.749137827772415,
+        "isolated_slots": [
+          1
+        ]
+      },
+      {
+        "group_idx": 2,
+        "start_s": 21.935432692705092,
+        "end_s": 34.029721850405046,
+        "isolated_slots": [
+          0
+        ]
+      },
+      {
+        "group_idx": 3,
+        "start_s": 20.884833503447993,
+        "end_s": 35.1630171819662,
+        "isolated_slots": [
+          0
+        ]
+      }
+    ]
+  },
+  "switching": {
+    "switch_count": 2,
+    "switch_times_s": [
+      0.0,
+      23.400000000000002
+    ]
+  },
+  "train": {
+    "iterations": 23,
+    "best_iteration": 14,
+    "final_delta": [
+      0.0010437,
+      0.00126225,
+      0.00150224,
+      0.00120065
+    ],
+    "final_residual": [
+      60.60348676,
+      71.40980363,
+      111.11757385,
+      103.56141419
+    ],
+    "final_weight_norms": [
+      0.87562363,
+      0.70412654,
+      0.95859161,
+      0.74393068
+    ],
+    "validation_history": [
+      242.428184,
+      243.220241,
+      243.220241,
+      243.220241,
+      245.923313,
+      245.923313,
+      245.923313,
+      248.503209,
+      248.503209,
+      248.503209,
+      250.618919,
+      250.618919,
+      250.618919,
+      252.172736,
+      252.172736,
+      252.172736,
+      253.11792,
+      253.11792,
+      253.11792,
+      253.594929,
+      253.594929,
+      253.594929,
+      253.807996,
+      253.860835
+    ]
+  },
+  "runtime": {
+    "wall_time_s": 140.6980165259447,
+    "simulated_steps_total": 18560,
+    "ms_per_step_total": 7.580712097303055
+  }
+}

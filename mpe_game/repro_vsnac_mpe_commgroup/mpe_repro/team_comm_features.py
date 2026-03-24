@@ -63,7 +63,7 @@ class TeamCommunicationFeatureMap:
             feats.extend(mixed.tolist())
 
         out = np.asarray(feats, dtype=float)
-        return np.clip(out, -2.0e4, 2.0e4)
+        return np.clip(out, -1.0e5, 1.0e5)
 
     def jacobian(self, team_state: np.ndarray, visibility_mask: np.ndarray | None = None) -> np.ndarray:
         p, v = self._split(team_state)

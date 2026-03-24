@@ -291,16 +291,16 @@ class MultiTeamCommunicationSimulator:
     def _init_weights(self, rng: np.random.Generator) -> list[np.ndarray]:
         weights: list[np.ndarray] = []
         for features in self.group_features:
-            local_w = rng.uniform(0.22, 0.34, size=features.local_feature_count)
-            cross_w = rng.uniform(0.10, 0.20, size=features.n_features - features.local_feature_count)
+            local_w = rng.uniform(0.15, 0.30, size=features.local_feature_count)
+            cross_w = rng.uniform(0.02, 0.12, size=features.n_features - features.local_feature_count)
             weights.append(np.concatenate([local_w, cross_w], axis=0))
         return weights
 
     def _clip_weights(self, group_idx: int, weights: np.ndarray) -> np.ndarray:
         out = weights.copy()
         local_count = self.group_features[group_idx].local_feature_count
-        out[:local_count] = np.clip(out[:local_count], 0.06, 0.45)
-        out[local_count:] = np.clip(out[local_count:], -0.30, 0.30)
+        out[:local_count] = np.clip(out[:local_count], 0.001, 0.80)
+        out[local_count:] = np.clip(out[local_count:], -0.60, 0.60)
         return out
 
     def _weight_norm_sq(self, weights: list[np.ndarray]) -> float:
@@ -512,6 +512,25 @@ class MultiTeamCommunicationSimulator:
             int(np.ceil(self.learning.min_samples_per_evader / max(self.learning.rollout_steps, 1))),
         )
 
+        buffer_capacity = max(rollouts_per_iter * self.learning.rollout_steps * 8, 30000)
+        replays: list[TeamReplayLeastSquares] = []
+        for group_idx, features in enumerate(self.group_features):
+            # Stronger cross-feature ridge for larger groups to stabilise
+            # the coupled team Bellman LS.
+            cross_scale = 4.0 if features.cross_feature_count <= 3 else 6.0
+            replays.append(
+                TeamReplayLeastSquares(
+                    n_features=features.n_features,
+                    capacity=buffer_capacity,
+                    local_feature_count=features.local_feature_count,
+                    local_bounds=(0.001, 0.80),
+                    cross_bounds=(-0.60, 0.60),
+                    recent_weight_floor=0.35,
+                    cross_ridge_scale=cross_scale,
+                    svd_threshold=1e-4,
+                )
+            )
+
         weight_history: list[list[np.ndarray]] = [[w.copy() for w in weights]]
         weight_norm_history = [self._weight_norms(weights)]
         delta_history: list[np.ndarray] = []
@@ -556,19 +575,6 @@ class MultiTeamCommunicationSimulator:
             )
             exploration_history.append(explore)
 
-            replays: list[TeamReplayLeastSquares] = []
-            for group_idx, features in enumerate(self.group_features):
-                replays.append(
-                    TeamReplayLeastSquares(
-                        n_features=features.n_features,
-                        capacity=rollouts_per_iter * self.learning.rollout_steps,
-                        local_feature_count=features.local_feature_count,
-                        local_bounds=(0.06, 0.45),
-                        cross_bounds=(-0.30, 0.30),
-                        recent_weight_floor=0.75,
-                    )
-                )
-
             for _ in range(rollouts_per_iter):
                 self.schedule = self._make_schedule(
                     rng,
@@ -609,51 +615,38 @@ class MultiTeamCommunicationSimulator:
                 residual_row[group_idx] = float(stats.residual_rms)
                 sample_row[group_idx] = float(stats.sample_count)
 
-            alpha = float(np.clip(self.learning.critic_learning_rate, 0.0, 1.0)) / (1.0 + 0.16 * iteration)
-            prev_norm_sq = self._weight_norm_sq(weights)
-            accepted = False
-            candidate_weights = [w.copy() for w in weights]
-            candidate_metric = current_metric
-            step_alpha = alpha
-            metric_slack = 0.02 if iter_visibility_mode == "full" else 0.05
+            # Simple dampened update — always apply, no backtracking.
+            frac_done = iteration / max(total_iters - 1, 1)
+            alpha = float(np.clip(self.learning.critic_learning_rate, 0.0, 1.0)) * ((1.0 - frac_done) ** 2.0 + 0.025)
 
-            for _ in range(8):
-                proposal: list[np.ndarray] = []
-                for group_idx in range(self.scenario.n_evaders):
-                    cand = weights[group_idx] + step_alpha * (solved_weights[group_idx] - weights[group_idx])
-                    proposal.append(self._clip_weights(group_idx, cand))
-
-                proposal_norm_sq = self._weight_norm_sq(proposal)
-                proposal_metric = self._validation_metric(
-                    proposal,
-                    visibility_mode=current_validation_mode,
-                    dynamic_graph=dynamic_graph,
-                )
-                if proposal_norm_sq <= prev_norm_sq + 1.0e-6 and proposal_metric <= current_metric + metric_slack:
-                    candidate_weights = proposal
-                    candidate_metric = proposal_metric
-                    accepted = True
-                    break
-                step_alpha *= 0.5
-
-            if not accepted:
-                candidate_weights = [w.copy() for w in weights]
-                candidate_metric = current_metric
+            new_weights: list[np.ndarray] = []
+            for group_idx in range(self.scenario.n_evaders):
+                cand = weights[group_idx] + alpha * (solved_weights[group_idx] - weights[group_idx])
+                new_weights.append(self._clip_weights(group_idx, cand))
 
             deltas = np.asarray(
                 [
-                    float(np.linalg.norm(candidate_weights[group_idx] - weights[group_idx]))
+                    float(np.linalg.norm(new_weights[group_idx] - weights[group_idx]))
                     for group_idx in range(self.scenario.n_evaders)
                 ],
                 dtype=float,
             )
-            weights = [w.copy() for w in candidate_weights]
-            current_metric = candidate_metric
+            weights = new_weights
             weight_history.append([w.copy() for w in weights])
             weight_norm_history.append(self._weight_norms(weights))
             delta_history.append(deltas)
             residual_history.append(residual_row)
             sample_history.append(sample_row)
+
+            # Periodic validation for best-weight selection
+            _val_interval = max(3, total_iters // 8)
+            _do_val = (iteration % _val_interval == 0) or (iteration == total_iters - 1)
+            if _do_val:
+                current_metric = self._validation_metric(
+                    weights,
+                    visibility_mode=current_validation_mode,
+                    dynamic_graph=dynamic_graph,
+                )
             validation_history.append(np.array([current_metric], dtype=float))
 
             if current_validation_mode == selection_mode and current_metric < best_metric - 1.0e-9:
@@ -661,7 +654,7 @@ class MultiTeamCommunicationSimulator:
                 best_weights = [w.copy() for w in weights]
                 best_iteration = int(len(weight_history) - 1)
 
-            min_iters_before_stop = curriculum_iters if visibility_mode == "curriculum" else 1
+            min_iters_before_stop = curriculum_iters if visibility_mode == "curriculum" else 8
             if iteration + 1 >= min_iters_before_stop and float(np.nanmax(deltas)) < self.learning.convergence_tol and np.all(
                 sample_row >= self.learning.min_samples_per_evader
             ):

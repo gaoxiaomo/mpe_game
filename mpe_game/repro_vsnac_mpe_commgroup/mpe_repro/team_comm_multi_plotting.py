@@ -137,6 +137,41 @@ def plot_group_weight_convergence(train: TeamCommMultiTrainResult, path: Path, t
     _save(fig, path)
 
 
+def plot_convergence_diagnostics(train: TeamCommMultiTrainResult, path: Path, title: str) -> None:
+    """Plot weight delta and Bellman residual per iteration to diagnose convergence."""
+    if train.delta_history.size == 0:
+        return
+    n_iters = train.delta_history.shape[0]
+    iters = np.arange(n_iters, dtype=float)
+    fig, axes = plt.subplots(3, 1, figsize=(9.0, 9.5), sharex=True)
+
+    for group_idx in range(train.delta_history.shape[1]):
+        axes[0].plot(iters, train.delta_history[:, group_idx], linewidth=1.6, label=f"Group {group_idx + 1}")
+    axes[0].set_ylabel("Weight delta ||dW||")
+    axes[0].set_title(title)
+    axes[0].set_yscale("log")
+    axes[0].grid(alpha=0.3)
+    axes[0].legend(ncol=2, fontsize=8)
+
+    for group_idx in range(train.residual_history.shape[1]):
+        axes[1].plot(iters, train.residual_history[:, group_idx], linewidth=1.6, label=f"Group {group_idx + 1}")
+    axes[1].set_ylabel("Bellman residual RMS")
+    axes[1].grid(alpha=0.3)
+    axes[1].legend(ncol=2, fontsize=8)
+
+    val = train.validation_history[:, 0] if train.validation_history.ndim > 1 else train.validation_history
+    valid_mask = ~np.isnan(val)
+    if np.any(valid_mask):
+        axes[2].plot(np.arange(len(val))[valid_mask], val[valid_mask], "o-", linewidth=1.6, markersize=3, label="Validation metric")
+    if train.best_iteration < len(val):
+        axes[2].axvline(train.best_iteration, color="red", linestyle="--", alpha=0.6, label=f"Best iter={train.best_iteration}")
+    axes[2].set_xlabel("Policy iteration")
+    axes[2].set_ylabel("Validation metric")
+    axes[2].grid(alpha=0.3)
+    axes[2].legend(fontsize=8)
+    _save(fig, path)
+
+
 def plot_assigned_error_summary(result: TeamCommMultiEvalResult, dt: float, path: Path, title: str) -> None:
     if result.assigned_errors.size == 0:
         return

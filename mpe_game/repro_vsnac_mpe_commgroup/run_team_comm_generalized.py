@@ -24,6 +24,7 @@ from mpe_repro.team_comm_multi_plotting import (
     plot_assigned_error_summary,
     plot_assignment_timeline,
     plot_comm_ratio,
+    plot_convergence_diagnostics,
     plot_group_weight_convergence,
     plot_multiteam_errors,
     plot_multiteam_trajectory_xy,
@@ -66,53 +67,56 @@ def _parse_case_token(token: str, seed: int, assignment_mode: str, layout_mode: 
 def _feature_params() -> TeamFeatureParams:
     return TeamFeatureParams(
         state_scale=(2600.0, 2600.0, 2600.0, 150.0, 150.0, 150.0),
-        local_gain=2.8,
-        cross_gain=1.35,
+        local_gain=2.2,
+        cross_gain=0.8,
     )
 
 
 def _control_params() -> ControlParams:
     return ControlParams(
-        q_diag=(1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
+        q_diag=(80.0, 80.0, 25.0, 30.0, 30.0, 12.0),
         r1_diag=(1.0, 1.0, 1.0),
         r2_diag=(1.0, 1.0, 1.0),
         u_bar_p=25.0,
         u_bar_e=15.0,
-        u_bar_p_policy=35.0,
-        u_bar_e_policy=15.0,
+        u_bar_p_policy=None,
+        u_bar_e_policy=None,
     )
 
 
 def _learning_params(n_p: int, n_e: int, quick: bool) -> LearningParams:
     size = max(n_p, n_e)
+    # Feature count depends on max group size (cross features grow quadratically).
+    max_group = int(np.ceil(n_p / max(n_e, 1)))
+    n_feat = 6 * max_group + 3 * (max_group * (max_group - 1) // 2)
     if quick:
         return LearningParams(
             dt=0.05,
             ridge_lambda=1e-3,
-            replay_capacity=26000,
-            min_samples_per_evader=140 + 16 * n_e,
-            policy_iterations=8 + max(0, size - 3),
-            rollout_steps=70 + 10 * size,
-            exploration_std_start=0.35,
-            exploration_std_end=0.02,
-            critic_learning_rate=0.08,
+            replay_capacity=40000 + 1000 * n_feat,
+            min_samples_per_evader=max(200, 10 * n_feat),
+            policy_iterations=18 + max(0, size - 3),
+            rollout_steps=120 + 15 * size,
+            exploration_std_start=0.50,
+            exploration_std_end=0.03,
+            critic_learning_rate=0.06,
             convergence_tol=5e-4,
-            random_perturb_scale=0.02,
+            random_perturb_scale=0.025,
             graph_update_interval=1,
             graph_update_start_step=0,
         )
     return LearningParams(
         dt=0.05,
         ridge_lambda=1e-3,
-        replay_capacity=70000,
-        min_samples_per_evader=360 + 36 * n_e,
-        policy_iterations=20 + max(0, size - 3),
-        rollout_steps=150 + 18 * size,
-        exploration_std_start=0.35,
-        exploration_std_end=0.02,
-        critic_learning_rate=0.08,
-        convergence_tol=2e-4,
-        random_perturb_scale=0.02,
+        replay_capacity=80000 + 1500 * n_feat,
+        min_samples_per_evader=max(400, 14 * n_feat),
+        policy_iterations=35 + max(0, size - 3) * 2,
+        rollout_steps=220 + 20 * size,
+        exploration_std_start=0.60,
+        exploration_std_end=0.03,
+        critic_learning_rate=0.06,
+        convergence_tol=5e-4,
+        random_perturb_scale=0.025,
         graph_update_interval=1,
         graph_update_start_step=0,
     )
@@ -234,13 +238,13 @@ def _run_single_case(job: dict[str, Any]) -> dict[str, Any]:
         feature_params=_feature_params(),
     )
 
-    dynamic_graph = scenario.n_evaders > 1
+    dynamic_graph_eval = scenario.n_evaders > 1
     t0 = time.perf_counter()
-    train = sim.train_policy(seed=case.seed, dynamic_graph=dynamic_graph, visibility_mode="curriculum")
+    train = sim.train_policy(seed=case.seed, dynamic_graph=False, visibility_mode="curriculum")
     eval_result = sim.evaluate_policy(
         weights=train.weights,
         seed=case.seed + 1000,
-        dynamic_graph=dynamic_graph,
+        dynamic_graph=dynamic_graph_eval,
         visibility_mode="dropout",
         stop_on_capture=False,
         zero_tail_after_capture=True,
@@ -269,6 +273,11 @@ def _run_single_case(job: dict[str, Any]) -> dict[str, Any]:
             learning.dt,
             case_dir / "fig_assigned_errors.png",
             f"{case.name} assigned error summary",
+        )
+        plot_convergence_diagnostics(
+            train,
+            case_dir / "fig_convergence_diagnostics.png",
+            f"{case.name} convergence diagnostics",
         )
 
     switch_times = _switch_times(eval_result.assignment_history, learning.dt, scenario.initial_assignment)
