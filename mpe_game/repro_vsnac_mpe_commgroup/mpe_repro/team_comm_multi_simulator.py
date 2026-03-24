@@ -7,6 +7,8 @@ import numpy as np
 
 from .config import AircraftParams, ControlParams, LearningParams
 from .dynamics import AircraftDynamics
+from .summed_controller import SummedVSNACController
+from .summed_features import SummedStateFeatureMap
 from .team_comm_config import TeamFeatureParams
 from .team_comm_controller import TeamVSNACController
 from .team_comm_features import TeamCommunicationFeatureMap
@@ -112,6 +114,7 @@ class MultiTeamCommunicationSimulator:
         control_params: ControlParams,
         learning_params: LearningParams,
         feature_params: TeamFeatureParams,
+        summed_mode: bool = False,
     ) -> None:
         self.scenario = scenario
         self.learning = learning_params
@@ -119,31 +122,50 @@ class MultiTeamCommunicationSimulator:
         self.dynamics = AircraftDynamics(aircraft_params)
         self.nu_eval = np.asarray(self.scenario.nu_eval, dtype=float)
         self.graph_metric = self.nu_eval.copy()
+        self.summed_mode = summed_mode
 
         self.group_sizes = self.scenario.group_sizes
-        self.group_features: list[TeamCommunicationFeatureMap] = []
-        self.group_controllers: list[TeamVSNACController] = []
+        self.group_features: list = []
+        self.group_controllers: list = []
         self.group_slot_displacements: list[np.ndarray] = []
         for evader_idx, slot_ids in enumerate(self.scenario.group_slot_ids):
             group_size = int(slot_ids.shape[0])
-            features = TeamCommunicationFeatureMap(feature_params, n_pursuers=group_size)
-            controller = TeamVSNACController(
-                dynamics=self.dynamics,
-                features=features,
-                q=control_params.q,
-                r1=control_params.r1,
-                r2=control_params.r2,
-                u_bar_p=control_params.u_bar_p,
-                u_bar_e=control_params.u_bar_e,
-                u_bar_p_actor=control_params.u_bar_p_actor,
-                u_bar_e_actor=control_params.u_bar_e_actor,
-                state_cost_scale=np.asarray(feature_params.state_scale, dtype=float),
-                nu_eval=self.nu_eval,
-            )
-            self.group_features.append(features)
-            self.group_controllers.append(controller)
             disp = self.scenario.slot_displacements[np.asarray(slot_ids, dtype=int)][:, None, :]
             self.group_slot_displacements.append(disp)
+
+            if summed_mode:
+                features = SummedStateFeatureMap(feature_params)
+                controller = SummedVSNACController(
+                    dynamics=self.dynamics,
+                    features=features,
+                    n_pursuers=group_size,
+                    q=control_params.q,
+                    r1=control_params.r1,
+                    r2=control_params.r2,
+                    u_bar_p=control_params.u_bar_p,
+                    u_bar_e=control_params.u_bar_e,
+                    u_bar_p_actor=control_params.u_bar_p_actor,
+                    u_bar_e_actor=control_params.u_bar_e_actor,
+                    state_cost_scale=np.asarray(feature_params.state_scale, dtype=float),
+                    nu_eval=self.nu_eval,
+                )
+            else:
+                features = TeamCommunicationFeatureMap(feature_params, n_pursuers=group_size)
+                controller = TeamVSNACController(
+                    dynamics=self.dynamics,
+                    features=features,
+                    q=control_params.q,
+                    r1=control_params.r1,
+                    r2=control_params.r2,
+                    u_bar_p=control_params.u_bar_p,
+                    u_bar_e=control_params.u_bar_e,
+                    u_bar_p_actor=control_params.u_bar_p_actor,
+                    u_bar_e_actor=control_params.u_bar_e_actor,
+                    state_cost_scale=np.asarray(feature_params.state_scale, dtype=float),
+                    nu_eval=self.nu_eval,
+                )
+            self.group_features.append(features)
+            self.group_controllers.append(controller)
 
         self.schedule = GroupCommunicationSchedule(self.scenario.communication, self.group_sizes)
 
@@ -374,39 +396,71 @@ class MultiTeamCommunicationSimulator:
             p_group = pursuer_states[members]
             e_state = evader_states[evader_idx]
 
-            true_team_state = controller.team_state(
-                pursuer_states=p_group,
-                evader_state=e_state,
-                displacements=displacements,
-            )
-            group_true_states.append(true_team_state.copy())
-            phi_t.append(features.phi(true_team_state))
+            if self.summed_mode:
+                # Summed mode: 6D summed state, no communication needed
+                summed_state = controller.team_state(
+                    pursuer_states=p_group,
+                    evader_state=e_state,
+                    displacements=displacements,
+                )
+                group_true_states.append(summed_state.copy())
+                phi_t.append(features.phi(summed_state))
 
-            comm_matrix = self._comm_matrix_for_group(evader_idx, float(step_idx * self.learning.dt), visibility_mode)
-            communication_matrices.append(comm_matrix.astype(int))
-            team_estimates, team_masks = self._build_team_estimates_and_masks(true_team_state, comm_matrix)
-            step = controller.policy(
-                pursuer_states=p_group,
-                evader_state=e_state,
-                displacements=displacements,
-                team_estimates=team_estimates,
-                team_masks=team_masks,
-                weights=weights[evader_idx],
-                rng=rng,
-                exploration_std=exploration_std,
-            )
+                group_size = int(p_group.shape[0])
+                comm_matrix = np.ones((group_size, group_size), dtype=bool)
+                communication_matrices.append(comm_matrix.astype(int))
 
-            pursuer_u[members] = step.pursuer_u
-            pursuer_u_tanh[members] = step.pursuer_u_tanh
-            evader_u_virtual[evader_idx] = step.evader_u
-            evader_u_tanh[evader_idx] = step.evader_u_tanh
-            group_errors[evader_idx] = float(step.team_error)
-            communication_ratio[evader_idx] = self._availability_ratio_for_group(
-                evader_idx,
-                float(step_idx * self.learning.dt),
-                visibility_mode,
-            )
-            estimate_errors[evader_idx] = float(np.mean(np.linalg.norm(team_estimates - true_team_state, axis=1)))
+                step = controller.policy(
+                    pursuer_states=p_group,
+                    evader_state=e_state,
+                    displacements=displacements,
+                    weights=weights[evader_idx],
+                    rng=rng,
+                    exploration_std=exploration_std,
+                )
+
+                pursuer_u[members] = step.pursuer_u
+                pursuer_u_tanh[members] = step.pursuer_u_tanh
+                evader_u_virtual[evader_idx] = step.evader_u
+                evader_u_tanh[evader_idx] = step.evader_u_tanh
+                group_errors[evader_idx] = float(step.team_error)
+                communication_ratio[evader_idx] = 1.0
+                estimate_errors[evader_idx] = 0.0
+            else:
+                # Stacked (communication-aware) mode
+                true_team_state = controller.team_state(
+                    pursuer_states=p_group,
+                    evader_state=e_state,
+                    displacements=displacements,
+                )
+                group_true_states.append(true_team_state.copy())
+                phi_t.append(features.phi(true_team_state))
+
+                comm_matrix = self._comm_matrix_for_group(evader_idx, float(step_idx * self.learning.dt), visibility_mode)
+                communication_matrices.append(comm_matrix.astype(int))
+                team_estimates, team_masks = self._build_team_estimates_and_masks(true_team_state, comm_matrix)
+                step = controller.policy(
+                    pursuer_states=p_group,
+                    evader_state=e_state,
+                    displacements=displacements,
+                    team_estimates=team_estimates,
+                    team_masks=team_masks,
+                    weights=weights[evader_idx],
+                    rng=rng,
+                    exploration_std=exploration_std,
+                )
+
+                pursuer_u[members] = step.pursuer_u
+                pursuer_u_tanh[members] = step.pursuer_u_tanh
+                evader_u_virtual[evader_idx] = step.evader_u
+                evader_u_tanh[evader_idx] = step.evader_u_tanh
+                group_errors[evader_idx] = float(step.team_error)
+                communication_ratio[evader_idx] = self._availability_ratio_for_group(
+                    evader_idx,
+                    float(step_idx * self.learning.dt),
+                    visibility_mode,
+                )
+                estimate_errors[evader_idx] = float(np.mean(np.linalg.norm(team_estimates - true_team_state, axis=1)))
 
         evader_u_applied = self._applied_evader_inputs(step_idx, evader_u_virtual)
 
@@ -418,17 +472,32 @@ class MultiTeamCommunicationSimulator:
             features = self.group_features[evader_idx]
             displacements = self.group_slot_displacements[evader_idx]
             members = group_members[evader_idx]
-            next_true_state = controller.team_state(
-                pursuer_states=next_p[members],
-                evader_state=next_e[evader_idx],
-                displacements=displacements,
-            )
-            phi_tp1.append(features.phi(next_true_state))
-            stage_costs[evader_idx] = controller.stage_cost(
-                team_state=group_true_states[evader_idx],
-                u_p=pursuer_u[members],
-                u_e=evader_u_applied[evader_idx],
-            )
+            if self.summed_mode:
+                next_summed = controller.team_state(
+                    pursuer_states=next_p[members],
+                    evader_state=next_e[evader_idx],
+                    displacements=displacements,
+                )
+                phi_tp1.append(features.phi(next_summed))
+                stage_costs[evader_idx] = controller.stage_cost(
+                    pursuer_states=pursuer_states[members],
+                    evader_state=evader_states[evader_idx],
+                    displacements=displacements,
+                    u_p=pursuer_u[members],
+                    u_e=evader_u_applied[evader_idx],
+                )
+            else:
+                next_true_state = controller.team_state(
+                    pursuer_states=next_p[members],
+                    evader_state=next_e[evader_idx],
+                    displacements=displacements,
+                )
+                phi_tp1.append(features.phi(next_true_state))
+                stage_costs[evader_idx] = controller.stage_cost(
+                    team_state=group_true_states[evader_idx],
+                    u_p=pursuer_u[members],
+                    u_e=evader_u_applied[evader_idx],
+                )
 
         total_team_error = float(np.sum(assigned_errors))
         record = MultiTeamStepRecord(
@@ -458,6 +527,10 @@ class MultiTeamCommunicationSimulator:
         visibility_mode: str = "dropout",
         initial_weights: Optional[list[np.ndarray]] = None,
     ) -> TeamCommMultiTrainResult:
+        # In summed mode, communication is not applicable: force full visibility.
+        if self.summed_mode:
+            visibility_mode = "full"
+
         rng = np.random.default_rng(seed)
         if initial_weights is None:
             weights = self._init_weights(rng)
@@ -473,7 +546,8 @@ class MultiTeamCommunicationSimulator:
         for group_idx, features in enumerate(self.group_features):
             # Stronger cross-feature ridge for larger groups to stabilise
             # the coupled team Bellman LS.
-            cross_scale = 4.0 if features.cross_feature_count <= 3 else 6.0
+            cross_count = getattr(features, 'cross_feature_count', 0)
+            cross_scale = 4.0 if cross_count <= 3 else 6.0
             replays.append(
                 TeamReplayLeastSquares(
                     n_features=features.n_features,
@@ -602,6 +676,10 @@ class MultiTeamCommunicationSimulator:
         zero_tail_after_capture: bool = False,
         record_logs: bool = False,
     ) -> TeamCommMultiEvalResult:
+        # In summed mode, communication is not applicable: force full visibility.
+        if self.summed_mode:
+            visibility_mode = "full"
+
         rng = np.random.default_rng(seed)
         self.schedule = self._make_schedule(rng, randomize_episode=(visibility_mode == "dropout"))
         p, e = self._reset_states(rng, perturb_scale=0.0)

@@ -86,11 +86,14 @@ def _control_params() -> ControlParams:
     )
 
 
-def _learning_params(n_p: int, n_e: int, quick: bool) -> LearningParams:
+def _learning_params(n_p: int, n_e: int, quick: bool, mode: str = "comm") -> LearningParams:
     size = max(n_p, n_e)
     # Feature count depends on max group size (cross features grow quadratically).
     max_group = int(np.ceil(n_p / max(n_e, 1)))
-    n_feat = 6 * max_group + 3 * (max_group * (max_group - 1) // 2)
+    if mode == "summed":
+        n_feat = 6  # summed mode always uses 6 features
+    else:
+        n_feat = 6 * max_group + 3 * (max_group * (max_group - 1) // 2)
     if quick:
         return LearningParams(
             dt=0.05,
@@ -230,21 +233,28 @@ def _run_single_case(job: dict[str, Any]) -> dict[str, Any]:
     case_dir = Path(job["case_dir"])
     quick = bool(job["quick"])
     make_plots = bool(job.get("make_plots", True))
+    mode = str(job.get("mode", "comm"))
+    summed_mode = mode == "summed"
 
     scenario = build_team_comm_multi_scenario(_scenario_spec(case, quick))
-    learning = _learning_params(case.n_pursuers, case.n_evaders, quick)
+    learning = _learning_params(case.n_pursuers, case.n_evaders, quick, mode=mode)
     sim = MultiTeamCommunicationSimulator(
         scenario=scenario,
         aircraft_params=AircraftParams(),
         control_params=_control_params(),
         learning_params=learning,
         feature_params=_feature_params(),
+        summed_mode=summed_mode,
     )
 
     dynamic_graph_eval = scenario.n_evaders > 1
     t0 = time.perf_counter()
-    train = sim.train_policy(seed=case.seed, dynamic_graph=False, visibility_mode="curriculum")
-    # Evaluation with communication dropout (realistic)
+    if summed_mode:
+        # Summed mode: no communication, train with full visibility
+        train = sim.train_policy(seed=case.seed, dynamic_graph=False, visibility_mode="full")
+    else:
+        train = sim.train_policy(seed=case.seed, dynamic_graph=False, visibility_mode="curriculum")
+    # Evaluation with communication dropout (realistic) -- summed mode forces full internally
     eval_result = sim.evaluate_policy(
         weights=train.weights,
         seed=case.seed + 1000,
@@ -433,23 +443,33 @@ def main() -> None:
     parser.add_argument("--seed-base", type=int, default=29, help="Base random seed")
     parser.add_argument("--parallel-workers", type=int, default=1, help="Parallel worker count")
     parser.add_argument("--skip-plots", action="store_true", help="Skip figure generation")
+    parser.add_argument(
+        "--mode",
+        type=str,
+        default="comm",
+        choices=["comm", "summed"],
+        help="Controller mode: 'comm' (stacked, communication-aware) or 'summed' (original paper's summed-state)",
+    )
     args = parser.parse_args()
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     root = Path(__file__).resolve().parent
-    out_dir = Path(args.output) if args.output else root / "outputs" / f"team_comm_generalized_{ts}"
+    mode_suffix = f"_{args.mode}" if args.mode != "comm" else ""
+    out_dir = Path(args.output) if args.output else root / "outputs" / f"team_comm_generalized{mode_suffix}_{ts}"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     cases = [
         _parse_case_token(token, seed=int(args.seed_base) + 10 * idx, assignment_mode=args.assignment_mode, layout_mode=args.layout_mode)
         for idx, token in enumerate(args.cases)
     ]
+    mode = str(args.mode)
     jobs = [
         {
             "case": asdict(case),
             "case_dir": str(out_dir / case.name),
             "quick": bool(args.quick),
             "make_plots": not bool(args.skip_plots),
+            "mode": mode,
         }
         for case in cases
     ]

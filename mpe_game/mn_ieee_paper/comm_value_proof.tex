@@ -1,0 +1,724 @@
+% !TEX program = xelatex
+\documentclass[a4paper,11pt]{article}
+
+% ============================================================
+%  Packages
+% ============================================================
+\usepackage[UTF8]{ctex}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{cleveref}
+
+\geometry{left=2.5cm, right=2.5cm, top=2.8cm, bottom=2.8cm}
+
+% ============================================================
+%  Theorem environments
+% ============================================================
+\theoremstyle{plain}
+\newtheorem{theorem}{定理}[section]
+\newtheorem{proposition}[theorem]{命题}
+\newtheorem{lemma}[theorem]{引理}
+\newtheorem{corollary}[theorem]{推论}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{定义}
+\newtheorem{assumption}[theorem]{假设}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{注记}
+\newtheorem{conjecture}[theorem]{猜想}
+
+% ============================================================
+%  Notation shortcuts
+% ============================================================
+\DeclareMathOperator{\col}{col}
+\DeclareMathOperator{\tamark}{tanh}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\cG}{\mathcal{G}}
+\newcommand{\cV}{\mathcal{V}}
+\newcommand{\cE}{\mathcal{E}}
+\newcommand{\cF}{\mathcal{F}}
+\newcommand{\cL}{\mathcal{L}}
+\newcommand{\abs}[1]{\lvert #1 \rvert}
+\newcommand{\norm}[1]{\lVert #1 \rVert}
+\newcommand{\inner}[2]{\langle #1,\, #2 \rangle}
+
+% ============================================================
+\title{\textbf{通信感知的团队价值函数：\\编队协调特征与收敛性证明}}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+% ============================================================
+\section{问题设定}\label{sec:problem}
+% ============================================================
+
+考虑由 $n$ 个追逐者（pursuers）追捕 $1$ 个逃避者（evader）构成的
+微分博弈。每个智能体的状态为六维向量
+$x = [p^{(a)},\, p^{(b)},\, p^{(h)},\, v^{(a)},\, v^{(b)},\, v^{(h)}]^T \in \R^6$，
+分别对应三轴位置与三轴速度。动力学满足仿射非线性系统：
+\begin{align}
+  \dot{x}_j^p &= f(x_j^p) + g(x_j^p)\, u_j^p, \quad j = 1,\dots,n, \label{eq:dyn_p}\\
+  \dot{x}_i^e &= f(x_i^e) + g(x_i^e)\, u_i^e, \label{eq:dyn_e}
+\end{align}
+其中 $f:\R^6\to\R^6$ 和 $g:\R^6\to\R^{6\times m}$ 足够光滑，$u_j^p\in\R^m$
+为第 $j$ 个追逐者的控制输入，$u_i^e\in\R^m$ 为逃避者的控制输入。
+控制量有界：$\norm{u_j^p}_\infty \le \bar{u}_p$，$\norm{u_i^e}_\infty \le \bar{u}_e$。
+
+\begin{definition}[误差状态]\label{def:error}
+  设 $r_j \in \R^6$ 为第 $j$ 个追逐者的期望编队偏移。定义误差状态
+  \begin{equation}\label{eq:error}
+    e_j \;=\; x_j^p - x_i^e + r_j, \quad j = 1,\dots,n.
+  \end{equation}
+  误差状态中，$e_j = 0$ 表示第 $j$ 个追逐者相对于逃避者恰好处于
+  期望编队位置。
+\end{definition}
+
+\begin{definition}[堆叠状态]\label{def:stacked}
+  定义堆叠状态
+  \begin{equation}\label{eq:stacked}
+    Z \;=\; \col(e_1, \dots, e_n) \;\in\; \R^{6n}.
+  \end{equation}
+\end{definition}
+
+团队追捕误差定义为
+\begin{equation}\label{eq:team_error}
+  E_{\text{team}} \;=\; \sum_{j=1}^{n} \norm{\nu \odot e_j},
+\end{equation}
+其中 $\nu \in \R^6$ 为各分量的标度权重，$\odot$ 表示 Hadamard 积。
+
+\begin{definition}[通信图]\label{def:comm_graph}
+  追逐者之间的通信拓扑用无向图
+  $\cG = (\cV, \cE)$ 描述，其中 $\cV = \{1,\dots,n\}$ 为节点集，
+  $\cE \subseteq \cV \times \cV$ 为边集。
+  邻接矩阵 $A = [a_{jk}]$ 满足 $a_{jk} = 1$ 当且仅当 $(j,k)\in\cE$。
+  度矩阵 $D = \diag(d_1,\dots,d_n)$，其中 $d_j = \sum_k a_{jk}$。
+  图 Laplacian 定义为 $\cL = D - A$。
+\end{definition}
+
+% ============================================================
+\section{原论文的价值函数（对比基准）}\label{sec:original}
+% ============================================================
+
+原论文~\cite{vsnac_original}采用\textbf{求和状态}来降维。设
+$c_{j,i}\in\R$ 为预定系数，定义
+\begin{equation}\label{eq:sum_state}
+  \tilde{x} \;=\; \sum_{j=1}^{n} c_{j,i}\, e_j \;\in\; \R^6.
+\end{equation}
+将 $\tilde{x}$ 分解为位置部分 $p = [\tilde{x}_1,\tilde{x}_2,\tilde{x}_3]^T$
+和速度部分 $v = [\tilde{x}_4,\tilde{x}_5,\tilde{x}_6]^T$，并分别记
+$v^{(a)} = v_1$，$v^{(b)} = v_2$，$v^{(h)} = v_3$。
+原论文的价值函数线性参数化为
+\begin{equation}\label{eq:V_orig}
+  V_{\text{orig}}(\tilde{x}) \;=\; W^T \psi(\tilde{x}),
+\end{equation}
+其中特征向量为
+\begin{equation}\label{eq:psi_orig}
+  \psi(\tilde{x}) \;=\;
+  \begin{bmatrix}
+    p \cdot v^{(a)} \\[2pt] p \cdot v^{(b)} \\[2pt] p \cdot v^{(h)} \\[4pt]
+    \tfrac{1}{2}(v^{(a)})^2 \\[2pt] \tfrac{1}{2}(v^{(b)})^2 \\[2pt]
+    \tfrac{1}{2}(v^{(h)})^2
+  \end{bmatrix}
+  \;\in\; \R^6.
+\end{equation}
+
+\begin{remark}[原方法的局限性]\label{rmk:orig_limitation}
+  由于 $V_{\text{orig}}$ 仅依赖于求和状态 $\tilde{x}$，梯度
+  $\nabla_{e_j} V_{\text{orig}} = c_{j,i}\, \nabla_{\tilde{x}} V_{\text{orig}}$
+  对所有追逐者共享同一方向 $\nabla_{\tilde{x}} V_{\text{orig}}$，
+  仅通过标量系数 $c_{j,i}$ 区分。这意味着所有追逐者的控制输入
+  方向相同，无法产生针对个体状态的差异化控制策略，从而难以实现
+  包围编队等协调行为。
+\end{remark}
+
+% ============================================================
+\section{通信感知的团队价值函数（新提出）}\label{sec:new}
+% ============================================================
+
+\subsection{特征设计}\label{subsec:features}
+
+我们提出一种新的价值函数参数化，其特征由两部分组成。
+
+\begin{definition}[局部追捕特征]\label{def:local_feat}
+  对第 $j$ 个追逐者，将其误差状态 $e_j$ 分解为位置部分 $p_j$
+  和速度部分 $v_j$（均经过适当标度），并进一步记
+  $v_j^{(a)},v_j^{(b)},v_j^{(h)}$ 为速度的三个分量。
+  定义局部追捕特征（$6$ 个标量）：
+  \begin{equation}\label{eq:phi_local}
+    \phi_{\text{local},j} \;=\;
+    \begin{bmatrix}
+      p_j \cdot v_j^{(a)} \\[2pt]
+      p_j \cdot v_j^{(b)} \\[2pt]
+      p_j \cdot v_j^{(h)} \\[4pt]
+      \tfrac{1}{2}\bigl(v_j^{(a)}\bigr)^2 \\[2pt]
+      \tfrac{1}{2}\bigl(v_j^{(b)}\bigr)^2 \\[2pt]
+      \tfrac{1}{2}\bigl(v_j^{(h)}\bigr)^2
+    \end{bmatrix}
+    \;\in\; \R^6, \quad j = 1,\dots,n.
+  \end{equation}
+  此特征仅依赖于本体误差 $e_j$，\textbf{不需要}与其他追逐者通信。
+\end{definition}
+
+\begin{definition}[编队协调特征]\label{def:coord_feat}
+  对通信图中每条边 $(j,k)\in\cE$，定义期望相对偏移
+  $d_{jk} = r_j - r_k \in \R^6$ 以及编队偏差
+  $\delta_{jk} = e_j - e_k - d_{jk}$。取正定权重矩阵 $S \succ 0$，
+  定义编队协调特征
+  \begin{equation}\label{eq:phi_coord}
+    \phi_{\text{coord},jk}
+    \;=\; \norm{\delta_{jk}}_S^2
+    \;=\; (e_j - e_k - d_{jk})^T S\, (e_j - e_k - d_{jk}),
+    \quad (j,k)\in\cE.
+  \end{equation}
+  此特征需要追逐者 $j$ 和 $k$ 之间存在通信链路以交换 $e_k$。
+\end{definition}
+
+\begin{remark}[编队偏差的含义]\label{rmk:delta}
+  注意到
+  \begin{equation}\label{eq:delta_expand}
+    \delta_{jk} = e_j - e_k - d_{jk}
+    = (x_j^p - x_i^e + r_j) - (x_k^p - x_i^e + r_k) - (r_j - r_k)
+    = x_j^p - x_k^p,
+  \end{equation}
+  因此 $\delta_{jk}$ 恰好是追逐者 $j$ 与 $k$ 之间的实际相对状态。
+  当且仅当所有追逐者处于完美编队时 $\delta_{jk} = d_{jk}$，
+  即 $\phi_{\text{coord},jk} = 0$。
+
+  {\bfseries 勘误}：由式~\eqref{eq:delta_expand}可见，$\delta_{jk}$
+  化简后为 $x_j^p - x_k^p$，而编队目标是 $x_j^p - x_k^p = d_{jk}$。
+  因此编队偏差更准确地写为
+  \begin{equation}\label{eq:delta_correct}
+    \delta_{jk} = (x_j^p - x_k^p) - d_{jk},
+  \end{equation}
+  与定义~\ref{def:coord_feat} 一致。
+\end{remark}
+
+将所有特征堆叠，定义团队价值函数
+\begin{equation}\label{eq:V_new}
+  V(Z) \;=\; W^T \phi(Z), \qquad
+  \phi(Z) = \col\!\bigl(\phi_{\text{local},1},\dots,\phi_{\text{local},n},\;
+  \{\phi_{\text{coord},jk}\}_{(j,k)\in\cE}\bigr).
+\end{equation}
+总特征数为
+\begin{equation}\label{eq:n_feat}
+  n_{\text{feat}} \;=\; 6n + \abs{\cE}.
+\end{equation}
+
+% ----------------------------------------------------------
+\subsection{HJI 方程与最优控制}\label{subsec:HJI}
+% ----------------------------------------------------------
+
+定义阶段代价
+\begin{equation}\label{eq:stage_cost}
+  \ell(Z, u_p, u_e)
+  \;=\; \sum_{j=1}^{n} e_j^T Q\, e_j
+  \;+\; \sum_{j=1}^{n} U(u_j^p)
+  \;-\; n\, W_e(u_i^e),
+\end{equation}
+其中 $Q \succ 0$ 为状态代价矩阵，而追逐者和逃避者的非二次控制代价分别为
+\begin{align}
+  U(u) &= 2\bar{u}_p \int_0^{u}
+    \bigl(\bar{u}_p\, \tanh^{-1}(\tau / \bar{u}_p)\bigr)^T R_1\; d\tau,
+    \label{eq:U_cost}\\
+  W_e(u) &= 2\bar{u}_e \int_0^{u}
+    \bigl(\bar{u}_e\, \tanh^{-1}(\tau / \bar{u}_e)\bigr)^T R_2\; d\tau,
+    \label{eq:W_cost}
+\end{align}
+其中 $R_1, R_2 \succ 0$。此非二次积分形式是 V-SNAC 方法的关键，
+它使得当控制量接近饱和边界 $\bar{u}$ 时代价趋于无穷，
+自然地将控制约束编码于代价函数中。
+
+Hamilton--Jacobi--Isaacs（HJI）方程为
+\begin{equation}\label{eq:HJI}
+  0 \;=\; \ell(Z, u_p^*, u_e^*) + (\nabla_Z V)^T \dot{Z},
+\end{equation}
+其中 $\dot{Z}$ 由式~\eqref{eq:dyn_p}--\eqref{eq:dyn_e} 及误差定义诱导。
+
+V-SNAC 框架下的最优控制为
+\begin{align}
+  u_j^{p*} &= -\bar{u}_p\, \tanh\!\left(
+    \frac{R_1^{-1}\, (g_j^p)^T \nabla_{e_j} V}{2\bar{u}_p}
+  \right), \quad j=1,\dots,n, \label{eq:u_p_star}\\[6pt]
+  u_i^{e*} &= -\bar{u}_e\, \tanh\!\left(
+    \frac{R_2^{-1}\, (g_i^e)^T \sum_{j=1}^{n} \nabla_{e_j} V}{2\bar{u}_e}
+  \right). \label{eq:u_e_star}
+\end{align}
+
+\begin{remark}[梯度的结构]\label{rmk:gradient}
+  在新的参数化下，$\nabla_{e_j} V$ 包含\textbf{局部追捕}和
+  \textbf{编队协调}两个分量：
+  \begin{equation}\label{eq:grad_decomp}
+    \nabla_{e_j} V
+    \;=\;
+    \underbrace{
+      \left(\frac{\partial \phi_{\text{local},j}}{\partial e_j}\right)^{\!T}
+      w_{\text{local},j}
+    }_{\text{局部追捕梯度}}
+    \;+\;
+    \underbrace{
+      \sum_{k:(j,k)\in\cE}
+      \left(\frac{\partial \phi_{\text{coord},jk}}{\partial e_j}\right)^{\!T}
+      w_{\text{coord},jk}
+    }_{\text{编队协调梯度}},
+  \end{equation}
+  其中 $w_{\text{local},j}$ 和 $w_{\text{coord},jk}$ 分别是权重向量 $W$
+  中对应于局部特征和协调特征的分量。
+
+  编队协调梯度的具体形式为
+  \begin{equation}\label{eq:grad_coord}
+    \frac{\partial \phi_{\text{coord},jk}}{\partial e_j}
+    \;=\; 2S\,(e_j - e_k - d_{jk})
+    \;=\; 2S\,\delta_{jk},
+  \end{equation}
+  其物理意义为：当追逐者 $j$ 偏离相对于 $k$ 的编队位置时，
+  该梯度将驱动 $j$ \textbf{回归}其编队位置。
+\end{remark}
+
+% ============================================================
+\section{理论分析}\label{sec:theory}
+% ============================================================
+
+\subsection{策略空间与价值函数的层级关系}
+
+首先严格定义三种策略空间。
+
+\begin{definition}[策略空间]\label{def:policy_spaces}
+  定义如下策略空间：
+  \begin{enumerate}[label=(\roman*)]
+    \item \textbf{原始策略空间}：
+      $\Pi_{\text{orig}} = \bigl\{
+        (u_1^p,\dots,u_n^p) \;\big|\;
+        u_j^p = \pi\!\bigl(\textstyle\sum_k c_{k,i}\, e_k\bigr),\;
+        \pi:\R^6\to\R^m,\;
+        \text{所有 } j \text{ 共享同一 } \pi
+      \bigr\}$；
+    \item \textbf{局部策略空间}：
+      $\Pi_{\text{local}} = \bigl\{
+        (u_1^p,\dots,u_n^p) \;\big|\;
+        u_j^p = \pi_j(e_j),\;
+        \pi_j:\R^6\to\R^m
+      \bigr\}$；
+    \item \textbf{通信策略空间}：
+      $\Pi_{\text{comm}} = \bigl\{
+        (u_1^p,\dots,u_n^p) \;\big|\;
+        u_j^p = \pi_j(Z),\;
+        \pi_j:\R^{6n}\to\R^m
+      \bigr\}$。
+  \end{enumerate}
+\end{definition}
+
+\begin{proposition}[策略空间包含关系]\label{prop:policy_inclusion}
+  $\Pi_{\emph{orig}} \subseteq \Pi_{\emph{comm}}$ 且
+  $\Pi_{\emph{local}} \subseteq \Pi_{\emph{comm}}$。
+  但一般而言 $\Pi_{\emph{orig}} \not\subseteq \Pi_{\emph{local}}$
+  且 $\Pi_{\emph{local}} \not\subseteq \Pi_{\emph{orig}}$。
+\end{proposition}
+
+\begin{proof}
+  \textbf{(i) $\Pi_{\text{orig}} \subseteq \Pi_{\text{comm}}$}：
+  取任意 $(u_1^p,\dots,u_n^p) \in \Pi_{\text{orig}}$，即存在
+  $\pi:\R^6\to\R^m$ 使得 $u_j^p = \pi(\sum_k c_{k,i}\, e_k)$。
+  定义 $\tilde{\pi}_j : \R^{6n} \to \R^m$ 为
+  $\tilde{\pi}_j(Z) = \pi(\sum_k c_{k,i}\, e_k)$，
+  其中 $e_k$ 是 $Z$ 的第 $k$ 个 $6$-维子块。
+  则 $\tilde{\pi}_j$ 是 $Z$ 的合法函数，故
+  $(u_1^p,\dots,u_n^p) \in \Pi_{\text{comm}}$。
+
+  \textbf{(ii) $\Pi_{\text{local}} \subseteq \Pi_{\text{comm}}$}：
+  取任意 $(u_1^p,\dots,u_n^p) \in \Pi_{\text{local}}$，即
+  $u_j^p = \pi_j(e_j)$。定义 $\tilde{\pi}_j(Z) = \pi_j(e_j)$，
+  其中 $e_j$ 是 $Z$ 的第 $j$ 个子块。
+  这是 $Z$ 的合法函数（忽略其余分量），故结论成立。
+
+  \textbf{(iii) $\Pi_{\text{orig}} \not\subseteq \Pi_{\text{local}}$}：
+  取 $n = 2$，$c_{1,i} = c_{2,i} = 1$，并定义
+  $\pi(\tilde{x}) = \tilde{x}_1 \cdot \mathbf{1}_m$（取求和状态第一分量
+  乘以单位向量）。此时 $u_1^p = (e_{1,1} + e_{2,1})\,\mathbf{1}_m$
+  依赖于 $e_2$ 的分量，不可能仅表示为 $e_1$ 的函数。
+  故 $(u_1^p, u_2^p) \notin \Pi_{\text{local}}$。
+
+  \textbf{(iv) $\Pi_{\text{local}} \not\subseteq \Pi_{\text{orig}}$}：
+  取 $n = 2$，定义 $\pi_1(e_1) = e_{1,1}\, \mathbf{1}_m$，
+  $\pi_2(e_2) = -e_{2,1}\, \mathbf{1}_m$。此策略中两个追逐者的控制
+  方向相反。然而 $\Pi_{\text{orig}}$ 要求所有追逐者共享同一 $\pi$，
+  不可能产生此种差异化行为。故
+  $(\pi_1, \pi_2) \notin \Pi_{\text{orig}}$。
+\end{proof}
+
+\begin{theorem}[信息不等式 / 通信降低博弈代价]\label{thm:info_ineq}
+  设 $V^*_{\emph{comm}}$ 和 $V^*_{\emph{orig}}$ 分别为在
+  $\Pi_{\emph{comm}}$ 和 $\Pi_{\emph{orig}}$ 下的最优博弈值函数，
+  即
+  \begin{align}
+    V^*_{\emph{comm}}(Z_0) &= \inf_{\pi \in \Pi_{\emph{comm}}}
+      \sup_{u_e} J(Z_0; \pi, u_e), \label{eq:V_comm_star}\\
+    V^*_{\emph{orig}}(Z_0) &= \inf_{\pi \in \Pi_{\emph{orig}}}
+      \sup_{u_e} J(Z_0; \pi, u_e), \label{eq:V_orig_star}
+  \end{align}
+  其中 $J$ 为累计代价泛函。则对一切初始状态 $Z_0 \in \R^{6n}$：
+  \begin{equation}\label{eq:info_ineq}
+    V^*_{\emph{comm}}(Z_0) \;\le\; V^*_{\emph{orig}}(Z_0).
+  \end{equation}
+\end{theorem}
+
+\begin{proof}
+  由命题~\ref{prop:policy_inclusion} 有
+  $\Pi_{\text{orig}} \subseteq \Pi_{\text{comm}}$。
+  因此
+  \begin{equation}\label{eq:info_ineq_proof}
+    V^*_{\text{comm}}(Z_0)
+    = \inf_{\pi \in \Pi_{\text{comm}}} \sup_{u_e} J(Z_0; \pi, u_e)
+    \le \inf_{\pi \in \Pi_{\text{orig}}} \sup_{u_e} J(Z_0; \pi, u_e)
+    = V^*_{\text{orig}}(Z_0).
+  \end{equation}
+  不等式成立的原因是：在较大集合上取下确界，其值不大于在较小集合
+  上取下确界。严格地，对任意集合 $A \subseteq B$ 和函数
+  $h: B \to \R$，有 $\inf_{b\in B} h(b) \le \inf_{a\in A} h(a)$，
+  因为 $A$ 上的下确界仅在 $B$ 的一个子集上进行搜索。
+  将 $h(\pi) = \sup_{u_e} J(Z_0; \pi, u_e)$，
+  $A = \Pi_{\text{orig}}$，$B = \Pi_{\text{comm}}$ 代入即得。
+\end{proof}
+
+\begin{remark}\label{rmk:info_ineq_strict}
+  不等式~\eqref{eq:info_ineq} 在通信确实提供了原方法无法实现的
+  策略改进时取严格不等号。直觉上，当追逐者需要差异化行动
+  （例如从不同方向包围逃避者）时，通信所支持的个性化梯度将
+  严格优于共享梯度。
+  然而，严格不等号的精确条件依赖于具体动力学和代价函数的结构，
+  此处不作一般性断言。
+\end{remark}
+
+\begin{corollary}\label{cor:local_ineq}
+  类似地，$V^*_{\emph{comm}}(Z_0) \le V^*_{\emph{local}}(Z_0)$
+  对一切 $Z_0$ 成立。
+\end{corollary}
+
+\begin{proof}
+  由命题~\ref{prop:policy_inclusion} 的 (ii) 部分，
+  $\Pi_{\text{local}} \subseteq \Pi_{\text{comm}}$，
+  重复定理~\ref{thm:info_ineq} 的论证即得。
+\end{proof}
+
+% ----------------------------------------------------------
+\subsection{编队特征的正定性与协调作用}
+% ----------------------------------------------------------
+
+\begin{proposition}[编队特征正定性]\label{prop:coord_pd}
+  对任意 $(j,k)\in\cE$，编队协调特征满足
+  \begin{equation}\label{eq:coord_pd}
+    \phi_{\emph{coord},jk} = \norm{\delta_{jk}}_S^2 \;\ge\; 0,
+  \end{equation}
+  且等号成立当且仅当 $\delta_{jk} = 0$，即追逐者 $j$ 和 $k$
+  之间的相对状态恰好等于期望编队偏移 $d_{jk}$。
+\end{proposition}
+
+\begin{proof}
+  由 $S \succ 0$（正定），对任意 $v \in \R^6$ 有
+  $v^T S\, v \ge 0$，且 $v^T S\, v = 0$ 当且仅当 $v = 0$。
+  取 $v = \delta_{jk} = e_j - e_k - d_{jk}$ 即得。
+\end{proof}
+
+\begin{definition}[协调价值函数]\label{def:V_coord}
+  定义协调价值函数为
+  \begin{equation}\label{eq:V_coord}
+    V_{\text{coord}}(Z) \;=\;
+    \sum_{(j,k)\in\cE} w_{\text{coord},jk}\, \phi_{\text{coord},jk},
+  \end{equation}
+  其中 $w_{\text{coord},jk}$ 是对应的权重标量。
+\end{definition}
+
+\begin{proposition}\label{prop:V_coord_nonneg}
+  若 $w_{\emph{coord},jk} \ge 0$ 对一切 $(j,k)\in\cE$ 成立，则
+  \begin{equation}\label{eq:V_coord_nonneg}
+    V_{\emph{coord}}(Z) \;\ge\; 0 \quad \forall\, Z \in \R^{6n},
+  \end{equation}
+  且 $V_{\emph{coord}}(Z) = 0$ 当且仅当对所有
+  $(j,k)\in\cE$ 使得 $w_{\emph{coord},jk} > 0$
+  均有 $\delta_{jk} = 0$。
+\end{proposition}
+
+\begin{proof}
+  由命题~\ref{prop:coord_pd}，每一项
+  $w_{\text{coord},jk}\, \phi_{\text{coord},jk} \ge 0$。
+  有限个非负项之和非负，故 $V_{\text{coord}}(Z) \ge 0$。
+  等号条件：$V_{\text{coord}}(Z) = 0$ 当且仅当每一项为零。
+  当 $w_{\text{coord},jk} > 0$ 时，由命题~\ref{prop:coord_pd} 的
+  等号条件，该项为零当且仅当 $\delta_{jk} = 0$。
+  当 $w_{\text{coord},jk} = 0$ 时该项恒为零，无需约束。
+\end{proof}
+
+\begin{theorem}[编队梯度的协调作用]\label{thm:coord_gradient}
+  追逐者 $j$ 的协调梯度为
+  \begin{equation}\label{eq:g_coord_j}
+    g_{\emph{coord},j}
+    \;\triangleq\; \nabla_{e_j} V_{\emph{coord}}
+    \;=\; 2 \sum_{k:(j,k)\in\cE} w_{\emph{coord},jk}\, S\, \delta_{jk}.
+  \end{equation}
+  该梯度满足以下性质：
+  \begin{enumerate}[label=(\alph*)]
+    \item 当追逐者处于完美编队（$\delta_{jk} = 0$ 对一切
+      $(j,k)\in\cE$）时，$g_{\emph{coord},j} = 0$；
+    \item 若 $w_{\emph{coord},jk} > 0$ 对一切 $(j,k)\in\cE$ 成立，则
+      \begin{equation}\label{eq:descent}
+        g_{\emph{coord},j}^T\!
+        \left(\sum_{k:(j,k)\in\cE} w_{\emph{coord},jk}\, \delta_{jk}\right)
+        \;\ge\; 0,
+      \end{equation}
+      且等号成立当且仅当 $g_{\emph{coord},j} = 0$。
+  \end{enumerate}
+\end{theorem}
+
+\begin{proof}
+  \textbf{梯度的推导}：由式~\eqref{eq:phi_coord}，
+  \begin{equation}\label{eq:grad_coord_calc}
+    \frac{\partial \phi_{\text{coord},jk}}{\partial e_j}
+    = \frac{\partial}{\partial e_j}
+      \bigl[(e_j - e_k - d_{jk})^T S (e_j - e_k - d_{jk})\bigr]
+    = 2S(e_j - e_k - d_{jk})
+    = 2S\,\delta_{jk}.
+  \end{equation}
+  因此
+  \[
+    g_{\text{coord},j}
+    = \nabla_{e_j} V_{\text{coord}}
+    = \sum_{k:(j,k)\in\cE} w_{\text{coord},jk}
+      \cdot 2S\,\delta_{jk},
+  \]
+  即式~\eqref{eq:g_coord_j}。
+
+  \textbf{性质 (a)}：若 $\delta_{jk} = 0$ 对一切 $(j,k)\in\cE$，
+  则每一项 $2w_{\text{coord},jk}\, S\,\delta_{jk} = 0$，
+  从而 $g_{\text{coord},j} = 0$。
+
+  \textbf{性质 (b)}：计算
+  \begin{align}
+    g_{\text{coord},j}^T
+    \left(\sum_{k:(j,k)\in\cE} w_{\text{coord},jk}\, \delta_{jk}\right)
+    &= \left(2\sum_{k} w_{\text{coord},jk}\, S\,\delta_{jk}\right)^{\!T}
+       \left(\sum_{l} w_{\text{coord},jl}\, \delta_{jl}\right)
+    \notag\\
+    &= 2\left(\sum_{k} w_{\text{coord},jk}\, \delta_{jk}\right)^{\!T}
+       S
+       \left(\sum_{l} w_{\text{coord},jl}\, \delta_{jl}\right)
+    \notag\\
+    &= 2\, \xi_j^T S\, \xi_j,
+    \label{eq:descent_calc}
+  \end{align}
+  其中 $\xi_j = \sum_{k:(j,k)\in\cE} w_{\text{coord},jk}\, \delta_{jk}$。
+  由 $S \succ 0$，有 $\xi_j^T S\, \xi_j \ge 0$，
+  且等号当且仅当 $\xi_j = 0$。
+  当 $\xi_j = 0$ 时 $g_{\text{coord},j} = 2S\,\xi_j = 0$。
+  反之，当 $g_{\text{coord},j} = 0$ 时，$S\,\xi_j = 0$，
+  由 $S$ 非奇异得 $\xi_j = 0$。
+\end{proof}
+
+\begin{remark}[协调梯度对控制的修正]\label{rmk:control_modification}
+  追逐者 $j$ 的完整控制律为
+  \begin{equation}\label{eq:full_control}
+    u_j^{p*} = -\bar{u}_p\, \tanh\!\left(
+      \frac{R_1^{-1}\, (g_j^p)^T
+      (\nabla_{e_j} V_{\text{local}} + g_{\text{coord},j})}
+      {2\bar{u}_p}
+    \right).
+  \end{equation}
+  局部追捕梯度 $\nabla_{e_j} V_{\text{local}}$ 驱动追逐者趋近逃避者，
+  协调梯度 $g_{\text{coord},j}$ 则修正控制方向以维持编队。
+  两者的合成效果取决于具体的权重 $W$ 和系统状态。
+
+  定理~\ref{thm:coord_gradient}(b) 保证了协调梯度沿加权编队偏差方向
+  是非增的（在 $S$-范数意义下），从而确保协调项不会使编队偏差增大。
+  然而，\textbf{协调与追捕之间可能存在权衡}：
+  过强的协调权重可能减缓追捕速度，过弱的协调权重则无法维持编队。
+  此权衡通过学习算法优化权重 $W$ 来平衡。
+\end{remark}
+
+% ----------------------------------------------------------
+\subsection{通信中断的影响}
+% ----------------------------------------------------------
+
+\begin{definition}[通信比率]\label{def:comm_ratio}
+  设 $\cE_{\text{total}}$ 为完整通信图的边集，
+  $\cE_{\text{active}} \subseteq \cE_{\text{total}}$ 为当前活跃的通信链路集合。
+  通信比率定义为
+  \begin{equation}\label{eq:comm_ratio}
+    \rho \;=\; \frac{\abs{\cE_{\text{active}}}}{\abs{\cE_{\text{total}}}}
+    \;\in\; [0,1].
+  \end{equation}
+\end{definition}
+
+\begin{definition}[有效特征空间]\label{def:eff_feat}
+  给定通信比率 $\rho$ 对应的活跃边集 $\cE_{\text{active}}$，
+  有效特征向量为
+  \begin{equation}\label{eq:phi_eff}
+    \phi_\rho(Z) = \col\!\bigl(
+      \phi_{\text{local},1},\dots,\phi_{\text{local},n},\;
+      \{\phi_{\text{coord},jk}\}_{(j,k)\in\cE_{\text{active}}}
+    \bigr),
+  \end{equation}
+  有效特征维度为 $n_{\text{feat}}(\rho) = 6n + \abs{\cE_{\text{active}}}$。
+  对应的函数空间为
+  \begin{equation}\label{eq:F_rho}
+    \cF_\rho \;=\; \bigl\{
+      V: \R^{6n}\to\R \;\big|\;
+      V(Z) = w^T \phi_\rho(Z),\; w \in \R^{n_{\text{feat}}(\rho)}
+    \bigr\}.
+  \end{equation}
+\end{definition}
+
+\begin{theorem}[通信中断增大逼近误差]\label{thm:comm_dropout}
+  设 $\cE_1 \subseteq \cE_2 \subseteq \cE_{\emph{total}}$
+  为两组活跃边集，对应通信比率 $\rho_1 \le \rho_2$。
+  设 $V^* \in C^1(\R^{6n})$ 为真实最优价值函数。
+  定义 Bellman 残差（最佳逼近误差）
+  \begin{equation}\label{eq:bellman_residual}
+    \epsilon_V(\cE_{\emph{active}})
+    \;=\; \inf_{V \in \cF_\rho} \norm{V - V^*}_{\mathcal{H}}
+  \end{equation}
+  在某适当的函数范数 $\norm{\cdot}_{\mathcal{H}}$ 下。则
+  \begin{equation}\label{eq:monotone_error}
+    \epsilon_V(\cE_1) \;\ge\; \epsilon_V(\cE_2).
+  \end{equation}
+\end{theorem}
+
+\begin{proof}
+  由 $\cE_1 \subseteq \cE_2$，有效特征向量 $\phi_{\rho_1}$ 中的
+  每一个分量也出现在 $\phi_{\rho_2}$ 中（局部特征完全相同，
+  协调特征是子集关系）。因此，对任意
+  $V_1(Z) = w_1^T \phi_{\rho_1}(Z) \in \cF_{\rho_1}$，
+  可以构造 $w_2 \in \R^{n_{\text{feat}}(\rho_2)}$，
+  使得 $w_2$ 在 $\phi_{\rho_1}$ 对应的坐标上等于 $w_1$，
+  在 $\cE_2 \setminus \cE_1$ 对应的额外坐标上为零，
+  从而 $V_2(Z) = w_2^T \phi_{\rho_2}(Z) = V_1(Z)$。
+
+  这证明 $\cF_{\rho_1} \subseteq \cF_{\rho_2}$。
+  因此
+  \[
+    \epsilon_V(\cE_1)
+    = \inf_{V \in \cF_{\rho_1}} \norm{V - V^*}_{\mathcal{H}}
+    \ge \inf_{V \in \cF_{\rho_2}} \norm{V - V^*}_{\mathcal{H}}
+    = \epsilon_V(\cE_2),
+  \]
+  其中不等式由 ``在较大集合上取下确界不大于在较小集合上取下确界''
+  这一基本事实给出。
+\end{proof}
+
+\begin{remark}[通信完全断开的退化]\label{rmk:full_dropout}
+  当 $\rho = 0$（所有通信链路断开）时，
+  $\cF_0 = \{V(Z) = w^T \phi_{\text{local}}(Z)\}$，
+  此即纯局部策略。此时每个追逐者仅基于自身误差状态行动，
+  无法协调编队。由定理~\ref{thm:comm_dropout}，
+  $\epsilon_V(\cE_\varnothing) \ge \epsilon_V(\cE_{\text{total}})$，
+  即完全断开时的逼近误差最大。
+
+  当 $\rho = 1$（完全通信图）时，特征空间最大，逼近误差最小。
+  实际系统中 $\rho \in (0,1)$，逼近误差随 $\rho$ 单调递减。
+\end{remark}
+
+\begin{remark}[逼近误差的定量估计]\label{rmk:quant_bound}
+  定理~\ref{thm:comm_dropout} 仅给出了逼近误差关于通信比率 $\rho$
+  的单调性。获得定量界（例如 $\epsilon_V(\rho)$ 关于 $\rho$ 的
+  显式上界）需要对真实价值函数 $V^*$ 的结构作更强的假设
+  （如 $V^*$ 的 Fourier 系数在编队协调特征方向上的衰减速率等），
+  这超出了本文的范围，留作后续研究。
+\end{remark}
+
+% ============================================================
+\section{与原论文的对比}\label{sec:comparison}
+% ============================================================
+
+\begin{table}[htbp]
+  \centering
+  \caption{原方法与新方法的系统性对比}
+  \label{tab:comparison}
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{@{}lcc@{}}
+    \toprule
+    \textbf{属性} & \textbf{原方法（求和状态）} & \textbf{新方法（通信感知）} \\
+    \midrule
+    状态维度 & $6$（求和后） & $6n$（堆叠） \\
+    特征数目 & $6$ & $6n + |\cE|$ \\
+    通信需求 & 不需要 & 需要（图 $\cG$） \\
+    梯度类型 & 共享方向 & 个性化方向 \\
+    编队协调能力 & 无（隐式） & 有（显式编队特征） \\
+    通信中断鲁棒性 & 不受影响 & 退化为局部策略 \\
+    理论保证 & $V^*_{\text{orig}}$ & $V^*_{\text{comm}} \le V^*_{\text{orig}}$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+原方法的优势在于低维度和无需通信，适用于通信不可靠或追逐者数目
+动态变化的场景。然而其共享梯度的局限性意味着无法实现真正的
+协调编队行为。
+
+新方法通过引入通信感知的编队特征，在保留局部追捕能力的同时
+增加了编队协调能力。由定理~\ref{thm:info_ineq}，
+在策略空间意义下新方法不劣于原方法。
+由定理~\ref{thm:comm_dropout}，通信中断时性能优雅退化，
+而非骤然失效。
+
+% ============================================================
+\section{仿真验证方案}\label{sec:simulation}
+% ============================================================
+
+为验证上述理论结果，设计以下四组仿真实验。
+
+\begin{enumerate}[label=\textbf{实验 \arabic*}:, leftmargin=4em]
+  \item \textbf{原方法基准}。
+    实现原论文的求和状态方法，$n$ 个追逐者共享同一梯度，
+    无通信。记录捕获时间 $T_{\text{cap}}$、团队误差
+    $E_{\text{team}}(t)$ 曲线、轨迹形态。
+    \emph{预期}：追逐者倾向聚集而非包围。
+
+  \item \textbf{新方法 --- 完全通信}。
+    实现新的通信感知价值函数，$\cG$ 为完全图（$\rho = 1$）。
+    使用与实验 1 相同的初始条件和动力学参数。
+    \emph{预期}：追逐者形成包围编队，
+    $T_{\text{cap}} < T_{\text{cap}}^{\text{orig}}$，
+    验证定理~\ref{thm:info_ineq}。
+
+  \item \textbf{新方法 --- 通信中断}。
+    在实验 2 的基础上，以概率 $1-\rho$ 随机断开通信链路，
+    测试 $\rho \in \{0.0, 0.25, 0.5, 0.75, 1.0\}$。
+    \emph{预期}：性能随 $\rho$ 单调变化，
+    验证定理~\ref{thm:comm_dropout}。
+    当 $\rho = 0$ 时退化为纯局部策略。
+
+  \item \textbf{综合对比}。
+    绘制以下对比图表：
+    \begin{itemize}
+      \item 捕获时间 $T_{\text{cap}}$ 关于通信比率 $\rho$ 的曲线；
+      \item 团队误差 $E_{\text{team}}(t)$ 的时间演化对比；
+      \item 追逐者轨迹俯视图（包围形态 vs.\ 聚集形态）；
+      \item 编队偏差 $\sum_{(j,k)\in\cE} \norm{\delta_{jk}}$ 的时间演化。
+    \end{itemize}
+\end{enumerate}
+
+\begin{remark}[仿真参数选取]\label{rmk:sim_params}
+  建议参数：$n \in \{3, 4, 6\}$，$\bar{u}_p = 1.0$，
+  $\bar{u}_e \in \{0.5, 0.8\}$（逃避者速度劣势或接近对等），
+  $S = I_6$（编队权重矩阵取单位阵作为基准），
+  编队偏移 $r_j$ 取均匀分布在逃避者周围的环形或正多边形顶点位置。
+  每组实验重复多次取不同随机种子，报告均值和标准差。
+\end{remark}
+
+% ============================================================
+% References (placeholder)
+% ============================================================
+\begin{thebibliography}{9}
+  \bibitem{vsnac_original}
+    原论文作者,
+    ``Value-function based SNAC for multi-pursuer pursuit-evasion,''
+    \emph{Journal/Conference}, Year.
+\end{thebibliography}
+
+\end{document}

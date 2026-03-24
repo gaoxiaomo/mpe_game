@@ -1,0 +1,107 @@
+{
+  "case": {
+    "name": "5v2",
+    "n_pursuers": 5,
+    "n_evaders": 2,
+    "seed": 39,
+    "assignment_mode": "shifted",
+    "layout_mode": "structured"
+  },
+  "scenario": {
+    "name": "team_comm_5v2",
+    "group_sizes": [
+      2,
+      3
+    ],
+    "capture_radius": 220.0,
+    "swap_threshold": 5.0,
+    "drop_windows": [
+      {
+        "group_idx": 0,
+        "start_s": 24.29864882262449,
+        "end_s": 40.30997672267749,
+        "isolated_slots": [
+          0
+        ]
+      },
+      {
+        "group_idx": 1,
+        "start_s": 24.87421311210548,
+        "end_s": 37.582633002181396,
+        "isolated_slots": [
+          0,
+          1
+        ]
+      }
+    ]
+  },
+  "eval": {
+    "capture_time_s": null,
+    "final_team_error": 1482.207125127983,
+    "final_max_assigned_error": 432.34336262309444,
+    "mean_assigned_error": 755.576420655167,
+    "final_group_errors": [
+      847.579857,
+      634.627268
+    ],
+    "final_group_comm_ratio": [
+      1.0,
+      1.0
+    ],
+    "min_group_comm_ratio": [
+      1.0,
+      1.0
+    ],
+    "final_group_estimate_errors": [
+      0.0,
+      0.0
+    ],
+    "random_drop_windows": [
+      {
+        "group_idx": 0,
+        "start_s": 24.29864882262449,
+        "end_s": 40.30997672267749,
+        "isolated_slots": [
+          0
+        ]
+      },
+      {
+        "group_idx": 1,
+        "start_s": 24.87421311210548,
+        "end_s": 37.582633002181396,
+        "isolated_slots": [
+          0,
+          1
+        ]
+      }
+    ]
+  },
+  "switching": {
+    "switch_count": 1,
+    "switch_times_s": [
+      0.0
+    ]
+  },
+  "train": {
+    "iterations": 20,
+    "best_iteration": 20,
+    "final_delta": [
+      0.00072842,
+      0.00068609
+    ],
+    "final_residual": [
+      124.22716882,
+      171.48722623
+    ],
+    "final_weight_norms": [
+      0.655864,
+      0.5761929
+    ],
+    "validation_history": []
+  },
+  "runtime": {
+    "wall_time_s": 33.412403132999316,
+    "simulated_steps_total": 14100,
+    "ms_per_step_total": 2.3696739810637815
+  }
+}
