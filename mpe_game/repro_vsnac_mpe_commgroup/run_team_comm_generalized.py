@@ -23,6 +23,7 @@ from mpe_repro.team_comm_multi_config import (
 from mpe_repro.team_comm_multi_plotting import (
     plot_assigned_error_summary,
     plot_assignment_timeline,
+    plot_comm_comparison,
     plot_comm_ratio,
     plot_convergence_diagnostics,
     plot_group_weight_convergence,
@@ -243,6 +244,7 @@ def _run_single_case(job: dict[str, Any]) -> dict[str, Any]:
     dynamic_graph_eval = scenario.n_evaders > 1
     t0 = time.perf_counter()
     train = sim.train_policy(seed=case.seed, dynamic_graph=False, visibility_mode="curriculum")
+    # Evaluation with communication dropout (realistic)
     eval_result = sim.evaluate_policy(
         weights=train.weights,
         seed=case.seed + 1000,
@@ -252,8 +254,19 @@ def _run_single_case(job: dict[str, Any]) -> dict[str, Any]:
         zero_tail_after_capture=False,
         record_logs=False,
     )
+    # Evaluation with full communication (baseline for comparison)
+    eval_full = sim.evaluate_policy(
+        weights=train.weights,
+        seed=case.seed + 1000,
+        dynamic_graph=dynamic_graph_eval,
+        visibility_mode="full",
+        stop_on_capture=False,
+        zero_tail_after_capture=False,
+        record_logs=False,
+    )
     wall_s = time.perf_counter() - t0
 
+    rpi = _rollouts_per_iter(learning)
     case_dir.mkdir(parents=True, exist_ok=True)
     if make_plots:
         plot_multiteam_trajectory_xy(eval_result, case_dir / "fig_trajectory_xy.png", f"{case.name} trajectory")
@@ -269,6 +282,9 @@ def _run_single_case(job: dict[str, Any]) -> dict[str, Any]:
             train,
             case_dir / "fig_weight_convergence.png",
             f"{case.name} group critic convergence",
+            dt=learning.dt,
+            rollout_steps=int(learning.rollout_steps),
+            rollouts_per_iter=rpi,
         )
         plot_assigned_error_summary(
             eval_result,
@@ -280,6 +296,13 @@ def _run_single_case(job: dict[str, Any]) -> dict[str, Any]:
             train,
             case_dir / "fig_convergence_diagnostics.png",
             f"{case.name} convergence diagnostics",
+        )
+        plot_comm_comparison(
+            eval_full,
+            eval_result,
+            learning.dt,
+            case_dir / "fig_comm_comparison.png",
+            f"{case.name} full comm vs dropout",
         )
         plot_multiteam_trajectory_gif(
             eval_result,

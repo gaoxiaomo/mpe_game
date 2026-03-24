@@ -120,17 +120,28 @@ def plot_comm_ratio(result: TeamCommMultiEvalResult, dt: float, path: Path, titl
     _save(fig, path)
 
 
-def plot_group_weight_convergence(train: TeamCommMultiTrainResult, path: Path, title: str) -> None:
+def plot_group_weight_convergence(
+    train: TeamCommMultiTrainResult,
+    path: Path,
+    title: str,
+    dt: float = 0.0,
+    rollout_steps: int = 0,
+    rollouts_per_iter: int = 0,
+) -> None:
     norms_sq = train.weight_norm_history * train.weight_norm_history
+    n_iters = norms_sq.shape[0]
+    # Use wall-clock-equivalent time if rollout info is available.
+    if dt > 0 and rollout_steps > 0 and rollouts_per_iter > 0:
+        iter_time = dt * rollout_steps * rollouts_per_iter
+        x = np.arange(n_iters, dtype=float) * iter_time
+        xlabel = "Training time (s)"
+    else:
+        x = np.arange(n_iters, dtype=float)
+        xlabel = "Policy iteration"
     fig, ax = plt.subplots(figsize=(8.8, 4.8))
     for group_idx in range(norms_sq.shape[1]):
-        ax.plot(
-            np.arange(norms_sq.shape[0], dtype=float),
-            norms_sq[:, group_idx],
-            linewidth=1.9,
-            label=f"Group {group_idx + 1}",
-        )
-    ax.set_xlabel("Policy iteration")
+        ax.plot(x, norms_sq[:, group_idx], linewidth=1.9, label=f"Group {group_idx + 1}")
+    ax.set_xlabel(xlabel)
     ax.set_ylabel(r"$||\hat W_i||^2$")
     ax.set_title(title)
     ax.grid(alpha=0.3)
@@ -170,6 +181,43 @@ def plot_convergence_diagnostics(train: TeamCommMultiTrainResult, path: Path, ti
     axes[2].set_ylabel("Validation metric")
     axes[2].grid(alpha=0.3)
     axes[2].legend(fontsize=8)
+    _save(fig, path)
+
+
+def plot_comm_comparison(
+    result_full: TeamCommMultiEvalResult,
+    result_dropout: TeamCommMultiEvalResult,
+    dt: float,
+    path: Path,
+    title: str,
+) -> None:
+    """Compare team errors under full communication vs dropout."""
+    steps_f = int(result_full.team_errors.shape[0])
+    steps_d = int(result_dropout.team_errors.shape[0])
+    t_f = np.arange(steps_f) * dt
+    t_d = np.arange(steps_d) * dt
+
+    fig, axes = plt.subplots(2, 1, figsize=(9.5, 7.5), sharex=True)
+
+    # Total team error
+    axes[0].plot(t_f, result_full.team_errors, linewidth=2.0, color="#2f5597", label="Full comm")
+    axes[0].plot(t_d, result_dropout.team_errors, linewidth=2.0, color="#c0392b", linestyle="--", label="With dropout")
+    axes[0].set_ylabel("Total Eteam")
+    axes[0].set_title(title)
+    axes[0].grid(alpha=0.3)
+    axes[0].legend(fontsize=9)
+
+    # Per-group max assigned error
+    n_groups = result_full.group_errors.shape[1]
+    cmap = plt.get_cmap("tab10")
+    for g in range(n_groups):
+        c = cmap(g % 10)
+        axes[1].plot(t_f, result_full.group_errors[:, g], linewidth=1.6, color=c, label=f"G{g+1} full")
+        axes[1].plot(t_d, result_dropout.group_errors[:, g], linewidth=1.6, color=c, linestyle="--", alpha=0.7, label=f"G{g+1} dropout")
+    axes[1].set_xlabel("Time (s)")
+    axes[1].set_ylabel("Group error")
+    axes[1].grid(alpha=0.3)
+    axes[1].legend(ncol=2, fontsize=7)
     _save(fig, path)
 
 

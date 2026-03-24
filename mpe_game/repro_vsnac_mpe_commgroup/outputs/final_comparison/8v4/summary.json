@@ -1,0 +1,181 @@
+{
+  "case": {
+    "name": "8v4",
+    "n_pursuers": 8,
+    "n_evaders": 4,
+    "seed": 69,
+    "assignment_mode": "shifted",
+    "layout_mode": "structured"
+  },
+  "scenario": {
+    "name": "team_comm_8v4",
+    "group_sizes": [
+      2,
+      2,
+      2,
+      2
+    ],
+    "capture_radius": 220.0,
+    "swap_threshold": 5.0,
+    "drop_windows": [
+      {
+        "group_idx": 0,
+        "start_s": 34.154999340728764,
+        "end_s": 50.0949183935589,
+        "isolated_slots": [
+          0
+        ]
+      },
+      {
+        "group_idx": 1,
+        "start_s": 25.088239328043127,
+        "end_s": 38.47312536117385,
+        "isolated_slots": [
+          0
+        ]
+      },
+      {
+        "group_idx": 2,
+        "start_s": 32.02218164093956,
+        "end_s": 49.7318947086867,
+        "isolated_slots": [
+          0,
+          1
+        ]
+      },
+      {
+        "group_idx": 3,
+        "start_s": 23.985737171630955,
+        "end_s": 40.02491546022701,
+        "isolated_slots": [
+          0,
+          1
+        ]
+      }
+    ]
+  },
+  "eval": {
+    "capture_time_s": 45.900000000000006,
+    "final_team_error": 56.437135081046236,
+    "final_max_assigned_error": 14.163831445641687,
+    "mean_assigned_error": 546.884520741137,
+    "final_group_errors": [
+      10.461416,
+      11.164802,
+      9.400325,
+      25.410593
+    ],
+    "final_group_comm_ratio": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "min_group_comm_ratio": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "final_group_estimate_errors": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "random_drop_windows": [
+      {
+        "group_idx": 0,
+        "start_s": 33.36088258760469,
+        "end_s": 52.52420131660783,
+        "isolated_slots": [
+          0,
+          1
+        ]
+      },
+      {
+        "group_idx": 1,
+        "start_s": 29.751952906460055,
+        "end_s": 47.6989653933269,
+        "isolated_slots": [
+          1
+        ]
+      },
+      {
+        "group_idx": 2,
+        "start_s": 26.322519231246112,
+        "end_s": 40.835666220486054,
+        "isolated_slots": [
+          0
+        ]
+      },
+      {
+        "group_idx": 3,
+        "start_s": 25.061800204137594,
+        "end_s": 42.19562061835944,
+        "isolated_slots": [
+          0
+        ]
+      }
+    ]
+  },
+  "switching": {
+    "switch_count": 1,
+    "switch_times_s": [
+      0.0
+    ]
+  },
+  "train": {
+    "iterations": 23,
+    "best_iteration": 14,
+    "final_delta": [
+      0.00137963,
+      0.00152593,
+      0.00160863,
+      0.00130568
+    ],
+    "final_residual": [
+      66.32002995,
+      86.84459595,
+      111.29308778,
+      94.42641202
+    ],
+    "final_weight_norms": [
+      0.91752919,
+      0.78058615,
+      0.74599741,
+      0.82335484
+    ],
+    "validation_history": [
+      177.128032,
+      178.339201,
+      178.339201,
+      178.339201,
+      181.564404,
+      181.564404,
+      181.564404,
+      184.056179,
+      184.056179,
+      184.056179,
+      185.823631,
+      185.823631,
+      185.823631,
+      187.227241,
+      187.227241,
+      187.227241,
+      188.137026,
+      188.137026,
+      188.137026,
+      188.592011,
+      188.592011,
+      188.592011,
+      188.78709,
+      188.825871
+    ]
+  },
+  "runtime": {
+    "wall_time_s": 176.07992839301005,
+    "simulated_steps_total": 18960,
+    "ms_per_step_total": 9.286916054483653
+  }
+}

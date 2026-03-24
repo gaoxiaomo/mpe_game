@@ -1,0 +1,129 @@
+{
+  "case": {
+    "name": "5v2",
+    "n_pursuers": 5,
+    "n_evaders": 2,
+    "seed": 39,
+    "assignment_mode": "shifted",
+    "layout_mode": "structured"
+  },
+  "scenario": {
+    "name": "team_comm_5v2",
+    "group_sizes": [
+      2,
+      3
+    ],
+    "capture_radius": 220.0,
+    "swap_threshold": 5.0,
+    "drop_windows": [
+      {
+        "group_idx": 0,
+        "start_s": 24.29864882262449,
+        "end_s": 40.30997672267749,
+        "isolated_slots": [
+          0
+        ]
+      },
+      {
+        "group_idx": 1,
+        "start_s": 24.87421311210548,
+        "end_s": 37.582633002181396,
+        "isolated_slots": [
+          0,
+          1
+        ]
+      }
+    ]
+  },
+  "eval": {
+    "capture_time_s": 52.150000000000006,
+    "final_team_error": 22.878258107780223,
+    "final_max_assigned_error": 5.1410558436536204,
+    "mean_assigned_error": 561.3194760118964,
+    "final_group_errors": [
+      9.62237,
+      13.255888
+    ],
+    "final_group_comm_ratio": [
+      1.0,
+      1.0
+    ],
+    "min_group_comm_ratio": [
+      0.0,
+      0.0
+    ],
+    "final_group_estimate_errors": [
+      0.0,
+      0.0
+    ],
+    "random_drop_windows": [
+      {
+        "group_idx": 0,
+        "start_s": 28.590707819226893,
+        "end_s": 46.84983261768117,
+        "isolated_slots": [
+          0
+        ]
+      },
+      {
+        "group_idx": 1,
+        "start_s": 32.96513242989686,
+        "end_s": 49.99578019453162,
+        "isolated_slots": [
+          1,
+          2
+        ]
+      }
+    ]
+  },
+  "switching": {
+    "switch_count": 1,
+    "switch_times_s": [
+      0.0
+    ]
+  },
+  "train": {
+    "iterations": 20,
+    "best_iteration": 12,
+    "final_delta": [
+      0.00146384,
+      0.00228711
+    ],
+    "final_residual": [
+      47.15258037,
+      58.23644908
+    ],
+    "final_weight_norms": [
+      1.04314296,
+      0.98761626
+    ],
+    "validation_history": [
+      167.858388,
+      167.504844,
+      167.504844,
+      167.504844,
+      166.909242,
+      166.909242,
+      166.909242,
+      166.557618,
+      166.557618,
+      166.557618,
+      166.655682,
+      166.655682,
+      166.676301,
+      166.708573,
+      166.708573,
+      166.708573,
+      166.759714,
+      166.759714,
+      166.759714,
+      166.775143,
+      166.777077
+    ]
+  },
+  "runtime": {
+    "wall_time_s": 88.4756435349118,
+    "simulated_steps_total": 14100,
+    "ms_per_step_total": 6.274868335809347
+  }
+}
