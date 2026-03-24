@@ -5,6 +5,7 @@ from pathlib import Path
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.animation import FuncAnimation, PillowWriter
 
 from .team_comm_multi_simulator import TeamCommMultiEvalResult, TeamCommMultiTrainResult
 
@@ -188,4 +189,120 @@ def plot_assigned_error_summary(result: TeamCommMultiEvalResult, dt: float, path
     ax.grid(alpha=0.3)
     ax.legend()
     _save(fig, path)
+
+
+def plot_multiteam_trajectory_gif(
+    result: TeamCommMultiEvalResult,
+    dt: float,
+    path: Path,
+    title: str,
+    capture_radius: float = 220.0,
+    fps: int = 20,
+    frame_skip: int = 4,
+    tail_steps: int = 60,
+) -> None:
+    """Generate an animated GIF of the multi-team pursuit-evasion trajectory."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    n_p = result.pursuer_traj.shape[1]
+    n_e = result.evader_traj.shape[1]
+    total_steps = result.pursuer_traj.shape[0]
+    frame_indices = list(range(0, total_steps, frame_skip))
+    if frame_indices[-1] != total_steps - 1:
+        frame_indices.append(total_steps - 1)
+
+    cmap_p = plt.get_cmap("tab10")
+    cmap_e = plt.get_cmap("Set1")
+    # Assign distinct colors per evader group for pursuers
+    evader_colors = [cmap_e(i % 9) for i in range(n_e)]
+
+    # Compute axis limits from full trajectories with padding
+    all_x = np.concatenate([result.pursuer_traj[:, :, 0].ravel(), result.evader_traj[:, :, 0].ravel()])
+    all_y = np.concatenate([result.pursuer_traj[:, :, 1].ravel(), result.evader_traj[:, :, 1].ravel()])
+    pad = max(np.ptp(all_x), np.ptp(all_y)) * 0.08
+    xlim = (float(np.min(all_x) - pad), float(np.max(all_x) + pad))
+    ylim = (float(np.min(all_y) - pad), float(np.max(all_y) + pad))
+
+    fig, ax = plt.subplots(figsize=(9.0, 7.5))
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+    ax.set_aspect("equal", adjustable="box")
+    ax.set_xlabel("X (m)")
+    ax.set_ylabel("Y (m)")
+    ax.grid(alpha=0.2)
+
+    # Create plot elements
+    pursuer_trails = [ax.plot([], [], linewidth=1.2, alpha=0.5)[0] for _ in range(n_p)]
+    pursuer_dots = [ax.plot([], [], "o", markersize=7)[0] for _ in range(n_p)]
+    evader_trails = [ax.plot([], [], linewidth=2.0, linestyle="--", alpha=0.6)[0] for _ in range(n_e)]
+    evader_dots = [ax.plot([], [], "s", markersize=10)[0] for _ in range(n_e)]
+    assign_lines = [ax.plot([], [], linewidth=0.8, alpha=0.3, linestyle=":")[0] for _ in range(n_p)]
+    # Capture circles around evaders
+    capture_circles = [
+        plt.Circle((0, 0), capture_radius, fill=False, linestyle="--", linewidth=0.8, alpha=0.3)
+        for _ in range(n_e)
+    ]
+    for c in capture_circles:
+        ax.add_patch(c)
+
+    time_text = ax.text(0.02, 0.96, "", transform=ax.transAxes, fontsize=11, verticalalignment="top",
+                        bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8))
+    title_text = ax.set_title(title)
+
+    has_assignment = result.assignment_history.size > 0
+
+    def _update(frame_num: int) -> list:
+        idx = frame_indices[frame_num]
+        t_s = idx * dt
+
+        # Get assignment at this step
+        if has_assignment and idx < result.assignment_history.shape[0]:
+            assignment = result.assignment_history[idx]
+        elif has_assignment:
+            assignment = result.assignment_history[-1]
+        else:
+            assignment = np.zeros(n_p, dtype=int)
+
+        # Trail window
+        trail_start = max(0, idx - tail_steps * frame_skip)
+
+        for j in range(n_p):
+            evader_target = int(assignment[j])
+            color = evader_colors[evader_target % len(evader_colors)]
+            px = result.pursuer_traj[trail_start:idx + 1, j, 0]
+            py = result.pursuer_traj[trail_start:idx + 1, j, 1]
+            pursuer_trails[j].set_data(px, py)
+            pursuer_trails[j].set_color(color)
+            pursuer_dots[j].set_data([result.pursuer_traj[idx, j, 0]], [result.pursuer_traj[idx, j, 1]])
+            pursuer_dots[j].set_color(color)
+            # Assignment line from pursuer to its target evader
+            ex = result.evader_traj[min(idx, result.evader_traj.shape[0] - 1), evader_target, 0]
+            ey = result.evader_traj[min(idx, result.evader_traj.shape[0] - 1), evader_target, 1]
+            assign_lines[j].set_data(
+                [result.pursuer_traj[idx, j, 0], ex],
+                [result.pursuer_traj[idx, j, 1], ey],
+            )
+            assign_lines[j].set_color(color)
+
+        for i in range(n_e):
+            color = evader_colors[i % len(evader_colors)]
+            darker = tuple(c * 0.6 for c in color[:3]) + (1.0,)
+            eidx = min(idx, result.evader_traj.shape[0] - 1)
+            ex_trail = result.evader_traj[trail_start:eidx + 1, i, 0]
+            ey_trail = result.evader_traj[trail_start:eidx + 1, i, 1]
+            evader_trails[i].set_data(ex_trail, ey_trail)
+            evader_trails[i].set_color(darker)
+            evader_dots[i].set_data([result.evader_traj[eidx, i, 0]], [result.evader_traj[eidx, i, 1]])
+            evader_dots[i].set_color(darker)
+            capture_circles[i].center = (result.evader_traj[eidx, i, 0], result.evader_traj[eidx, i, 1])
+
+        cap_str = ""
+        if result.capture_time is not None and t_s >= result.capture_time:
+            cap_str = f"  [CAPTURED at {result.capture_time:.1f}s]"
+        time_text.set_text(f"t = {t_s:.1f}s{cap_str}")
+
+        return pursuer_trails + pursuer_dots + evader_trails + evader_dots + assign_lines + [time_text]
+
+    anim = FuncAnimation(fig, _update, frames=len(frame_indices), interval=1000 // fps, blit=False)
+    anim.save(str(path), writer=PillowWriter(fps=fps))
+    plt.close(fig)
 

@@ -27,6 +27,7 @@ from mpe_repro.team_comm_multi_plotting import (
     plot_convergence_diagnostics,
     plot_group_weight_convergence,
     plot_multiteam_errors,
+    plot_multiteam_trajectory_gif,
     plot_multiteam_trajectory_xy,
 )
 from mpe_repro.team_comm_multi_simulator import (
@@ -125,21 +126,22 @@ def _learning_params(n_p: int, n_e: int, quick: bool) -> LearningParams:
 def _scenario_spec(case: TeamCommGeneralCase, quick: bool) -> GeneralTeamCommScenarioSpec:
     n_p = case.n_pursuers
     n_e = case.n_evaders
-    t_final = 100.0 if quick else 130.0
+    # Extra time after expected capture so the GIF shows post-capture behavior.
+    t_final = 120.0 if quick else 150.0
     return GeneralTeamCommScenarioSpec(
         n_pursuers=n_p,
         n_evaders=n_e,
         seed=case.seed,
         assignment_mode=case.assignment_mode,
         layout_mode=case.layout_mode,
-        t_final=t_final if n_e > 1 else min(t_final, 95.0),
+        t_final=t_final if n_e > 1 else min(t_final, 110.0),
         capture_radius=220.0 if n_e > 1 else 180.0,
         swap_threshold=5.0 if n_e > 1 else 1.0e9,
         max_switch_worsening=0.0,
         evader_motion_mode="scripted",
-        evader_script_amp=(8.0, 8.0, 3.0) if n_e > 1 else (10.0, 8.0, 4.0),
-        evader_script_omega=0.16 if n_e > 1 else 0.42,
-        evader_script_decay=0.060 if n_e > 1 else 0.060,
+        evader_script_amp=(12.0, 10.0, 4.0) if n_e > 1 else (12.0, 10.0, 5.0),
+        evader_script_omega=0.35 if n_e > 1 else 0.50,
+        evader_script_decay=0.025 if n_e > 1 else 0.040,
         evader_script_mix=1.0,
         swap_lookahead_time=0.5 if n_e > 1 else 0.0,
         comm_windows_per_group=1 if quick else 2,
@@ -247,7 +249,7 @@ def _run_single_case(job: dict[str, Any]) -> dict[str, Any]:
         dynamic_graph=dynamic_graph_eval,
         visibility_mode="dropout",
         stop_on_capture=False,
-        zero_tail_after_capture=True,
+        zero_tail_after_capture=False,
         record_logs=False,
     )
     wall_s = time.perf_counter() - t0
@@ -278,6 +280,13 @@ def _run_single_case(job: dict[str, Any]) -> dict[str, Any]:
             train,
             case_dir / "fig_convergence_diagnostics.png",
             f"{case.name} convergence diagnostics",
+        )
+        plot_multiteam_trajectory_gif(
+            eval_result,
+            learning.dt,
+            case_dir / "trajectory.gif",
+            f"{case.name} pursuit-evasion",
+            capture_radius=float(scenario.capture_radius),
         )
 
     switch_times = _switch_times(eval_result.assignment_history, learning.dt, scenario.initial_assignment)

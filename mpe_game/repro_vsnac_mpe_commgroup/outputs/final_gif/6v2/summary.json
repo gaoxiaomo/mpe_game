@@ -1,0 +1,134 @@
+{
+  "case": {
+    "name": "6v2",
+    "n_pursuers": 6,
+    "n_evaders": 2,
+    "seed": 59,
+    "assignment_mode": "shifted",
+    "layout_mode": "structured"
+  },
+  "scenario": {
+    "name": "team_comm_6v2",
+    "group_sizes": [
+      3,
+      3
+    ],
+    "capture_radius": 220.0,
+    "swap_threshold": 5.0,
+    "drop_windows": [
+      {
+        "group_idx": 0,
+        "start_s": 24.443370231033896,
+        "end_s": 39.57756372249451,
+        "isolated_slots": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "group_idx": 1,
+        "start_s": 27.939775106853443,
+        "end_s": 42.56739679744929,
+        "isolated_slots": [
+          1,
+          2
+        ]
+      }
+    ]
+  },
+  "eval": {
+    "capture_time_s": 50.400000000000006,
+    "final_team_error": 36.22657795655215,
+    "final_max_assigned_error": 8.10678540540027,
+    "mean_assigned_error": 556.8044148896191,
+    "final_group_errors": [
+      17.537888,
+      18.68869
+    ],
+    "final_group_comm_ratio": [
+      1.0,
+      1.0
+    ],
+    "min_group_comm_ratio": [
+      0.0,
+      0.0
+    ],
+    "final_group_estimate_errors": [
+      0.0,
+      0.0
+    ],
+    "random_drop_windows": [
+      {
+        "group_idx": 0,
+        "start_s": 26.921028378541973,
+        "end_s": 42.16620817751283,
+        "isolated_slots": [
+          0,
+          2
+        ]
+      },
+      {
+        "group_idx": 1,
+        "start_s": 31.376980437616854,
+        "end_s": 50.18656557173402,
+        "isolated_slots": [
+          0,
+          1,
+          2
+        ]
+      }
+    ]
+  },
+  "switching": {
+    "switch_count": 1,
+    "switch_times_s": [
+      0.0
+    ]
+  },
+  "train": {
+    "iterations": 21,
+    "best_iteration": 13,
+    "final_delta": [
+      0.0025697,
+      0.00192079
+    ],
+    "final_residual": [
+      133.90527372,
+      99.21009987
+    ],
+    "final_weight_norms": [
+      1.13726457,
+      0.9097356
+    ],
+    "validation_history": [
+      204.437602,
+      204.416521,
+      204.416521,
+      204.416521,
+      204.652886,
+      204.652886,
+      204.652886,
+      204.817664,
+      204.817664,
+      204.817664,
+      205.09049,
+      205.09049,
+      205.09049,
+      205.32028,
+      205.32028,
+      205.32028,
+      205.479006,
+      205.479006,
+      205.479006,
+      205.546777,
+      205.546777,
+      205.573843
+    ]
+  },
+  "runtime": {
+    "wall_time_s": 99.44361820816994,
+    "simulated_steps_total": 15630,
+    "ms_per_step_total": 6.362355611527187
+  }
+}
