@@ -1,0 +1,219 @@
+XU et al.: APPROXIMA TE OPTIMAL STRA TEGY FOR MULTIAGENT SYSTEM PURSUIT–EV ASION GAME 1671
+B. Problem F ormulation
+Consider a system comprising Np pursuers, each character-
+ized by the following dynamics:
+˙xp
+j = f
+(
+xp
+j
+)
++g
+(
+xp
+j
+)
+up
+j (1)
+where j =1 ,...,N p, xp
+j ∈Rn, is the system state of the jth
+pursuer,up
+j ∈Rm denotes the control input of the jth pursuer.
+Consider also a system with Ne evaders, each described by
+˙xe
+i = f (xe
+i)+ g(xe
+i)ue
+i (2)
+where i =1 ,...,N e, xe
+i ∈Rn, is the system state of the ith
+evader, ue
+i ∈Rm denotes the control input of the ith evader.
+up
+j andue
+i are both subjected to saturation constraint ¯up and ¯ue,
+respectively, i.e.,|up
+j|≤ ¯up and|ue
+i|≤ ¯ue.¯up and¯ue are positive
+constant. f(·) ∈Rn is the continuous nonlinear function and
+g(·) ∈Rn×m is the continuous control gain function. In this
+article, we assumed that f(·),g(·) are Lipchitz functions on a
+compact set Ω1.
+For each evader, deﬁne the state error variable between the
+pursuers and their target evader i as
+˜xpe
+i =
+Np∑
+j=1
+(
+cj,i(xp
+j −xe
+i +rpe
+j,i)
+)
+(3)
+where rpe
+j,i is the expected displacement between the pursuer j
+and the evader i, and it can be a zero vector if necessary.
+Using (1) and (2), it can be inferred that
+˙˜xpe
+i =
+Np∑
+j=1
+(
+cj,i(f
+(
+xp
+j
+)
+−f (xe
+i)+ g
+(
+xp
+j
+)
+up
+j −g(xe
+i)ue
+i)
+)
+.
+(4)
+Remark 1: In the MPE game framework considered in this
+article, we assume that the number of pursuers is greater than or
+equal to the number of evaders, i.e., Np ≥Ne. If the number of
+evaders is greater, there will inevitably be some evaders escaping
+without facing any challenge, which is not within the scope of
+our analysis. Conversely, if the number of pursuers is greater,
+there can be cases where several pursuers simultaneously chase
+a single evader. The pursuers may aim to intercept the target
+evader by achieving surrounding formation control. The target
+allocation method, which will be discussed later in this article,
+contributes to better team cohesion among pursuers.
+When considering the PE game involving multiple pursuers
+and evaders, the augmented system states are deﬁned as follows:
+Xp =
+⎡
+⎢⎢⎢⎣
+xp
+1
+xp
+2
+···
+xp
+Np
+⎤
+⎥⎥⎥⎦,X e =
+⎡
+⎢⎢⎣
+xe
+1
+xe
+2
+···
+xe
+Ne
+⎤
+⎥⎥⎦ (5)
+then the multiagent PE system based on (1) and (2) can be
+described as
+˙Xp = F (Xp)+
+Np∑
+j=1
+Gj (Xp)up
+j
+˙Xe = F (Xe)+
+Ne∑
+i=1
+Gi (Xe)ue
+i (6)
+where F(Xp)=[fT(xp
+1),...,f T(xp
+Np)]T , Gj(Xp)=[ B1,...,
+Bj,...,B Np]T ⊗[gT(xp
+1),...,g T(xp
+Np)]T with Bm =0 n
+for m =1 ,...,N p, m ̸= j and Bm = In if m = j.I n
+Algorithm 1: Dynamic Target Graph Algorithm.
+Input: System states of pursuers {xp
+j} and evaders{xe
+i}.
+Specify the swap threshold ϱ ≥0
+Calculate the distance γj,i between all pursuers and
+evaders.
+For evaderei,i ≤Ne and pursuers pj,j ≤Np
+If(γj,i +γj′,i′)−(γj′,i +γj,i′) >ϱ
+Swap their edge weights that exchanging cj,i with
+cj′,i andcj,i′ withcj′,i′ . Update ej,i accordingly.
+until comparison of other distances γis completed.
+Update the weighted adjacency matrix Ape andAep.
+Output:{Ape,Aep}.
+which ⊗ stands for Kronecker product. Similarly, F(Xe)=
+[fT(xe
+1),...,f T(xe
+Ne)]T and Gi(Xe)=[ D1,...,D i,...,
+DNe]T ⊗[gT(xe
+1),...,g T(xe
+Ne)]T with Dm =0 n for m =1 ,
+...,N e, m ̸= i andDm = In ifm = i.
+In the following, for simplicity, we will write {fp
+j ,f e
+i } and
+{gp
+j,ge
+i } to replace{f(xp
+j),f (xe
+i)} and{g(xp
+j),g(xe
+i)}, respec-
+tively.
+III. O BJECTIVE DESIGN AND SOLUTIONS
+A. Target Allocation and Objective Design
+Deﬁneγj,i > 0 as the weighted 2-norm of the state difference
+between a speciﬁc pursuerj and another evaderi, given byγj,i =
+∥ν⊙(xp
+j −xe
+i +rpe
+j,i)∥, where ν∈Rn is the element weight
+and⊙ stands for Hadamard product. Both velocity and position
+information are contained in the state. If there exists another
+pair of pursuer j′ and its target evader i′, where cj′,i =0 or
+cj,i′ =0 , it implies that pursuerj′ and evaderi, as well as pursuer
+j and evader i′, do not form a target relationship. However, by
+exchanging their respective evader targets i and i′, pursuers j
+and j′ can achieve their objectives more easily. Consequently,
+the current weighted adjacency matrices Ape and Aep will be
+adjusted according to Algorithm 1.
+Remark 2: The swap threshold ϱ is crucial for ensuring sig-
+niﬁcant beneﬁts from target switches by pursuers. Increasing ϱ
+raises the switching barrier, potentially reducing the frequency
+or possibility of switches. Decreasing ϱ makes switching easier
+and more frequent, but excessive switching for trivial gains is
+impractical in engineering. The simulation section will carefully
+determine an appropriate ϱ value.
+In order to quantify and measure the overall team cohesion
+of the pursuers, we deﬁne the team state error of pursuers with
+target topology obtained by Algorithm 1 as
+ETeam =
+Ne∑
+i=1
+Np∑
+j=1
+(
+cj,i
+ν⊙(xp
+j −xe
+i +rpe
+j,i)
+)
+. (7)
+The team state error can reﬂect the overall state error within the
+team rather than the error of individual agents. The smaller the
+team state error, the stronger the team cohesion is considered
+to be. Subsequently, we analyze the enhancement of cohesion
+from a mathematical perspective.
+Theorem 1: Consider two arbitrary scenarios A and B, each
+characterized by identical MPE game dynamics described in(6).
+Scenario A uses algorithm 2 to dynamically allocate targets, and
+scenario B uses the initial ﬁxed target topology. The team state
+Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on December 24,2025 at 05:16:20 UTC from IEEE Xplore.  Restrictions apply. 

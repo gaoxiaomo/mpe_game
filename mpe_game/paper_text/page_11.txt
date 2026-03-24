@@ -1,0 +1,100 @@
+XU et al.: APPROXIMA TE OPTIMAL STRA TEGY FOR MULTIAGENT SYSTEM PURSUIT–EV ASION GAME 1679
+Fig. 10. Team cohesion comparison, proposed method versus [26].
+Fig. 11. Convergence curves of weight estimate value ˆWi,s.
+TABLE II
+COMPARA TIVEANAL YSIS OFCOMPUTA TIONBURDEN IN V- S NACAND AC
+NETWORKS
+interactions. According to Theorem 1, the dynamic target graph
+method introduced here can further reduce the team state error
+and boost team cohesion in these ﬁxed-topology approaches.
+The team state error calculated by(7) is utilized to compare team
+cohesion. Smaller team state error indicating stronger cohesion
+among the pursuer team. It can be observed from Fig. 10 that
+our method exhibits faster reduction in team state error and
+demonstrates better team cohesion.
+The convergence curves ofˆWi,s are displayed in Fig.11. Thus,
+the approximate value functions converge to the optimal ones
+within a small bound. To elaborate, the weight vector ˆW1,s con-
+verges to [0.1468,0.1883,0.1986,0.3042,0.2033,0.4002]T ,
+the weight vector ˆW2,s converges to [0.1943,0.1545,0.1995,
+0.3012,0.3051,0.3001]T , and the weight vector ˆW3,s converges
+to[0.1372,0.1930,0.1985,0.3094,0.1978,0.4003]T at the end
+of the simulation. This also conﬁrms the stability of the control
+policy.
+Because the V -SNAC structure adopted by our method
+reduces the number of neural networks, we have compared
+its computational time with the traditional AC structure [39].
+Table II records the computational time required for a single
+step of control under the two network structures, denoted as
+“time per step.” The comparative analysis reveals that the
+V -SNAC framework achieves a reduction of approximately
+31% in computation time per step, which demonstrate the
+efﬁciency of the V -SNAC structure and provides a possibility
+for faster decision-making in the context of the MPE game.
+Remark 6: The abovementioned two simulation scenarios
+represent two categories of typical cases. Under the assump-
+tion that Np ≥Ne, the MPE game can be classiﬁed into
+the aforementioned combinations of multi-pursuer-multi-evader
+and multi-pursuer-single-evader, which can be solved in the
+same manner. Therefore, the simulation examples conﬁrm the
+effectiveness of the designed off-policy RL Algorithm with
+dynamic target graph and V -SNAC structure. Furthermore, it
+also shows that the off-policy RL scheme is applicable to the
+nonlinear MPE games with constrained inputs.
+V. C ONCLUSION
+An approximate optimal control strategy based on reinforce-
+ment learning has been designed and applied to the multiagent
+PE game in this article. The relationships between agents are
+represented using graph models. The MPE game is constrained
+by actuator saturation and nonlinear system dynamics. Initially,
+using the proposed approximate HJI equation, we present an
+on-policy PI algorithm with convergence analysis. Then, to
+approximate the value functions, an off-policy RL method is in-
+troduced. This algorithm efﬁciently solves the approximate HJI
+equation and provides solutions under multiagent conditions. We
+utilize a network based on the V -SNAC structure to implement
+this off-policy RL method. Furthermore, it is noteworthy that
+the proof of the network system’s UUB is provided. Finally, we
+conduct simulations in two distinct scenarios: multiple-pursuer-
+one-evader and multiple-pursuer-multiple-evader. Comparative
+analyzes on cohesion and computational burden are employed
+to verify the effectiveness. In future research, attention can be
+focused on enhancing the collaboration among evaders, as well
+as addressing the problem of MPE in situations with limited
+state perception and communication.
+REFERENCES
+[1] R. Zhang, Q. Zong, X. Zhang, L. Dou, and B. Tian, “Game of drones:
+Multi-UA V pursuit-evasion game with online motion planning by deep
+reinforcement learning,” IEEE Trans. Neural Netw. Learn. Syst. , vol. 34,
+no. 10, pp. 7900–7909, Oct. 2023.
+[2] H. Gong, S. Gong, and J. Li, “Pursuit–evasion game for satellites based on
+continuous thrust reachable domain,” IEEE Trans. Aerosp. Electron. Syst.,
+vol. 56, no. 6, pp. 4626–4637, Dec. 2020.
+[3] F. Lewis, S. Jagannathan, and A. Y esildirak, Neural Network Control of
+Robot Manipulators and Non-Linear Systems(Systems and Control). New
+Y ork, NY , USA: Taylor & Francis, 1998.
+[4] C. Hong, I. Jeong, L. F. V ecchietti, D. Har, and J.-H. Kim, “AI world cup:
+Robot-soccer-based competitions,” IEEE Trans. Games , vol. 13, no. 4,
+pp. 330–341, Dec. 2021.
+[5] J. Chen, W. Zha, Z. Peng, and D. Gu, “Multi-player pursuit–evasion games
+with one superior evader,” Automatica, vol. 71, pp. 24–32, 2016.
+[6] J. Wang, C. Wang, Y . Wei, and C. Zhang, “Neuroadaptive sliding mode
+formation control of autonomous underwater vehicles with uncertain
+dynamics,” IEEE Syst. J., vol. 14, no. 3, pp. 3325–3333, Sep. 2020.
+[7] R. Isaacs, Differential Games: A Mathematical Theory With Applications
+to Warfare and Pursuit, Control and Optimization. North Chelmsford, MA,
+USA: Courier Corporation, 1999.
+[8] J. S. Jang and C. Tomlin, “Control strategies in multi-player pursuit and
+evasion game,” in Proc. Amer . Inst. Aeronaut. Astronaut. Guid., Navigat.,
+Control Conf. Exhib., 2005, Art. no. 6239.
+[9] A. Jagat and A. J. Sinclair, “Nonlinear control for spacecraft pursuit-
+evasion game using the state-dependent Riccati equation method,” IEEE
+Trans. Aerosp. Electron. Syst., vol. 53, no. 6, pp. 3032–3042, Dec. 2017.
+[10] W. Lin, Z. Qu, and M. A. Simaan, “Nash strategies for pursuit-evasion
+differential games involving limited observations,” IEEE Trans. Aerosp.
+Electron. Syst., vol. 51, no. 2, pp. 1347–1356, Apr. 2015.
+[11] V . G. Lopez, F. L. Lewis, Y . Wan, E. N. Sanchez, and L. Fan, “Solutions for
+multiagent pursuit-evasion games on communication graphs: Finite-time
+capture and asymptotic behaviors,” IEEE Trans. Autom. Control, vol. 65,
+no. 5, pp. 1911–1923, May 2020.
+Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on December 24,2025 at 05:16:20 UTC from IEEE Xplore.  Restrictions apply. 

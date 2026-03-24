@@ -1,0 +1,143 @@
+1670
+IEEE SYSTEMS JOURNAL, VOL. 18, NO. 3, SEPTEMBER 2024
+In practical applications, several MPE game processes often
+involve inherent nonlinearities [9], [24]. Consequently, solving
+the nonlinear Hamilton–Jacobi–Isaacs (HJI) equations becomes
+necessary, for which analytical solutions are not readily avail-
+able [25], [26]. To address this issue, various adaptive dy-
+namic programming algorithms have been proposed [27], [28],
+[29], [30]. In addition, based on the principle of optimality,
+reinforcement learning algorithms employing the actor–critic
+(AC) architecture have been widely utilized for learning op-
+timal policies online in MPE problems [29], [30]. However,
+in the context of multiagent systems, each agent is equipped
+with its own actor and critic networks [1]. The existence of
+multiple networks, while necessary for decentralized decision-
+making, inadvertently increases the computational burden [31].
+To enhance computational efﬁciency, a single network adaptive
+critic (SNAC) structure has been proposed for solving control-
+constrained optimal control problems [32], which eliminates the
+need for an action network. This structure was later applied
+to single-pursuer single-evader games within the framework
+of fault-tolerant control [33]. Literature surveys reveal that
+existing studies have implemented the SNAC structure in the
+context of single-agent PE games and multiagent adversarial
+problems [33], [34]. However, no studies have been found to
+explore the potential application of this approach within MPE
+systems. Therefore, one of the objectives of this article is to
+explore the potential of this structure in the MPE system.
+Another aspect worth mentioning is that, in engineering ap-
+plications, the output amplitudes of actuators often exhibit satu-
+rated nonlinearities due to physical limitations [35]. Therefore,
+many studies also take into account the design of controllers con-
+sidering the actuator saturation phenomenon [36], [37]. Ignoring
+the actuator saturation phenomenon not only increases the risk
+of performance degradation and instability in controlled systems
+butalsoresultsinapartialdetachmentofresearchfrompractical-
+ity. Furthermore, the stability and reliability of the systems are of
+utmost importance. Currently, mainstream approximate optimal
+control methods construct Lyapunov functions to prove the
+uniformly boundedness of nonlinear closed-loop systems. The
+stability analysis of multiagent systems based on graph-theoretic
+approaches is investigated in [38] and [34].
+According to the aforementioned discussion, conventional
+MPE games present some interesting challenges in designing
+coordinated capture strategies among all pursuers. In this article,
+our objective is to design an algorithm that combines reinforce-
+ment learning and dynamic target graphs to approximate optimal
+control strategies for MPE games under actuator saturation
+conditions. The contributions of this article are summarized as
+follows.
+1) A graph-theoretic approach is designed to represent the
+relationships among the agents, and based on this, a dy-
+namic target graph algorithm is employed to enhance the
+coordination among the agents. Unlike the ﬁxed com-
+munication graph in [17], [18], and [39], the weighted
+adjacency matrix of our graph is entirely dynamic, further
+improving the team cohesion among pursuers compared
+to [26].
+2) In contrast to existing results [12], [26], which solved
+MPE games under linear systems, our work considers the
+nonlinear dynamic of the system and actuator constraints.
+Moreover, unlike [33], our method can obtain solutions
+for various scenarios with different numbers of pursuers
+and evaders by solving the HJI equation, which implies
+that our algorithm faces a more complex environment.
+3) In the proposed method, we utilize the value-based sin-
+gle network adaptive critic (V-SNAC) network structure,
+which reduces the computational burden compared to
+the AC network structure [39], [40]. We validate the
+effectiveness of our algorithm in two typical scenar-
+ios: multiple-pursuer-single-evader and multiple-pursuer-
+multiple-evader. In addition, a comparison of the com-
+putational burden with the AC structure [39] has been
+implemented, and the results indicate that the V-SNAC
+structure can reduce computational time by approximately
+31%.
+The rest of this article is organized as follows. Section II
+provides the preliminaries of the MPE problem, including the
+graph model and state equations. The solution strategies for the
+MPE game are proposed in Section III. The simulations and
+experiments for the two scenarios are presented in Section IV.
+Finally, Section V concludes this article.
+II. PRELIMINARIES
+A. Graph Theory
+Consider an MPE scenario with Np pursuers and Ne evaders,
+where the entire system consists of Np + Ne agents. Deﬁne the
+graph Gp = (Vp, Ep) to represent the communication topology
+of Np pursuers. Set of nodes Vp = {vp
+1, . . . , vp
+Np} and set of
+edges Ep ⊆Vp × Vp. If and only pursuer m has access to the in-
+formation of pursuer n, and we say agent n is a neighbor of agent
+m, i.e., (vp
+m, vp
+n) ∈Ep. Let am,n be the communication weight
+of the graph Gp, with am,n = 1 if (vp
+m, vp
+n) ∈Ep and am,n = 0
+otherwise. Let Ap = [am,n] ∈RNp×Np be the weighted adja-
+cency matrix where am,m = 0. Deﬁne the in-degree of pursuer
+m as dp
+m = Np
+n=1 am,n and the in-degree matrix of the graph
+Dp = diag{dp
+m}. Then, the Laplacian matrix can be deﬁned as
+Lp = Dp −Ap. Similarly, the graph Ge = (Ve, Ee) represents
+the interaction topology among Ne evaders with the nodes
+Ve = {ve
+1, . . . , ve
+Ne}. The edge weights bm,n with bm,n = 1
+if (ve
+m, ve
+n) ∈Ee and bm,n = 0 otherwise. The in-degree of
+evader m as de
+m = Ne
+n=1 bm,n and the in-degree matrix of
+the graph De = diag{de
+m}. Deﬁned the matrix Ae = [bm,n] as
+Le = De −Ae.
+Deﬁne the bipartite graph G = (V, E) represent the target
+topology among pursuers and evaders. Speciﬁcally, for m ∈Vp
+and n ∈Ve, the edge weight cm,n = 1 if pursuer m targets
+evader n and cm,n = 0 otherwise. Similarly, en,m = 1 if evader
+n targets pursuer m for evasion and en,m = 0 otherwise. The in-
+degree of pursuer m in graph G is deﬁned as dpe
+m = Ne
+n=1 cm,n,
+and the in-degree of evader n is dep
+n = Np
+m=1 en,m. Deﬁne the
+pursuer-partition matrices Dpe = diag{dpe
+m} and Ape = [cm,n],
+and the evader-partition matrices Dep = diag{dep
+m} and Aep =
+[en,m].
+Assumption 1: For the MPE game problem in this article, it
+is assumed that agents on the same team can communicate and
+exchange information with each other. Each pursuer has access
+to the state information of their targeted evader, and conversely,
+each evader can obtain information about the pursuers who
+are targeting them as their objectives. Graphs Gp and Ge are
+connected graphs.
+Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on December 24,2025 at 05:16:20 UTC from IEEE Xplore.  Restrictions apply. 

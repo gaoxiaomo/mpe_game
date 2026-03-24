@@ -1,0 +1,269 @@
+XU et al.: APPROXIMA TE OPTIMAL STRA TEGY FOR MULTIAGENT SYSTEM PURSUIT–EV ASION GAME 1675
+and
+H′
+V s
+i
+Vs
+i (x)
+= ∇TVs
+i (x)
+⎛
+⎝
+Np∑
+j=1
+(
+cj,i
+(
+Fj,i(x)+ gp
+jup
+j −ge
+i ue
+i
+))
+⎞
+⎠ . (34)
+Combining (25) and (27), one has
+H(Vs
+i (x)) =Pi(x)+ U(up
+j)−W(ue
+i)
++∇TVs
+i (x)
+⎛
+⎝
+Np∑
+j=1
+(
+cj,i
+(
+Fj,i(x)+ gp
+jup
+j −ge
+i ue
+i
+))
+⎞
+⎠ .
+(35)
+Subtracting (34) from (35),w eh a v e
+H′
+V s+1
+i
+Vs+1
+i (x)−H(Vs
+i (x))
+= −(Pi(x)+ U(up
+j)−W(ue
+i)). (36)
+Considering (24) and (33), (36), we obtain
+H′
+V s+1
+i
+Vs+1
+i (x)= H′
+V s+1
+i
+Vs
+i (x)−H(Vs
+i (x))
+which is accordant with (32). ■
+Since the proposed on-policy policy iteration algorithm be-
+tween the iteration is equivalent to the quasi-Newton’s iteration,
+we can deduce that the value functions Vs
+i (x) will eventually
+converge to the optimal value V∗
+i (x) as s →∞ . As a result,
+μp
+j,s, μe
+i,s will tend to follow the optimal value according to
+(22), simultaneously. Therefore, Theorem 2 holds. ■
+C. Off-Policy RL Algorithm Design
+In this section, an off-policy RL algorithm based on the
+foundation of Algorithm 2 is proposed. Note that Algorithm 2
+requires the knowledge of value functions Vi(x) to solve the
+approximate HJI equation. Thus, we leverage the approximating
+characteristics of neural networks to address this issue. In the
+case of multiple agents, the application of multiple networks
+introduces computational burden. Therefore, we adopt the V -
+SNAC structure. In this structure, for each evader, only one critic
+network is utilized to captures the mapping between states and
+the value functions Vi(x). In MPE game, all the agents will
+continuously and simultaneously update the network weights.
+Therefore, the value functions Vi(x) can be approximated by
+critic network as
+V∗
+i (x)= WT
+i ψi(x)+ δi(x) (37)
+whereWi =[ Wi,1,Wi,2,...,W i,h]T ∈Rh are the ideal weight
+vectors, h stands for the number of the hidden neurons,
+ψi(·): Rn → Rh denotes the nonlinear activation functions,
+and δi(x) ∈R represents the approximation error of the neural
+networks.
+And the value solutionV∗
+i (x) approximated by critic network
+at step s are reconstructed as
+ˆVs
+i (x)= ˆWT
+i,sψi(x) (38)
+where ˆVs
+i (x) represents the estimate of the optimal valueV∗
+i (x)
+and ˆWi,s ∈Rh represents the estimated weight vector at step s.
+The derivatives of ˆVs
+i (x) with respect to ˜xpe
+i are represented
+as
+∇ˆVi(x)= ∇ψT
+i (x) ˆWi,s (39)
+where∇ψT
+i (x) ∈Rn×h are bounded gradients of the activation
+functions.
+To circumvent the need for system dynamics, the neural
+network is employed to approximate the value functions. Sub-
+stituting (39) into (22) yields⎧
+⎨
+⎩
+up∗
+j = −¯up tanh
+(
+1
+2¯up
+R−1
+1 (gp
+j)T∇ψT
+i (x) ˆWi,s
+)
+ue∗
+i = −¯ue tanh
+(
+1
+2¯ue
+R−1
+2 (ge
+i )T∇ψT
+i (x) ˆWi,s
+) (40)
+and substituting (40) into (26) yields
+H∗
+i = Pi(x)
++
+Np∑
+j=1
+(
+cj,i¯u2
+p ¯R1 ln
+(
+⃗1−tanh2(ρp(∇ψT
+i (x) ˆWi,s))
+))
+−dep
+i ¯u2
+e ¯R2 ln
+(
+⃗1−tanh2(ρe(∇ψT
+i (x) ˆWi,s))
+)
++ ˆWT
+i,s∇ψi(x)
+⎛
+⎝
+Np∑
+j=1
+(cj,iFj,i(x))
+⎞
+⎠ =0 . (41)
+Equation (41) is employed as the off-policy Bellman equation.
+From (26) and (40), derive the deﬁnition of the residual error es
+i
+at step s
+es
+i ≜ (˜xpe
+i )TQ˜xpe
+i
++
+Np∑
+j=1
+(
+cj,i¯u2
+p ¯R1 ln
+(
+⃗1−tanh2(ρp(∇ψT
+i (x) ˆWi,s))
+))
+−dep
+i ¯u2
+e ¯R2 ln
+(
+⃗1−tanh2(ρe(∇ψT
+i (x) ˆWi,s))
+)
++ ˆWT
+i,s∇ψi(x)
+⎛
+⎝
+Np∑
+j=1
+(cj,iFj,i(x))
+⎞
+⎠ =0 . (42)
+Deﬁne
+Ki,s ≜ ∇ψi(x)
+⎛
+⎝
+Np∑
+j=1
+(cj,iFj,i(x))
+⎞
+⎠
+Us
+N,i ≜
+Np∑
+j=1
+(
+cj,i¯u2
+p ¯R1 ln
+(
+⃗1−tanh2(ρp(∇ψT
+i (x) ˆWi,s))
+))
+Ws
+N,i ≜ −dep
+i ¯u2
+e ¯R2 ln
+(
+⃗1−tanh2(ρe(∇ψT
+i (x) ˆWi,s))
+)
+.
+Then, we can further deﬁne
+Rs
+i ≜ (˜xpe
+i )TQ˜xpe
+i +Us
+N,i +Ws
+N,i (43)
+and thus, the residual error es
+i can be rewritten as
+es
+i = Rs
+i + ˆWT
+i,sKi,s. (44)
+For obtaining the update rule of the weights of critic networks,
+the optimization objective is deﬁned as
+Es
+i = 1
+2(es
+i)Tes
+i. (45)
+The tuning law for the neural network weights ˆWi,s is given by
+˙ˆWi,s = −αi
+(
+∂Es
+i
+∂ˆWi,s
+)T
+= −αi(Rs
+i + ˆWT
+i,sKi,s)KT
+i,s (46)
+Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on December 24,2025 at 05:16:20 UTC from IEEE Xplore.  Restrictions apply. 

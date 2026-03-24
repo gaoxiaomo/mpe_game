@@ -1,0 +1,125 @@
+1680 IEEE SYSTEMS JOURNAL, VOL. 18, NO. 3, SEPTEMBER 2024
+[12] Y . Xu, H. Y ang, B. Jiang, and M. M. Polycarpou, “Multiplayer pursuit-
+evasion differential games with malicious pursuers,” IEEE Trans. Autom.
+Control, vol. 67, no. 9, pp. 4939–4946, Sep. 2022.
+[13] A. Jenabzadeh and B. Safarinejadian, “Distributed tracking of nonholo-
+nomic targets over multiagent systems,” IEEE Syst. J. , vol. 13, no. 2,
+pp. 1678–1681, Jun. 2019.
+[14] D. K. Kim et al., “A policy gradient algorithm for learning to learn in
+multiagent reinforcement learning,” inProc. Int. Conf. Mach. Learn., 2021,
+pp. 5541–5550.
+[15] T. T. Nguyen, N. D. Nguyen, and S. Nahavandi, “Deep reinforcement
+learning for multiagent systems: A review of challenges, solutions, and ap-
+plications,”IEEE Trans. Cybern., vol. 50, no. 9, pp. 3826–3839, Sep. 2020.
+[16] K. G. V amvoudakis, F. L. Lewis, and G. R. Hudas, “Multi-agent differential
+graphical games: Online adaptive learning solution for synchronization
+with optimality,” Automatica, vol. 48, no. 8, pp. 1598–1611, 2012.
+[17] H. Zhang, W. Zhao, H. Ge, X. Xie, and D. Y ue, “Distributed model-free
+optimal control for multiagent pursuit-evasion differential games,” IEEE
+Trans. Netw. Sci. Eng., vol. 11, no. 4, pp. 3800–3811, Aug. 2024.
+[18] R. Sarkar, D. Patil, A. K. Mulla, and I. N. Kar, “Finite-time consensus
+tracking of multi-agent systems using time-fuel optimal pursuit evasion,”
+IEEE Control Syst. Lett. , vol. 6, pp. 962–967, 2022.
+[19] M. Liu, Y . Wan, V . G. Lopez, F. L. Lewis, G. A. Hewer, and K. Estabridis,
+“Differential graphical game with distributed global Nash solution,” IEEE
+Trans. Control Netw. Syst., vol. 8, no. 3, pp. 1371–1382, Sep. 2021.
+[20] D. Cappello and T. Mylvaganam, “Distributed differential games for
+control of multi-agent systems,” IEEE Trans. Control Netw. Syst. ,v o l .9 ,
+no. 2, pp. 635–646, Jun. 2022.
+[21] D. Y u, C. P . Chen, C.-E. Ren, and S. Sui, “Swarm control for self-organized
+system with ﬁxed and switching topology,” IEEE Trans. Cybern., vol. 50,
+no. 10, pp. 4481–4494, Oct. 2020.
+[22] X. Liu, X. Wu, Y . Xie, and B. Guo, “Time-varying formation control
+with transient performance for multiagent systems under jointly connected
+topologies,” IEEE Syst. J., vol. 18, no. 1, pp. 497–500, Mar. 2024.
+[23] W. Zou, C. K. Ahn, and Z. Xiang, “Event-triggered consensus tracking
+control of stochastic nonlinear multiagent systems,” IEEE Syst. J., vol. 13,
+no. 4, pp. 4051–4059, Dec. 2019.
+[24] J. Zhuang, S. Peng, and Y . Wang, “Leader-following consensus of discrete-
+time stochastic nonlinear multiagent systems under ﬁxed and switch-
+ing topologies via impulsive control,” IEEE Syst. J. , vol. 16, no. 4,
+pp. 6021–6030, Dec. 2022.
+[25] D. Liu, H. Li, and D. Wang, “Online synchronous approximate opti-
+mal learning algorithm for multi-player non-zero-sum games with un-
+known dynamics,” IEEE Trans. Syst., Man, Cybern. Syst. , vol. 44, no. 8,
+pp. 1015–1027, Aug. 2014.
+[26] P . Zhou and B. M. Chen, “Distributed optimal solutions for multiagent
+pursuit-evasion games for capture and formation control,” IEEE Trans.
+Ind. Electron., vol. 71, no. 5, pp. 5224–5234, May 2024.
+[27] Q. Wei, D. Liu, Q. Lin, and R. Song, “Discrete-time optimal control
+via local policy iteration adaptive dynamic programming,” IEEE Trans.
+Cybern., vol. 47, no. 10, pp. 3367–3379, Oct. 2017.
+[28] H. Xu, D. Y u, Z. Wang, K. H. Cheong, and C. P . Chen, “Nonsingular
+predeﬁned time adaptive dynamic surface control for quantized non-
+linear systems,” IEEE Trans. Syst., Man, Cybern. Syst. , early access,
+Jul. 2024.doi: 10.1109/TSMC.2024.3407150.
+[29] P . Zhou and B. M. Chen, “Distributed optimal solutions for multiagent
+pursuit-evasion games,” in Proc. IEEE 62nd Conf. Decis. Control , 2023,
+pp. 6424–6429.
+[30] H. Xiong and Y . Zhang, “Reinforcement learning-based formation-
+surrounding control for multiple quadrotor UA Vs pursuit-evasion games,”
+ISA Trans., vol. 145, pp. 205–224, 2024.
+[31] R. Lowe, Y . Wu, A. Tamar, J. Harb, P . Abbeel, and I. Mordatch, “Multi-
+agent actor-critic for mixed cooperative-competitive environments,” in
+Proc. 31st Int. Conf. Neural Inf. Process. Syst. , 2017, pp. 6382–6393.
+[32] J. Ding and S. Balakrishnan, “A single network approximate dynamic
+programming based constrained optimal controller for nonlinear systems
+with uncertainties,” in Proc. IEEE 49th Conf. Decis. Control , 2010,
+pp. 3054–3059.
+[33] Y . Y uan, P . Zhang, and X. Li, “Synchronous fault-tolerant near-optimal
+control for discrete-time nonlinear PE game,” IEEE Trans. Neural Netw.
+Learn. Syst., vol. 32, no. 10, pp. 4432–4444, Oct. 2021.
+[34] J. Long, D. Y u, G. Wen, L. Li, Z. Wang, and C. P . Chen, “Game-based
+backstepping design for strict-feedback nonlinear multi-agent systems
+based on reinforcement learning,” IEEE Trans. Neural Netw. Learn. Syst.,
+vol. 35, no. 1, pp. 817–830, Jan. 2024.
+[35] D. Y u, J. Long, C. P . Chen, and Z. Wang, “Adaptive swarm control within
+saturated input based on nonlinear coupling degree,” IEEE Trans. Syst.,
+Man, Cybern. Syst., vol. 52, no. 8, pp. 4900–4911, Aug. 2022.
+[36] T. Y ang, Z. Meng, D. V . Dimarogonas, and K. H. Johansson, “Global
+consensus for discrete-time multi-agent systems with input saturation
+constraints,” Automatica, vol. 50, no. 2, pp. 499–506, 2014.
+[37] H. Xu, D. Y u, and Y .-J. Liu, “Observer-based fuzzy adaptive prede-
+ﬁned time control for uncertain nonlinear systems with full-state error
+constraints,” IEEE Trans. Fuzzy Syst. , vol. 32, no. 3, pp. 1370–1382,
+Mar. 2024.
+[38] H. Zhang, Z. Li, Z. Qu, and F. L. Lewis, “On constructing lyapunov
+functions for multi-agent systems,” Automatica, vol. 58, pp. 39–42, 2015.
+[39] X. Dong, H. Zhang, and Z. Ming, “Adaptive optimal control via Q-learning
+for multi-agent pursuit-evasion games,”IEEE Trans. Circuits Syst. II: Exp.
+Briefs, vol. 71, no. 6, pp. 3056–3060, Jun. 2024.
+[40] R. Song, F. L. Lewis, and Q. Wei, “Off-policy integral reinforcement learn-
+ing method to solve nonlinear continuous-time multiplayer nonzero-sum
+games,”IEEE Trans. Neural Netw. Learn. Syst., vol. 28, no. 3, pp. 704–713,
+Mar. 2017.
+[41] H. P . Geering, Optimal Control With Engineering Applications , vol. 113.
+Berlin, Germany: Springer, 2007.
+[42] H. Modares, F. L. Lewis, and Z.-P . Jiang, “ H∞ tracking control of
+completely unknown continuous-time systems via off-policy reinforce-
+ment learning,” IEEE Trans. Neural Netw. Learn. Syst. , vol. 26, no. 10,
+pp. 2550–2562, Oct. 2015.
+[43] H.-N. Wu and B. Luo, “Neural network based online simultaneous policy
+update algorithm for solving the HJI equation in nonlinear H∞ control,”
+IEEE Trans. Neural Netw. Learn. Syst. , vol. 23, no. 12, pp. 1884–1895,
+Dec. 2012.
+[44] K. Hoffman, Banach Spaces of Analytic Functions . New Y ork, NY , USA:
+Dover, 2014.
+[45] L. Boron and E. Zeidler, Nonlinear Functional Analysis and Its Applica-
+tions: III: V ariational Methods and Optimization . New Y ork, NY , USA:
+Springer, 2013.
+[46] E. Zeidler, Nonlinear Functional Analysis and Its Applications: I: Fixed-
+Point Theorems (Nonlinear Functional Analysis and Its Applications).
+Berlin, Germany: Springer, 1985.
+[47] J. Sarangapani, Neural Network Control of Nonlinear Discrete-Time Sys-
+tems (Automation and Control Engineering). Boca Raton, FL, USA: CRC
+Press, 2018.
+[48] K. Hornik, M. Stinchcombe, and H. White, “Universal approximation of
+an unknown mapping and its derivatives using multilayer feedforward
+networks,” Neural Netw., vol. 3, no. 5, pp. 551–560, 1990.
+[49] Y . Huo, D. Wang, J. Qiao, and M. Li, “Off-policy model-free learning for
+multi-player non-zero-sum games with constrained inputs,” IEEE Trans.
+Circuits Syst. I: Regular Papers, vol. 70, no. 2, pp. 910–920, Feb. 2023.
+[50] B. Xu, F. Sun, C. Y ang, D. Gao, and J. Ren, “Adaptive discrete-time
+controller design with neural network for hypersonic ﬂight vehicle via
+back-stepping,” Int. J. Control, vol. 84, no. 9, pp. 1543–1552, 2011.
+Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on December 24,2025 at 05:16:20 UTC from IEEE Xplore.  Restrictions apply. 

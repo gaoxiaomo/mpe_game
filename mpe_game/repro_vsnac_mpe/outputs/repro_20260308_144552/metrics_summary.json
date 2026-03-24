@@ -1,0 +1,250 @@
+{
+  "scenario_3v1": {
+    "train": {
+      "iterations": 26,
+      "final_weight_norms": [
+        0.7404890826497406,
+        0.8475698005583681,
+        0.8476713633490313
+      ],
+      "final_weight_norm_squares": [
+        0.5483240815234542,
+        0.7183745668185518,
+        0.7185467402420054
+      ],
+      "final_weight_vectors": [
+        [
+          0.42,
+          0.42,
+          0.08,
+          0.08,
+          0.08,
+          0.4199
+        ],
+        [
+          0.42,
+          0.08,
+          0.42,
+          0.42,
+          0.42,
+          0.0801
+        ],
+        [
+          0.08,
+          0.42,
+          0.42,
+          0.42,
+          0.42,
+          0.0811
+        ]
+      ],
+      "final_delta_per_critic": [
+        4.7910763040762926e-05,
+        2.9620571593566032e-05,
+        0.00046094185624227395
+      ],
+      "mean_residual_per_critic": [
+        117.20926558673537,
+        211.65803225729255,
+        214.73126149234022
+      ]
+    },
+    "eval": {
+      "capture_time_s": 37.4,
+      "final_team_error": 268.556764910639,
+      "final_max_assigned_error": 156.9301230412338,
+      "mean_assigned_error": 3943.766272221639
+    },
+    "network": {
+      "v_snac_networks": 3,
+      "ac_networks_estimated": 8,
+      "network_reduction_percent": 62.5
+    },
+    "initial_xy_distance_matrix": [
+      [
+        7531.268153505092
+      ],
+      [
+        6356.886030125127
+      ],
+      [
+        9838.699100999074
+      ]
+    ]
+  },
+  "scenario_3v3_dynamic": {
+    "train": {
+      "iterations": 16,
+      "final_weight_norms": [
+        0.7327630198414512,
+        0.6155235443294667,
+        0.610365199943063
+      ],
+      "final_weight_norm_squares": [
+        0.536941643247163,
+        0.3788692336239089,
+        0.3725456773015353
+      ],
+      "final_weight_vectors": [
+        [
+          0.4198,
+          0.4198,
+          0.0814,
+          0.0811,
+          0.0811,
+          0.4059
+        ],
+        [
+          0.0813,
+          0.4194,
+          0.0831,
+          0.4198,
+          0.0812,
+          0.0814
+        ],
+        [
+          0.4074,
+          0.4196,
+          0.0977,
+          0.0812,
+          0.0885,
+          0.0811
+        ]
+      ],
+      "final_delta_per_critic": [
+        0.006099280631207196,
+        0.0016365863317960216,
+        0.010028070776411368
+      ],
+      "mean_residual_per_critic": [
+        55.494251806203025,
+        25.381269717285175,
+        32.17438842991952
+      ]
+    },
+    "eval": {
+      "capture_time_s": null,
+      "final_team_error": 47084.27830482824,
+      "final_max_assigned_error": 23400.189033877225,
+      "mean_assigned_error": 13759.770934482565
+    },
+    "eval_fixed_reference_same_trajectory": {
+      "final_team_error": 791309.9456043929,
+      "mean_team_error": 251193.81934950818
+    },
+    "network": {
+      "v_snac_networks": 3,
+      "ac_networks_estimated": 12,
+      "network_reduction_percent": 75.0
+    },
+    "initial_xy_distance_matrix": [
+      [
+        11166.467659918242,
+        19549.424543960366,
+        10159.232254457027
+      ],
+      [
+        9985.990186255944,
+        9596.353474106714,
+        12731.064370271639
+      ],
+      [
+        10647.065323364932,
+        20812.736485142937,
+        7323.933369440222
+      ]
+    ],
+    "switch_count": 1,
+    "switch_times_s": [
+      6.0
+    ],
+    "initial_assignment": [
+      1,
+      2,
+      0
+    ],
+    "first_dynamic_assignment": [
+      1,
+      2,
+      0
+    ],
+    "dynamic_gif_generated": true
+  },
+  "scenario_3v3_fixed_baseline": {
+    "train": {
+      "iterations": 16,
+      "final_weight_norms": [
+        0.687529302265021,
+        0.6253486109313185,
+        0.7847491773109022
+      ],
+      "final_weight_norm_squares": [
+        0.47269654147302653,
+        0.39106088519372956,
+        0.6158312712901379
+      ],
+      "final_weight_vectors": [
+        [
+          0.4196,
+          0.4184,
+          0.0811,
+          0.0811,
+          0.0812,
+          0.3192
+        ],
+        [
+          0.0813,
+          0.4196,
+          0.1367,
+          0.4198,
+          0.0828,
+          0.0812
+        ],
+        [
+          0.2726,
+          0.4197,
+          0.4197,
+          0.0813,
+          0.4196,
+          0.0812
+        ]
+      ],
+      "final_delta_per_critic": [
+        0.04323135545550401,
+        0.024339576051343525,
+        0.06318238564144373
+      ],
+      "mean_residual_per_critic": [
+        55.18231475477095,
+        25.374699034746484,
+        31.914969101331828
+      ]
+    },
+    "eval": {
+      "capture_time_s": null,
+      "final_team_error": 17097.9464302077,
+      "final_max_assigned_error": 6908.534842747227,
+      "mean_assigned_error": 8587.501723067586
+    }
+  },
+  "saturation_cases": {
+    "u_p > u_e (25,20)": {
+      "capture_time_s": 99.95,
+      "final_team_error": 71.77286364017466,
+      "final_max_assigned_error": 24.635983417768625,
+      "mean_assigned_error": 2958.1147282960546
+    },
+    "u_p = u_e (20,20)": {
+      "capture_time_s": null,
+      "final_team_error": 36597.721071929445,
+      "final_max_assigned_error": 15772.807487452797,
+      "mean_assigned_error": 9095.40090588799
+    },
+    "u_p < u_e (15,20)": {
+      "capture_time_s": null,
+      "final_team_error": 126960.16450565154,
+      "final_max_assigned_error": 44022.59022625726,
+      "mean_assigned_error": 19628.954148220924
+    }
+  }
+}

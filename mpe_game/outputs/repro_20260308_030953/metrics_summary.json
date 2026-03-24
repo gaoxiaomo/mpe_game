@@ -1,0 +1,86 @@
+{
+  "scenario_3v1": {
+    "train": {
+      "iterations": 18,
+      "final_weight_norms": [
+        745174150.4384063
+      ],
+      "final_delta_per_evader": [
+        23067777.333366565
+      ],
+      "mean_residual_per_evader": [
+        1116326.154234939
+      ]
+    },
+    "eval": {
+      "capture_time_s": null,
+      "final_team_error": 227200.12879032275,
+      "final_max_assigned_error": 80509.61795575487,
+      "mean_assigned_error": 27598.813951623026
+    },
+    "network": {
+      "v_snac_networks": 1,
+      "ac_networks_estimated": 8,
+      "network_reduction_percent": 87.5
+    }
+  },
+  "scenario_3v3_dynamic": {
+    "train": {
+      "iterations": 18,
+      "final_weight_norms": [
+        227649963.39578488,
+        133311714.5199321,
+        87563791.3241659
+      ],
+      "final_delta_per_evader": [
+        9419145.0754224,
+        2871419.0567123457,
+        3539986.097804887
+      ],
+      "mean_residual_per_evader": [
+        384122.8717607611,
+        135159.66186553522,
+        108507.19519059297
+      ]
+    },
+    "eval": {
+      "capture_time_s": null,
+      "final_team_error": 77545.1511253806,
+      "final_max_assigned_error": 43009.5843049103,
+      "mean_assigned_error": 12066.201948546424
+    },
+    "network": {
+      "v_snac_networks": 3,
+      "ac_networks_estimated": 12,
+      "network_reduction_percent": 75.0
+    }
+  },
+  "scenario_3v3_fixed_baseline": {
+    "eval": {
+      "capture_time_s": null,
+      "final_team_error": 26533.84474937532,
+      "final_max_assigned_error": 11107.062345789485,
+      "mean_assigned_error": 4754.797901957481
+    }
+  },
+  "saturation_cases": {
+    "u_p > u_e (25,20)": {
+      "capture_time_s": null,
+      "final_team_error": 103296.2288151274,
+      "final_max_assigned_error": 37412.722746283114,
+      "mean_assigned_error": 15346.113226414742
+    },
+    "u_p = u_e (20,20)": {
+      "capture_time_s": null,
+      "final_team_error": 35149.52212772939,
+      "final_max_assigned_error": 15050.8798985152,
+      "mean_assigned_error": 6856.451320673227
+    },
+    "u_p < u_e (15,20)": {
+      "capture_time_s": null,
+      "final_team_error": 117073.44361804408,
+      "final_max_assigned_error": 46008.49305261398,
+      "mean_assigned_error": 15870.263627998964
+    }
+  }
+}

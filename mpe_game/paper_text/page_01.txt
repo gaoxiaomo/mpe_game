@@ -1,0 +1,108 @@
+IEEE SYSTEMS JOURNAL, VOL. 18, NO. 3, SEPTEMBER 2024 1669
+Approximate Optimal Strategy for Multiagent
+System Pursuit–Evasion Game
+Zhiqiang Xu , Dengxiu Y u , Member , IEEE, Y an-Jun Liu , Senior Member , IEEE,
+and Zhen Wang , Fellow, IEEE
+Abstract—In this article, we propose an approximate optimal
+control strategy for a class of nonlinear multiagent system pursuit–
+evasion games. Herein, multiple pursuers aim to capture multiple
+evaders trying to evade capture. Under the competitive framework,
+agents not only pursue their individual goals but also consider
+coordination with their teammates to achieve collective objectives.
+However, maintaining cohesion with teammates in existing dis-
+tributed control methods has always been a challenge. To enhance
+team coordination, we employ a graph-theoretic approach to rep-
+resent the relationships between agents. Based on this, we design
+a dynamic target graph algorithm to enhance the coordination
+among pursuers. The approximate optimal strategies for each agent
+are solved by utilizing the Hamilton–Jacobi–Isaacs equations of
+the system. As solving these equations becomes computationally
+intensive in multiagent scenarios, we propose a value-based sin-
+gle network adaptive critic network architecture. In addition, we
+consider scenarios where the numbers of agents on both sides
+are inconsistent and address the phenomenon of input saturation.
+Moreover, we provide sufﬁcient conditions to prove the system’s sta-
+bility. Finally, simulations conducted in two representative scenar-
+ios, multiple-pursuer-one-evader and multiple-pursuer-multiple-
+evader, demonstrate the effectiveness of our proposed algorithm.
+Index Terms —Approximate optimal control, multiagent
+systems, pursuit–evasion games, reinforcement learning.
+I. I NTRODUCTION
+I
+N THE past decades, the pursuit–evasion (PE) game has
+emerged as a prominent and intriguing research topic, draw-
+ing signiﬁcant attention. The pursuers and evaders, which partic-
+ipate in the PE game and possess capabilities in perception, com-
+munication, and action, are collectively referred to as agents. The
+multiagent system pursuit–evasion (MPE) game is a complex ex-
+tension of the PE game, involving multiple agents. Speciﬁcally,
+the objective of the pursuers is to minimize the distance to their
+targeted evaders and achieve interception while the evaders aim
+to evade or delay interception. Unlike evaders who engage in
+passive avoidance, pursuers possess the ﬂexibility to select dif-
+ferent targets as their objectives. The MPE game initially arose in
+Manuscript received 20 December 2023; revised 7 June 2024; accepted 20 July
+2024. Date of publication 2 August 2024; date of current version 20 September
+2024. This work was supported by the National Natural Science Foundation of
+China under Grant 62373302. (Corresponding author: Yan-Jun Liu.)
+Zhiqiang Xu is with the Unmanned System Research Institute, Northwest-
+ern Polytechnical University, Xi’an 710072, China (e-mail: zhiqiangxu@mail.
+nwpu.edu.cn).
+Dengxiu Y u and Zhen Wang are with the School of Artiﬁcial Intelligence,
+Optics and Electronics, Northwestern Polytechnical University, Xi’an 710072,
+China (e-mail: yudengxiu@nwpu.edu.cn; w-zhen@nwpu.edu.cn).
+Y an-Jun Liu is with the College of Science, Liaoning University of Technol-
+ogy, Jinzhou 121001, China (e-mail: liuyanjun@live.com).
+Digital Object Identiﬁer 10.1109/JSYST.2024.3432796
+natural animal hunting scenarios and have since been further de-
+veloped with the concepts of game theory. The MPE game ﬁnds
+wide engineering applications in areas, such as autonomous
+aerial vehicles, satellites, mobile robot systems, vicinagearth
+security, and sports/game strategy [1], [2], [3], [4], [5], [6].
+The single-pursuer single-evader game was initially studied
+based on the differential game framework involving two players,
+which is a zero-sum game. In most PE games, the pursuer’s
+objective of minimizing the distance to the evader is represented
+through value functions. These individual performance indices
+are then used to deﬁne equilibrium points of the game [7].B y
+differentiating the value functions, Jang and Tomlin[8] achieved
+PE between aircraft. Jagat and Sinclair [9] based on the state-
+dependent Riccati equation methods designed a nonlinear con-
+trol approach for the spacecraft PE game. Later, the PE game was
+extended to the multiple-pursuer single-evader scenario [10],
+where pursuers can form certain formations through formation
+control. When the PE game is extended to the multiple-pursuer
+multiple-evader scenario, it is referred to as MPE [11].I n [12],
+different types of pursuers are designed, and the PE relation-
+ships are studied based on an N -player nonzero-sum game
+framework.
+In MPE scenarios with multiple agents, the relationships
+among them become more complex [13], [14], [15]. To handle
+these relationships, graph-theoretic approaches have been uti-
+lized, as demonstrated in [16] and [17] and applied to PE games
+with linear dynamics in [11].I n [18], the pursuer, acting as a
+child node, is paired with the evader acting as a parent node; this
+topological relationship is ﬁxed. Consequently, when assistance
+is required from another child node’s pursuers, the inability
+to change the topological relationship leads to an inability to
+leverage team effectiveness. In [17], the MPE game is decom-
+posed into several MPE game subsystems. While the behavior
+within each subsystem does not inﬂuence the stability of the
+overall environment, there is an inherent lack of collaborative
+interaction between the subsystems themselves. These methods
+design value functions that take into account the state difference
+with respect to the goal or neighboring nodes. Although each
+distributed strategy is goal-oriented, agents within the same team
+lack communication and collaboration. Therefore, achieving
+coordinated control with team collaboration remains a challenge
+in many distributed control algorithms [19], [20]. Consequently,
+the complex interactions among multiple agents to enhance
+team cohesion merit in-depth research [21]. Consensus, which
+is extensively studied for multiagent system control using graph
+theory [22], is often achieved in the context of formation control
+by deﬁning desired displacements [23]. In this work, while
+enhancing cohesion through target switching, the role of desired
+displacements is also considered.
+1937-9234 © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.
+See https://www.ieee.org/publications/rights/index.html for more information.
+Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on December 24,2025 at 05:16:20 UTC from IEEE Xplore.  Restrictions apply. 

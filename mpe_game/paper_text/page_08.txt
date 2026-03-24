@@ -1,0 +1,196 @@
+1676 IEEE SYSTEMS JOURNAL, VOL. 18, NO. 3, SEPTEMBER 2024
+Algorithm 3: Off-Policy RL Algorithm.
+Input: System states {xp
+j,xe
+i} and their corresponding
+initial admissible control policy {μp
+j,0,μe
+i,0}.
+Initialize the error threshold ϵ, select an initial estimated
+weight vector ˆWi,0. Set s =0 .
+repeat
+Based on the control pair {μp
+j,s,μe
+i,s},s o l v e(41) by
+using (46) to update the ˆWi,s.
+Update the control policy μp
+j,s andμe
+i,s simultaneously
+by⎧
+⎨
+⎩
+μp
+j,s = −¯up tanh
+(
+1
+2¯up
+R−1
+1 (gp
+j)T∇ψT
+i (x) ˆWi,s
+)
+μe
+i,s = −¯ue tanh
+(
+1
+2¯ue
+R−1
+2 (ge
+i )T∇ψT
+i (x) ˆWi,s
+)
+.
+Update the weighted adjacency matrix Ape and Aep
+simultaneously by using Algorithm 1.
+Set s = s+1 .
+until | ˆWi,s − ˆWi,s−1| <ϵ .
+Output:{μp
+j,s,μe
+i,s}.
+whereαi > 0 is the learning rate of the critic network.
+According to Theorem 2 and [47], we make the following
+assumption.
+Assumption 2: For any iteration instants s>t 0, there exist
+positive scalars ϑw,ϑψ, λψ,ϑδ, λδand the time instant t0 such
+that the following parameters are bounded [48]:
+∥Wi,s∥ <ϑw, ∥ψi(·)∥ <ϑψ, ∥∇ψi(·)∥ < λψ
+∥δs(·)∥ <ϑδ, ∥∇δs(·)∥ < λδ
+where the conditions on activation function can be satisﬁed by
+standard activation functions, e.g., by sigmoids, tanh, and other
+standard activation functions.
+Then, the off-policy RL algorithm for MPE game is summa-
+rized as Algorithm 3.
+Remark 4: The Algorithm 3 mainly includes the policy eval-
+uation stage and policy improvement stage. To begin with,
+the correlative system data are collected. Then, the gradient
+descent algorithm is used to update the corresponding estimated
+weight. At last, the optimal control policies for MPE game
+with constrained inputs are iterated out. After the update of the
+weight adjacency matrix in each iteration, the corresponding
+edge weights in (41) will also be updated accordingly. Further-
+more, to minimize the target function Es
+i , the estimated weight
+ˆWi,s can be calculated using (46). For the MPE game, we can
+calculate the optimal control policies with only one formula to
+replace (26) and (25) in Algorithm 2.
+D. Stability Analysis
+Assumption 3: Deﬁne Ki,s is persistently existed. If at the
+time instance t1 for an integer N1 and ˘η>0, the following
+holds:
+t1+N1∑
+s=t1
+Ki,sKT
+i,s ≥˘ηIi,s (47)
+where Ii,s is the identity matrix.
+In Theorems 2 and 3, the convergent property of Algorithm 2
+is proved. In the following, the convergence of the weights of
+critic network based on off-policy RL algorithm is analyzed.
+Before proceeding, the uniformly ultimately bounded (UUB)
+stability of the weight estimation error is deﬁned as follows.
+Theorem 4 (see [3]): Let the update method for critic net-
+works be (46), deﬁne the weight estimation error ˜Wi,s = Wi,s −
+ˆWi,s. For eachi ∈{1,...,N e}, the weight estimation error ˜Wi,s
+is said to be UUB under the following conditions.
+We deﬁne a compact set Ω3 ⊂Rh as the convergence set
+Ω3 :
+{
+Wi,s |
+Wi,s − ˆWi,s
+ ≤´mbi
+}
+, ´m> 1
+wherebi is given by the formula
+bi =
+√d2
+(
+∥Wi,s∥2 ∥Ki,s∥2 +∥Rs
+i∥2
+)
+2(d−1)∥Ki,s∥2 .
+The condition for UUB is that for all Wi,s ∈Ω3 there exists a
+boundbi and a time instantT(bi,Wi,s) such that∥ ˜Wi,s∥≤ ´mbi
+for all s ≥T .
+Proof: Choose the following Lyapunov function:
+VL ≜ d
+2ηi
+˜WT
+i,s ˜Wi,s (48)
+with d> 0.
+According to (46)
+˙˜Wi,s = αi(Rs
+i +(Wi,s − ˜Wi,s)TKi,s)KT
+i,s
+= −αi ˜Wi,sKi,sKT
+i,s +αi(Rs
+i +Wi,sKi,s)KT
+i,s. (49)
+Take the derivative ofVL, one has
+˙VL = d( ˜Wi,s)T
+(
+(Rs
+i +Wi,sKi,s)KT
+i,s − ˜Wi,sKi,sKT
+i,s
+)
+= −d( ˜Wi,s)TWi,sKi,sKT
+i,s +d( ˜Wi,s)T
+(Rs
+i +Wi,sKi,s)KT
+i,s
+≤− d
+ ˜Wi,s
+
+2
+∥Ki,s∥2 +d( ˜Wi,s)TRs
+i(Ki,s)T
++d( ˜Wi,s)TWi,sKi,s(Ki,s)T
+≤− d
+ ˜Wi,s
+
+2
+∥Ki,s∥2 + 1
+2
+ ˜Wi,s
+
+2
+∥Ki,s∥2
++ d2
+2 ∥Wi,s∥2 ∥Ki,s∥2 + 1
+2
+ ˜Wi,s
+
+2
+∥Ki,s∥2
++ d2
+2 ∥Rs
+i∥2 (50)
+i.e.,
+˙VL ≤− (d−1)
+ ˜Wi,s
+
+2
+∥Ki,s∥2 + d2
+2 ∥Wi,s∥2 ∥Ki,s∥2
++ d2
+2 ∥Rs
+i∥2 . (51)
+Ifd> 1, one has
+ ˜Wi,s
+
+2
+>
+d2
+(
+∥Wi,s∥2 ∥Ki,s∥2 +∥Rs
+i∥2
+)
+2(d−1)∥Ki,s∥2 . (52)
+Therefore, using Lyapunov theory, it can be concluded that the
+norm of the weight estimation error ˜Wi,s is bounded to within a
+small neighborhood of bi. And thus, we can infer that ˆVs
+i (x) →
+Vs
+i (x). ■
+Remark 5: It has been proven that the magnitude of the weight
+estimation error is bounded within a ﬁnite region. To further
+Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on December 24,2025 at 05:16:20 UTC from IEEE Xplore.  Restrictions apply. 

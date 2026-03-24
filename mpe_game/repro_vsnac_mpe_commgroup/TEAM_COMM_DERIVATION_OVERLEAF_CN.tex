@@ -1,0 +1,437 @@
+﻿\documentclass[12pt,a4paper]{ctexart}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,bm,mathtools}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\newtheorem{theorem}{定理}
+\newtheorem{proposition}{命题}
+\newtheorem{assumption}{假设}
+\newtheorem{remark}{说明}
+
+\title{$n$追一通信感知组级追捕模型的数学推导}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{建模思路}
+
+考虑 $n$ 架追逐者共同追捕一架逃避者的场景。若这 $n$ 架追逐者的目标相同，则更自然的建模方式不是把它们分别视为彼此独立的最优控制器，而是将其视为一个追捕小组，用一个组级值函数统一刻画协同追捕行为。
+
+因此，我们将问题写成：
+\begin{enumerate}[label=\arabic*)]
+    \item $n$ 个追逐者联合最小化同一个组级性能指标；
+    \item 逃避者在理论上最大化该性能指标；
+    \item 通信正常时使用完整组状态；
+    \item 通信中断时每个追逐者仅使用按通信矩阵掩码后的组观测 $\bar Z_j=\Gamma_j Z$；
+    \item 被屏蔽块直接零填充，并通过可见性掩码同步关闭对应特征与交叉项；通信恢复后立即重新同步到真实组状态。
+\end{enumerate}
+
+\section{单体动力学与相对误差}
+
+每个智能体采用六维状态与三维控制输入：
+\begin{equation}
+    x=[x,y,h,v_x,v_y,v_h]^T\in\mathbb{R}^6,
+    \qquad
+    u=[u_1,u_2,u_3]^T\in\mathbb{R}^3.
+\end{equation}
+
+其动力学写为仿射非线性形式：
+\begin{equation}
+    \dot x = f(x)+g(x)u.
+\end{equation}
+
+对第 $j$ 个追逐者，有
+\begin{equation}
+    \dot x_j^p = f_j(x_j^p)+g_j(x_j^p)u_j^p,
+    \qquad j=1,\dots,n,
+\end{equation}
+对逃避者有
+\begin{equation}
+    \dot x^e = f_e(x^e)+g_e(x^e)u^e.
+\end{equation}
+
+对每个追逐者定义相对误差：
+\begin{equation}
+    \tilde x_j = x_j^p - x^e + r_j,
+    \qquad j=1,\dots,n,
+\end{equation}
+其中 $r_j\in\mathbb{R}^6$ 为期望位移。
+
+其导数为
+\begin{equation}
+    \dot{\tilde x}_j
+    =
+    f_j(x_j^p)-f_e(x^e)
+    +g_j(x_j^p)u_j^p
+    -g_e(x^e)u^e
+    +\dot r_j.
+\end{equation}
+
+若 $r_j$ 为常量，则 $\dot r_j=0$。
+
+\section{组级状态与组级性能指标}
+
+将 $n$ 个误差块堆叠成组状态：
+\begin{equation}
+    Z = \operatorname{col}(\tilde x_1,\tilde x_2,\dots,\tilde x_n)\in\mathbb{R}^{6n}.
+\end{equation}
+
+将 $n$ 个追逐者的控制堆叠为
+\begin{equation}
+    U^p = \operatorname{col}(u_1^p,u_2^p,\dots,u_n^p)\in\mathbb{R}^{3n}.
+\end{equation}
+
+于是组状态动力学可写成
+\begin{equation}
+    \dot Z = F(Z)+G(Z)U^p+E(Z)u^e.
+\end{equation}
+
+定义组级运行代价
+\begin{equation}
+    \ell(Z,U^p,u^e)
+    =
+    \sum_{j=1}^n P_j(\tilde x_j)
+    +
+    \sum_{j=1}^n U_j(u_j^p)
+    -W(u^e).
+\end{equation}
+
+从而组级性能指标为
+\begin{equation}
+    J_{\mathcal S}(Z(0),U^p,u^e)
+    =
+    \int_0^{\infty} \ell(Z,U^p,u^e)\,dt.
+\end{equation}
+
+这里，状态代价取为
+\begin{equation}
+    P_j(\tilde x_j)
+    =
+    \left(\frac{\tilde x_j}{s}\right)^T Q \left(\frac{\tilde x_j}{s}\right),
+\end{equation}
+其中 $s\in\mathbb{R}^6$ 为状态归一化尺度，$Q\succ 0$。
+
+为保持与原始饱和控制结构一致，输入代价采用非二次形式。对追逐者，记
+\begin{equation}
+    U_j(u_j^p)
+    =
+    \sum_{\ell=1}^{3}
+    2\bar u_p r_{1,\ell}
+    \left[
+    u_{j,\ell}^p\operatorname{atanh}\!\left(\frac{u_{j,\ell}^p}{\bar u_p}\right)
+    +
+    \frac{\bar u_p}{2}\ln\!\left(1-\left(\frac{u_{j,\ell}^p}{\bar u_p}\right)^2\right)
+    \right],
+\end{equation}
+对逃避者，记
+\begin{equation}
+    W(u^e)
+    =
+    \sum_{\ell=1}^{3}
+    2\bar u_e r_{2,\ell}
+    \left[
+    u_{\ell}^e\operatorname{atanh}\!\left(\frac{u_{\ell}^e}{\bar u_e}\right)
+    +
+    \frac{\bar u_e}{2}\ln\!\left(1-\left(\frac{u_{\ell}^e}{\bar u_e}\right)^2\right)
+    \right].
+\end{equation}
+
+\section{组级 Hamiltonian 与 HJI 方程}
+
+定义组级值函数
+\begin{equation}
+    V(Z)=\min_{U^p}\max_{u^e} J_{\mathcal S}(Z,U^p,u^e).
+\end{equation}
+
+则 Hamiltonian 为
+\begin{equation}
+    H(Z,U^p,u^e,\nabla V)
+    =
+    \ell(Z,U^p,u^e)
+    +
+    \nabla V(Z)^T\big(F(Z)+G(Z)U^p+E(Z)u^e\big).
+\end{equation}
+
+对应 HJI 方程为
+\begin{equation}
+    0 = \min_{U^p}\max_{u^e} H(Z,U^p,u^e,\nabla V).
+\end{equation}
+
+这是整个组级追逃问题的核心数学对象。
+
+\section{最优控制律推导}
+
+将组级梯度按块写成
+\begin{equation}
+    \nabla V(Z)
+    =
+    \operatorname{col}\left(
+    \frac{\partial V}{\partial \tilde x_1},
+    \frac{\partial V}{\partial \tilde x_2},
+    \dots,
+    \frac{\partial V}{\partial \tilde x_n}
+    \right).
+\end{equation}
+
+\subsection{追逐者控制律}
+
+对第 $j$ 个追逐者，令
+\begin{equation}
+    \frac{\partial H}{\partial u_j^p}=0.
+\end{equation}
+
+由于上述非二次输入代价满足
+\begin{equation}
+    \frac{\partial U_j}{\partial u_j^p}
+    =
+    2\bar u_p R_1\,\operatorname{atanh}\!\left(\frac{u_j^p}{\bar u_p}\right),
+\end{equation}
+因此驻值条件化为
+\begin{equation}
+    2\bar u_p R_1\,\operatorname{atanh}\!\left(\frac{u_j^{p*}}{\bar u_p}\right)
+    +
+    g_j(x_j^p)^T\frac{\partial V}{\partial \tilde x_j}=0.
+\end{equation}
+
+两边同乘 $R_1^{-1}/(2\bar u_p)$，得
+\begin{equation}
+    \operatorname{atanh}\!\left(\frac{u_j^{p*}}{\bar u_p}\right)
+    =
+    -\frac{1}{2\bar u_p}R_1^{-1}g_j(x_j^p)^T\frac{\partial V}{\partial \tilde x_j}.
+\end{equation}
+
+再取双曲正切，可得
+\begin{equation}
+    u_j^{p*}
+    =
+    -\bar u_p
+    \tanh\!\left(
+    \frac{1}{2\bar u_p}
+    R_1^{-1}
+    g_j(x_j^p)^T
+    \frac{\partial V}{\partial \tilde x_j}
+    \right),
+    \qquad j=1,\dots,n.
+\end{equation}
+
+这说明每个追逐者的控制仍保持原始论文中的饱和 $\tanh$ 结构，只是梯度项不再来自单个 critic，而是来自同一个组级值函数的分块梯度。
+
+\subsection{逃避者控制律}
+
+对逃避者做极大化，令
+\begin{equation}
+    \frac{\partial H}{\partial u^e}=0.
+\end{equation}
+
+同理可得
+\begin{equation}
+    u^{e*}
+    =
+    -\bar u_e
+    \tanh\!\left(
+    \frac{1}{2\bar u_e}
+    R_2^{-1}
+    g_e(x^e)^T
+    \sum_{j=1}^{n}\frac{\partial V}{\partial \tilde x_j}
+    \right).
+\end{equation}
+
+因此，从理论上看，逃避者面对的是整个追捕小组的综合梯度压力。
+
+\section{值函数近似}
+
+用线性参数化形式逼近组级值函数：
+\begin{equation}
+    V(Z)\approx \hat V(Z)=\hat W^T\phi(Z),
+\end{equation}
+其中 $\hat W$ 为待学习权重，$\phi(Z)$ 为组级特征向量。
+
+于是梯度近似为
+\begin{equation}
+    \nabla \hat V(Z)
+    =
+    \left(\frac{\partial \phi(Z)}{\partial Z}\right)^T\hat W.
+\end{equation}
+
+第 $j$ 个追逐者对应的分块梯度为
+\begin{equation}
+    \frac{\partial \hat V}{\partial \tilde x_j}
+    =
+    \left(\frac{\partial \phi(Z)}{\partial \tilde x_j}\right)^T\hat W.
+\end{equation}
+
+因此，近似控制律写为
+\begin{equation}
+    u_j^p
+    =
+    -\bar u_p
+    \tanh\!\left(
+    \frac{1}{2\bar u_p}
+    R_1^{-1}
+    g_j(x_j^p)^T
+    \left(\frac{\partial \phi(Z)}{\partial \tilde x_j}\right)^T\hat W
+    \right),
+    \qquad j=1,\dots,n,
+\end{equation}
+以及
+\begin{equation}
+    u^e
+    =
+    -\bar u_e
+    \tanh\!\left(
+    \frac{1}{2\bar u_e}
+    R_2^{-1}
+    g_e(x^e)^T
+    \sum_{j=1}^{n}\left(\frac{\partial \phi(Z)}{\partial \tilde x_j}\right)^T\hat W
+    \right).
+\end{equation}
+
+\begin{remark}
+执行阶段若通信受限，则第 $j$ 个追逐者实际使用掩码组观测
+\begin{equation}
+    \bar Z_j=\Gamma_j Z,
+    \qquad
+    \Gamma_j=\operatorname{diag}(\gamma_{1j}I_6,\dots,\gamma_{nj}I_6),
+    \qquad
+    m_j=[\gamma_{1j},\dots,\gamma_{nj}]^T.
+\end{equation}
+当前实现对应的是掩码特征映射 $\phi(\bar Z_j;m_j)$：局部特征按 $\gamma_{kj}$ 缩放，交叉特征按 $\gamma_{aj}\gamma_{bj}$ 缩放，因此隐藏块在当前时刻被直接零填充，而不是引入历史保持块。
+\end{remark}
+
+\begin{remark}
+以上推导对一般的 $n$ 追一场景成立。当前工程实验只是该一般模型在 $n=3$ 时的一个具体实例。
+\end{remark}
+
+\section{无通信中断时的稳定性}
+
+若采用理想值函数 $V^*(Z)$，则其可作为 Lyapunov 候选函数。沿最优闭环轨迹有
+\begin{equation}
+    \dot V^*(Z)
+    =
+    \nabla V^*(Z)^T\dot Z
+    =
+    -\ell\big(Z,U^{p*},u^{e*}\big).
+\end{equation}
+
+若运行代价对组状态是正定的，即
+\begin{equation}
+    \ell\big(Z,U^{p*},u^{e*}\big)\ge \alpha\|Z\|^2,
+    \qquad \alpha>0,
+\end{equation}
+则有
+\begin{equation}
+    \dot V^*(Z)\le -\alpha\|Z\|^2\le 0.
+\end{equation}
+
+这表明理想闭环下系统稳定。
+
+\begin{theorem}
+若理想值函数 $V^*(Z)$ 正定且径向无界，并满足上述 HJI 方程，则无通信中断时的理想闭环系统渐近稳定。
+\end{theorem}
+
+\begin{proof}
+由 $V^*(Z)$ 的正定性与径向无界性可知，它可以作为 Lyapunov 函数。又由 HJI 方程在最优控制下成立，有
+\[
+\dot V^*(Z)=-\ell\big(Z,U^{p*},u^{e*}\big)\le 0.
+\]
+若 $\ell$ 对误差状态正定，则除平衡点外有 $\dot V^*(Z)<0$，故由 Lyapunov 渐近稳定定理可知系统渐近稳定。
+\end{proof}
+
+\section{近似值函数下的一致最终有界性}
+
+实际实现中使用的是近似值函数 $\hat V(Z)$，而不是理想值函数 $V^*(Z)$。设近似误差满足
+\begin{equation}
+    \nabla \hat V(Z)=\nabla V^*(Z)+\varepsilon_V(Z),
+    \qquad \|\varepsilon_V(Z)\|\le \bar\varepsilon_V.
+\end{equation}
+
+则沿近似闭环轨迹有
+\begin{equation}
+    \dot{\hat V}(Z)
+    \le
+    -\alpha_1\|Z\|^2 + \alpha_2\bar\varepsilon_V,
+\end{equation}
+其中 $\alpha_1,\alpha_2>0$。
+
+因此，当 $\|Z\|$ 足够大时，负项占主导，系统轨迹最终进入一个由近似误差决定的有界邻域。
+
+\begin{theorem}
+在值函数近似误差有界、控制输入有界、动力学与特征映射局部 Lipschitz 的条件下，近似闭环系统是一致最终有界的。
+\end{theorem}
+
+\begin{proof}[证明思路]
+将 $\hat V$ 视作近似 Lyapunov 函数。由于理想部分给出负定衰减，而近似误差只引入有界扰动项，因此有
+\[
+\dot{\hat V}(Z)\le -\alpha_1\|Z\|^2+\alpha_2\bar\varepsilon_V.
+\]
+于是当 $\|Z\|$ 超过某个阈值后，$\dot{\hat V}(Z)<0$。故系统状态将被吸引到一个由 $\bar\varepsilon_V$ 决定的有界集合中，即得到一致最终有界性。
+\end{proof}
+
+\section{通信中断与恢复下的重新收敛}
+
+通信正常时，每个追逐者都可获得完整组状态 $Z$。通信中断时，第 $j$ 个追逐者只能使用掩码组观测 $\bar Z_j=\Gamma_j Z$，并定义观测误差
+\begin{equation}
+    e_j^Z = \bar Z_j - Z = -(I-\Gamma_j)Z.
+\end{equation}
+
+此时，第 $j$ 个追逐者的实际执行控制可写为
+\begin{equation}
+    u_j^{p,\mathrm{exec}}
+    =
+    -\bar u_p
+    \tanh\!\left(
+    \frac{1}{2\bar u_p}
+    R_1^{-1}
+    g_j(x_j^p)^T
+    \left(\frac{\partial \phi(\bar Z_j;m_j)}{\partial \tilde x_j}\right)^T\hat W
+    \right),
+    \qquad j=1,\dots,n.
+\end{equation}
+
+由 $\tanh(\cdot)$ 的 Lipschitz 性以及特征梯度的有界性，存在常数 $L_u>0$，使得
+\begin{equation}
+    \|u_j^{p,\mathrm{exec}}-u_j^{p*}\|
+    \le
+    L_u\|e_j^Z\|.
+\end{equation}
+
+因此，通信中断的作用可以视为闭环系统中的一个由掩码观测引起的有界扰动项。只要中断持续时间有限、恢复后 $\Gamma_j\to I$，则该扰动也是有限时长的。
+
+\begin{theorem}
+若无通信中断时近似闭环系统为一致最终有界，且通信中断时间有限、恢复后 $\Gamma_j\to I$ 从而 $e_j^Z\to 0$，则通信中断/恢复后的闭环系统仍保持有界，并在恢复后重新进入原一致最终有界邻域。
+\end{theorem}
+
+\begin{proof}[证明思路]
+中断期间，控制误差满足
+\[
+\|u_j^{p,\mathrm{exec}}-u_j^{p*}\|\le L_u\|e_j^Z\|,
+\]
+因此闭环系统等价于理想近似闭环系统叠加一个有界扰动。由于中断时长有限，扰动总能量有限；通信恢复后，$e_j^Z\to 0$，扰动项消失。由一致最终有界系统对有界扰动的鲁棒性可知，系统状态始终保持有界，并在恢复后重新回到原有界邻域。
+\end{proof}
+
+\section{可行性结论}
+
+由上述推导可知，这个 $n$ 追一通信感知组级追捕模型在数学上是自洽的：
+\begin{enumerate}[label=\arabic*)]
+    \item 组级性能指标、Hamiltonian 与 HJI 方程定义明确；
+    \item 最优控制律仍保持与原始论文一致的饱和 $\tanh$ 结构；
+    \item 使用组级值函数后，所有追逐者的控制天然耦合到同一个组级梯度；
+    \item 通信中断可等价视为局部组状态估计误差导致的有界扰动；
+    \item 在理想值函数下可得到渐近稳定，在近似值函数下可得到一致最终有界，在中断/恢复下可得到恢复后的重新收敛。
+\end{enumerate}
+
+因此，这一模型足以作为“多追一场景下，追逐者之间通信是否有理论意义、通信中断后是否仍能恢复收敛”的数学验证框架。
+
+\end{document}

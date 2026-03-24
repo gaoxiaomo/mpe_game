@@ -1,0 +1,293 @@
+XU et al.: APPROXIMA TE OPTIMAL STRA TEGY FOR MULTIAGENT SYSTEM PURSUIT–EV ASION GAME 1673
+B. PI Algorithm for MPE Game
+In this section, the HJI equation will be introduced, which
+is used to derive the optimal control strategy {up∗
+j ,ue∗
+i } and
+the value functions V∗
+i (x). The concept of admissible control
+is deﬁned in Deﬁnition 1. Then, the subsequent best-response
+HJI equation, serving as the Bellman equation for the system, is
+deﬁned as
+H∗
+i = Pi(x)+ U(up∗
+j )−W(ue∗
+i )
++∇TVi(x)
+⎛
+⎝
+Np∑
+j=1
+(cj,i(Fj,i(x)+ gp
+jup∗
+j −ge
+i ue∗
+i ))
+⎞
+⎠=0
+(21)
+whereup∗
+j andue∗
+i represent the optimal control strategies, which
+are given by
+⎧
+⎪⎪⎪⎪⎨
+⎪⎪⎪⎪⎩
+up∗
+j =a r gm i nup
+j ∈Ω2 Hi(x,up
+j,ue
+i,∇Vi)
+= −¯up tanh
+(
+1
+2¯up
+R−1
+1 (gp
+j)T∇V∗
+i (x)
+)
+ue∗
+i =a r gm a xue
+i∈Ω2 Hi(x,up
+j,ue
+i,∇Vi)
+= −¯ue tanh
+(
+1
+2¯ue
+R−1
+2 (ge
+i )T∇V∗
+i (x)
+)
+. (22)
+Substituting (22) into (21), the approximate HJI function is
+expressed in the following form:
+H∗
+i = Pi(x)
++
+Np∑
+j=1
+(
+2cj,i
+∫ −¯up tanh(ρp(V∗
+i ))
+0
+(
+¯up tanh−1 τ
+¯up
+)T
+R1dτ
+)
+−2dep
+i
+∫ −¯ue tanh(ρe(V∗
+i ))
+0
+(
+¯ue tanh−1 τ
+¯ue
+)T
+R2dτ
++∇TV∗
+i (x)
+⎛
+⎝
+Np∑
+j=1
+(
+cj,i
+(
+Fj,i(x)+ gp
+jup∗
+j −ge
+i ue∗
+i
+))
+⎞
+⎠ =0
+(23)
+whereρp(V∗
+i ),ρe(V∗
+i ) ∈Rm are deﬁned as
+ρp(V∗
+i ) ≜ 1
+2¯up
+R−1
+1 (gp
+j)T∇V∗
+i (x)
+ρe(V∗
+i ) ≜ 1
+2¯ue
+R−1
+2 (ge
+i )T∇V∗
+i (x).
+Then, (23) can be reformulated as
+H∗
+i = Pi(x)
++
+Np∑
+j=1
+(
+cj,i¯up tanhT (ρp(V∗
+i ))(gp
+j)T∇V∗
+i (x)
++cj,i¯u2
+p ¯R1 ln
+(
+⃗1−tanh2(ρp(V∗
+i ))
+))
+−dep
+i (¯ue tanhT (ρe(V∗
+i ))(ge
+i )T∇V∗
+i (x)
++¯u2
+e ¯R2 ln
+(
+⃗1−tanh2 (ρe(V∗
+i ))
+)
+−∇TV∗
+i (x)
+Np∑
+j=1
+(
+cj,igp
+j ¯up tanh(ρp(V∗
+i ))
+)
++∇TV∗
+i (x)dep
+i ge
+i ¯ue tanh(ρe(V∗
+i ))
++∇TV∗
+i (x)
+⎛
+⎝
+Np∑
+j=1
+(cj,iFj,i(x))
+⎞
+⎠ =0 (24)
+Algorithm 2: Policy Iteration Algorithm.
+Input: System initial states {xp
+j,xe
+i} and their
+corresponding initial admissible control policy
+{μp
+j,0,μe
+i,0}.
+Initialize the error threshold ξ. Set V0
+i =0 , and let s =0 .
+repeat
+Based on the control pair {μp
+j,s,μe
+i,s}, solve the equation
+(26) to obtain the value functions Vs+1
+i
+Update the control policy μp
+j,s andμe
+i,s simultaneously
+by
+μp
+j,s = −¯up tanh
+( 1
+2¯up
+R−1
+1 (gp
+j)T∇Vs+1
+i (x)
+)
+μe
+i,s = −¯ue tanh
+( 1
+2¯ue
+R−1
+2 (ge
+i )T∇Vs+1
+i (x)
+)
+. (25)
+Update the weighted adjacency matrix Ape andAep
+simultaneously by using Algorithm 1.
+Set s = s+1 .
+until |Vs
+i −Vs−1
+i | <ξ
+Output:{μp
+j,s,μe
+i,s}.
+where ⃗1 ≜ [11 ... 1]T ∈Rm, ¯R1 ≜ [r11 r12 ...r 1m], and
+¯R2 ≜ [r21 r22 ...r 2m].
+Remark 3: In this article, the control strategy for each agent
+is distributed. However, in Algorithm 2, each agent’s solution
+of the HJI equation requires knowledge of the dynamics of the
+associated agent, which is implied in ∇Vs+1
+i (x) in (25).T h i s
+restricts the application of the results. Therefore, in the next
+section, we will improve Algorithm 2 to achieve distributed
+control.
+Thus, the approximate HJI function can be simpliﬁed as
+H∗
+i = Pi(x)
++
+Np∑
+j=1
+(
+cj,i¯u2
+p ¯R1 ln
+(
+⃗1−tanh2(ρp(V∗
+i ))
+))
+−dep
+i ¯u2
+e ¯R2 ln
+(
+⃗1−tanh2(ρe(V∗
+i ))
+)
++∇TV∗
+i (x)
+⎛
+⎝
+Np∑
+j=1
+(cj,iFj,i(x))
+⎞
+⎠ =0 . (26)
+In this article, we denote the functions Vs
+i (x) and {μp
+1,s,μe
+1,s,
+...,μ p
+Np,s,μe
+Ne,s}(for s =1 ,2,... ) as approximations of the
+optimal values V∗
+i (x) and {up∗
+j ,ue∗
+i } at each iteration step s.
+Then, to solve the HJI approximate equations, the on-policy PI
+algorithm is put forward in Algorithm 2.
+In the realm of PE games involving nonlinear systems, Y uan
+et al. [33] conducted pertinent research. However, the property
+for MPE games has not been sufﬁciently explored. In the fol-
+lowing, we will demonstrate the convergence of the on-policy
+PI algorithm for MPE games. The analysis is based on the work
+of [43].
+Theorem 2: Consider the system of MPE game described
+by (6) with admissible control pair {μp
+j,s,μe
+i,s} obtained by
+(25) in Algorithm 2. If the system model parameters F(Xp),
+F(Xe) andGi(Xp),Gi(Xe) are known, then the iterative value
+functions will converge to V∗
+i (x),a s s →∞ .
+Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on December 24,2025 at 05:16:20 UTC from IEEE Xplore.  Restrictions apply. 

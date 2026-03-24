@@ -1,0 +1,97 @@
+{
+  "case": {
+    "name": "3v1",
+    "n_pursuers": 3,
+    "n_evaders": 1,
+    "seed": 7,
+    "assignment_mode": "zero",
+    "layout_mode": "structured"
+  },
+  "scenario": {
+    "name": "scenario_3v1_generalized",
+    "initial_assignment": [
+      0,
+      0,
+      0
+    ],
+    "capture_radius": 180.0,
+    "swap_threshold": 1000000000.0,
+    "t_final": 90.0
+  },
+  "train": {
+    "iterations": 12,
+    "final_weight_norms": [
+      0.8267774564052733,
+      0.7818867989948088,
+      0.8050355685942602
+    ],
+    "final_weight_norm_squares": [
+      0.6835609624199737,
+      0.6113469664423485,
+      0.6480822667018837
+    ],
+    "final_weight_vectors": [
+      [
+        0.3521,
+        0.3412,
+        0.3606,
+        0.3287,
+        0.2985,
+        0.3405
+      ],
+      [
+        0.2774,
+        0.3358,
+        0.3541,
+        0.3105,
+        0.3343,
+        0.2969
+      ],
+      [
+        0.2952,
+        0.3089,
+        0.3257,
+        0.3166,
+        0.3839,
+        0.3344
+      ]
+    ],
+    "final_delta_per_critic": [
+      0.004469290400732113,
+      0.004675575461650546,
+      0.005355453361756228
+    ],
+    "mean_residual_per_critic": [
+      46.7485679696457,
+      61.41479244095435,
+      56.03476554996343
+    ]
+  },
+  "dynamic_eval": {
+    "capture_time_s": 57.400000000000006,
+    "final_team_error": 262.1134571789781,
+    "final_max_assigned_error": 94.62636149316354,
+    "mean_assigned_error": 1736.6556018366655
+  },
+  "fixed_eval": null,
+  "network": {
+    "v_snac_networks": 3,
+    "ac_networks_estimated": 8,
+    "network_reduction_percent": 62.5
+  },
+  "runtime": {
+    "wall_time_s": 5.895889700012049,
+    "train_wall_time_s": 2.2417875999817625,
+    "eval_dynamic_wall_time_s": 3.654077299986966,
+    "eval_fixed_wall_time_s": 0.0,
+    "train_iterations": 12,
+    "simulated_steps_total": 3000,
+    "ms_per_step_total": 1.965296566670683,
+    "ms_per_step_train": 1.8681563333181355,
+    "ms_per_step_eval_dynamic": 2.0300429444372035,
+    "ms_per_step_eval_fixed": null
+  },
+  "dynamic_switch_count": 0,
+  "dynamic_switch_times_s": [],
+  "same_weights_same_seed_baseline": false
+}

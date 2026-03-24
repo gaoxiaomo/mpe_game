@@ -1,0 +1,279 @@
+1674 IEEE SYSTEMS JOURNAL, VOL. 18, NO. 3, SEPTEMBER 2024
+Proof: Based on (26), we consider a Banach space [44] V ⊂
+{Vi(x) | Vi(x):Ω → R,Vi(0) = 0} with a norm ∥·∥ Ω. Then,
+deﬁne the mapping Hi(Vi(x)) :V × V ···× V  
+Ne
+→ V as
+Hi(Vi(x)) ≜ Pi(x)
++
+Np∑
+j=1
+(
+cj,i¯u2
+p ¯R1 ln
+(
+⃗1−tanh2(ρp(Vi))
+))
+−dep
+i ¯u2
+e ¯R2 ln
+(
+⃗1−tanh2(ρe(Vi))
+)
++∇TVi(x)
+⎛
+⎝
+Np∑
+j=1
+(cj,iFj,i(x))
+⎞
+⎠ =0 . (27)
+Deﬁne mapping Ti : V → V
+Ti (Vi(x)) ≜ Vi(x)−
+(
+H′
+iVi
+)−1
+Hi (Vi(x)) (28)
+where H′
+iVi denotes the Fréchet derivative of Hi taken with
+respect to Vi. Here, we introduce the deﬁnition of Gâteaux
+derivative to compute the Fréchet derivative indirectly.
+Deﬁnition 3: Let H : U ⊆X → Y b eag i v e nm a pw i t hX
+and Y Banach spaces, where U(V) denotes a neighborhood of
+V .T h em a pH is Gâteaux differentiable at V if and only there
+exists a bounded linear operatorL : X → Y such that [25], [45]
+H(V +tK)−H(V)= tL(K)+ o(s),s → 0
+for all K with ∥K∥Ω =1 and all real numbers t in some
+neighborhood of zero, where lims→0(o(x)/s)=0 . L is called
+the Gâteaux derivative of H atV . Then, the Gâteaux derivative
+at V is deﬁned as
+L(K) = lim
+t→0
+H(V +tK)−H(V)
+t . (29)
+To compute the Fréchet derivative, we introduce the following
+Lemma 1.
+Lemma 1 (see [46]): If the Gâteaux derivative L exists in
+some neighborhood of V and L is continuous at V , then L =
+H′(V) is also an Fréchet derivative at V .
+Then, we compute the Fréchet derivative in the following
+Lemma 2 by (29).
+Lemma 2: Consider the mapping Hi deﬁned in (27), ∀Vi ∈
+V , the Gâteaux differential of Hi at Vi is
+H′
+V s+1
+i
+K = LiV s+1
+i
+(K)
+= ∇TK
+⎛
+⎝
+Np∑
+j=1
+(
+cj,i
+(
+Fj,i(x)+ gp
+jup
+j −ge
+i ue
+i
+))
+⎞
+⎠
+=0 . (30)
+Proof: First, according to the deﬁnition of Hi in (27),∀Vi ∈
+V , one has
+Hi(Vi(x)+ tK)−Hi(Vi(x))
+=
+Np∑
+j=1
+(
+cj,i¯u2
+p ¯R1
+(
+ln
+(
+⃗1−tanh2(ρp(Vi +tK))
+)
+−ln
+(
+⃗1−tanh2(ρp(Vi))
+)))
+−dep
+i ¯u2
+e ¯R2
+(
+ln
+(
+⃗1−tanh2(ρe(Vi +tK))
+)
+−ln
+(
+⃗1−tanh2(ρe(Vi))
+))
++t∇TK(x)
+⎛
+⎝
+Np∑
+j=1
+(cj,iFj,i(x))
+⎞
+⎠ .
+Therefore, the Gâteaux differential at Vi is
+LiVi(K) = lim
+t→0
+Hi(Vi +tK)−Hi(Vi)
+t
+= ∇TK
+⎛
+⎝
+Np∑
+j=1
+(
+cj,i
+(
+Fj,i(x)+ gp
+jup
+j −ge
+i ue
+i
+))
+)
+⎞
+⎠ .
+(31)
+Then, we will demonstrate the continuity of LiVi onVi.∀K0 ∈
+V ,w eh a v e
+∥LiVi(K)−LiVi(K0)∥Ω
+=
+
+∇T(K −K0)
+⎛
+⎝
+Np∑
+j=1
+(
+cj,i
+(
+Fj,i(x)+ gp
+jup
+j −ge
+i ue
+i
+))
+⎞
+⎠
+
+Ω
+≤
+
+Np∑
+j=1
+(
+cj,i
+(
+Fj,i(x)+ gp
+jup
+j −ge
+i ue
+i
+))
+
+Ω
+∥∇(K −K0)∥Ω
+≤
+
+Np∑
+j=1
+(
+cj,i
+(
+Fj,i(x)+ gp
+jup
+j −ge
+i ue
+i
+))
+
+Ω
+ϕ∥K −K0∥Ω
+≜ ϖ∥K −K0∥Ω
+whereϕ>0 andϖ is deﬁned as
+ϖ ≜ ϕ
+
+Np∑
+j=1
+(
+cj,i
+(
+Fj,i(x)+ gp
+jup
+j −ge
+i ue
+i
+))
+
+Ω
+.
+Therefore,ε>0, ∃η= ε
+ϖ such that
+∥LiVi(K)−LiVi(K0)∥Ω ≤ϖ∥K −K0∥ <ε .
+Sinceϖ∥K −K0∥ <η, which impliesLiVi is continuous atVi.
+According to Lemma 1, H′
+V s+1
+i
+K = LiV s+1
+i
+(K) corresponds
+to the Fréchet differential as depicted in (29), while H′
+V s+1
+i
+=
+LiV s+1
+i
+represents the Fréchet derivative. ■
+In accordance with the conclusion of the Lemma 2, we can
+prove that the policy iteration algorithm is mathematically equiv-
+alent to the quasi-Newton’s iteration in a Banach space V .
+Theorem 3: Consider the mapping T deﬁned in (28), then
+the iterative algorithm between (26) and (25) is equivalent to the
+following quasi-Newton’s iteration:
+Vs+1
+i (x)= T (Vs
+i (x))
+= Vs
+i −
+(
+H′
+iVi
+)−1
+Hi (Vi(x)),s =0 ,1,2,....
+(32)
+Proof: Considering (30) and Lemma 2, one has
+H′
+V s+1
+i
+Vs+1
+i (x)
+= ∇TVs+1
+i (x)
+⎛
+⎝
+Np∑
+j=1
+(
+cj,i
+(
+Fj,i(x)+ gp
+jup
+j −ge
+i ue
+i
+))
+⎞
+⎠
+(33)
+Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on December 24,2025 at 05:16:20 UTC from IEEE Xplore.  Restrictions apply. 

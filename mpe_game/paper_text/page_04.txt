@@ -1,0 +1,334 @@
+1672 IEEE SYSTEMS JOURNAL, VOL. 18, NO. 3, SEPTEMBER 2024
+errors of scenarios A and B are deﬁned as ETeam and Eo
+team,
+respectively. Then,Eteam ≤Eo
+team holds.
+Proof: Based on Algorithm 1, If the condition (γj,i +
+γj′,i′)−(γj′,i +γj,i′) >ϱ is not triggered, due to the same
+initial target topology, the two methods have the same adjacency
+matrix from beginning to end, and subsequentlyETeam = EO
+Team.
+If at a certain time step t, two pursuers exchange their tar-
+get evaders, it can be described as cj,i =0 ,cj′,i′ =0 ,cj′,i =
+1,cj,i′ =1 to the state where cj,i =1 ,cj′,i′ =1 ,cj′,i =
+0,cj,i′ =0 .L e t ˜xuc and ˜xo
+uc be deﬁned as the sums of the
+unchanged target topology part of the state errors for ETeam and
+EO
+Team, respectively. Then,ETeam andEO
+Team can be reformulated
+as
+ETeam =˜xuc +
+ν⊙(xp
+j′ −xe
+i +rpe
+j,i)
+
++
+ν⊙(xp
+j −xe
+i′ +rpe
+j,i)
+
+EO
+Team =˜xo
+uc +
+ν⊙(xp
+j −xe
+i +rpe
+j,i)
+
++
+ν⊙(xp
+j′ −xe
+i′ +rpe
+j,i)
+. (8)
+Based on (8), we calculate the difference between the team error
+statesETeam andEO
+Team at time step t, i.e.,
+ETeam −EO
+Team =
+ν⊙(xp
+j′ −xe
+i +rpe
+j,i)
+
++
+ν⊙(xp
+j −xe
+i′ +rpe
+j,i)
+−
+ν⊙(xp
+j −xe
+i +rpe
+j,i)
+
+−
+ν⊙(xp
+j′ −xe
+i′ +rpe
+j,i)
+. (9)
+Since
+(γj,i +γj′,i′)−(γj′,i +γj,i′)
+=
+ν⊙(xp
+j −xe
+i +rpe
+j,i)
++
+ν⊙(xp
+j′ −xe
+i′ +rpe
+j,i)
+
+−
+ν⊙(xp
+j′ −xe
+i +rpe
+j,i)
+−
+ν⊙(xp
+j −xe
+i′ +rpe
+j,i)
+ >ϱ .
+(10)
+It can be deduced that
+ETeam −EO
+Team ≤−ϱ< 0. (11)
+Since the previous values ofcj,i,cj′,i′,cj′,i, andcj,i′ are actually
+arbitrarily chosen, therefore, by the same token, any subsequent
+exchange will satisfy ETeam ≤EO
+Team, thereby mathematically
+demonstrating the enhancement of cohesion. ■
+Based on Algorithm 1 and Theorem 1, dynamic target as-
+signment prioritizes team cohesion over individual optimization
+by reducing the pursuer team’s overall cost. To quantify the
+outcome of the MPE game, for each target evader, the cost
+functionJi is deﬁned as
+Ji
+(
+x0,up
+j,ue
+i
+)
+=
+∫ ∞
+0
+(
+Pi(x)+ U(up
+j)−W(ue
+i)
+)
+dt (12)
+where Pi(x) is deﬁned as
+Pi(x)=(˜xpe
+i )TQ˜xpe
+i (13)
+and [32]⎧
+⎨
+⎩
+U(up
+j)= ∑Np
+j=1
+(
+2ci,j
+∫up
+j
+0 (¯up tanh−1 τ
+¯up
+)TR1dτ
+)
+W(ue
+i)=2 dep
+i
+∫ue
+i
+0 (¯ue tanh−1 τ
+¯ue
+)TR2dτ
+(14)
+with positive-deﬁnite matrices Q ∈Rn×n and R1,R2 ∈
+Rm×m. Taking into the factor of actuator saturation, non-
+quadratic functions U(·): Rm → R and W(·): Rm → R are
+designed to constrain the control input up
+j andue
+i within ¯up and
+¯ue, respectively.
+Deﬁnition 1: A series of control policiesup
+j = {up
+1,...,u p
+Np}
+and ue
+i = {ue
+1,...,u e
+Ne} are deﬁned to be admissible with re-
+spect to (12) overΩ2 ∈Rn,i f {up
+j,ue
+i} are continuous over Ω2
+and the control pair {up
+j,ue
+i} stabilizes (6) overΩ2, and (12) is
+ﬁnite.
+According to the control objective, pursuers aim to minimize
+function Ji(x0,up
+j,ue
+i), while the evaders aim to maximize
+the performance function Ji(x0,up
+j,ue
+i) by designing their re-
+spective control input up
+j and ue
+i . Upon achieving equilibrium
+conditions in the PE game, as per the Nash–Pontryagin minimax
+principle, this state is referred to as a saddle point equilibrium
+(SPE). There is no motivation for any agents to deviate from
+the equilibrium. In the following, the deﬁnition of SPE is pre-
+sented [41].
+Deﬁnition 2: Consider the MPE game in this article. Every
+pair of control strategies(up∗
+j ,ue∗
+i ) is said to be the SPE solution
+if
+Ji
+(
+x(0),up∗
+j ,ue
+i
+)
+≤Ji
+(
+x(0),up∗
+j ,ue∗
+i
+)
+≤Ji
+(
+x(0),up
+j,ue∗
+i
+)
+.
+(15)
+Deﬁne the value functions associated with admissible control
+policy as
+Vi(x)=
+∫ ∞
+t
+(
+Pi(x)+ U(up
+j)−W(ue
+i)
+)
+dτ. (16)
+The optimal value functions V∗
+i (x) is deﬁned as
+V∗
+i (x)= m i n
+{up
+j ,ue
+i}∈Ω2
+(∫ ∞
+t
+(
+Pi(x)+ U(up
+j)−W(ue
+i)
+)
+dτ
+)
+.
+(17)
+Based on the fact that the value functions (16) are continuously
+differentiable, taking its differentiation and obtain the Hamilto-
+nian equation
+Hi(x,up
+j,ue
+i,∇V)= Pi(x)+ U(up
+j)−W(ue
+i)
++∇TVi(x)
+⎛
+⎝
+Np∑
+j=1
+(cj,i(Fj,i(x)+ gp
+jup
+j −ge
+i ue
+i))
+⎞
+⎠ (18)
+where ∇Vi(x) ≜ ∂Vi(x)
+∂˜xpe
+i
+, ∇Vi(x) ∈Rn, and Fj,i(x) ≜ fp
+j −
+fe
+i .
+Taking the ﬁrst-order derivative of Hi with respect to up
+j and
+ue
+i , respectively, we can obtain that
+⎧
+⎨
+⎩
+up
+j = −¯up tanh
+(
+1
+2¯up
+R−1
+1 (gp
+j)T∇Vi(x)
+)
+ue
+i = −¯ue tanh
+(
+1
+2¯ue
+R−1
+2 (ge
+i )T∇Vi(x)
+)
+.
+(19)
+According to [42],w eh a v e
+Hi(x,up∗
+j ,ue∗
+i ,∇V∗
+i )=m a x
+ue
+i
+min
+up
+j
+Hi(x,ue
+i,up
+j,∇V∗
+i )
+=m i n
+up
+j
+max
+ue
+i
+Hi(x,ue
+i,up
+j,∇V∗
+i )=0 .
+(20)
+For the brevity, we will write J∗
+i (x0), H∗
+i to denote
+J∗
+i (x0,up∗
+j ,ue∗
+i ), Hi(x,up∗
+j ,ue∗
+i ,∇V∗
+i ) subsequently.
+Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on December 24,2025 at 05:16:20 UTC from IEEE Xplore.  Restrictions apply. 

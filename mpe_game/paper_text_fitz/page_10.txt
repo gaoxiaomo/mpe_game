@@ -1,0 +1,103 @@
+1678
+IEEE SYSTEMS JOURNAL, VOL. 18, NO. 3, SEPTEMBER 2024
+Fig. 4.
+Convergence curves of weight estimate value ˆ
+Wi,s.
+Fig. 5.
+Comparison of hi under different saturation constraints. (a) ¯up > ¯ue.
+(b) ¯up = ¯ue. (c) ¯up < ¯ue.
+From Fig. 4, we can observe the convergence process of
+the critic network weights ˆWi,s updated by (46). Thus, the
+approximate value functions converge to the optimal ones. Here,
+we calculate and plot the square of the Euclidean norm of the
+ˆWi,s vector. To be speciﬁc, the weight vector ˆW1,s converges to
+[0.1997, 0.1453, 0.1995, 0.3005, 0.2966, 0.2998]T , the weight
+vector
+ˆW2,s converges to [0.1996, 0.1286, 0.1956, 0.3002,
+0.2871, 0.2992]T , and the weight vector ˆW3,s converges to
+[0.1940, 0.1342, 0.2002, 0.3014, 0.2909, 0.3004]T at the end of
+the simulation.
+To compare and validate the impact of different saturation
+constraints ¯up and ¯ue on the algorithm’s results, the algorithm is
+evaluated under three conditions: ¯up > ¯ue, ¯up = ¯ue, and ¯up <
+¯ue. With all other conditions held constant, the state tracking
+of pursuers and evaders under different saturation constraints is
+depicted in Fig. 5. In Fig. 5(a), ¯up = 25, ¯ue = 20, in Fig. 5(b),
+¯up = ¯ue = 20, and in Fig. 5(c), ¯up = 15, ¯ue = 20. From the
+ﬁgure, it can be observed that as ¯up decreases relative to ¯ue, the
+time required for the state error to diminish also increases.
+C. Scenario 2: Multiple-Pursuer-Multiple-Evader
+Consider the following scenario with three pursuers and three
+evader in R3. This serves as an example of an MPE game with
+multiple pursuers and multiple evaders. The initial states of
+pursuers and evaders are xp
+1 = [263, −2380, 800, 123, 12, 18]T ,
+xp
+2 = [−380, 3100, −200, 12, −40, 15]T , xp
+3 = [2500, −3280,
+400, −15, 30, 15]T , xe
+1 = [1037, 360, 100, 80, 40, 0], xe
+2 = [521,
+1030, 34; 0; 80; 1.6],
+xe
+3 = [1816, −1887, −90, 40, 65, −0.1],
+¯up = 20, ¯ue = 20. The expected displacement rpe
+j,i = [100, 50,
+Fig. 6.
+MPE Game’s Trajectory using our algorithm, three-pursuer-three-
+evader scenario.
+Fig. 7.
+State errors between pursuers and their respective old/new targets in
+our algorithm.
+Fig. 8.
+Trajectory of the MPE game in a three-pursuer-three-evader setting
+using [26].
+Fig. 9.
+State errors between three pursuers and their respective target us-
+ing [26].
+50, 0, 0, 0]. The activation functions ψi(·) are selected as
+sigmoid functions. The swap threshold ϱ = 50.
+The results of the three-pursuer-three-evader trajectory are
+shown in Fig. 6. The corresponding state error between the
+pursuers and their respective old/new target evader is presented
+in Fig. 7. It can be observed from the trajectory that the targets
+of the pursuers undergo changes during the process under the
+dynamic target graph algorithm. The original and the reassigned
+weighted adjacency matrices, denoted as Ape and A′
+pe are shown
+as
+Ape =
+⎡
+⎣
+1
+0
+0
+0
+1
+0
+0
+0
+1
+⎤
+⎦, A′
+pe =
+⎡
+⎣
+0
+0
+1
+0
+1
+0
+1
+0
+0
+⎤
+⎦.
+As a comparative experiment, under the same conditions, we
+have implemented MPE experiments using the target topology
+in [26]. The corresponding trajectory and state error are shown
+in Figs. 8 and 9, respectively. In existing works [17], [18], [39]
+on the MPE problem with ﬁxed topologies, different control
+strategies are employed, but all use graphs to model agent
+Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on December 24,2025 at 05:16:20 UTC from IEEE Xplore.  Restrictions apply. 
