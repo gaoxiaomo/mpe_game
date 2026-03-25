@@ -321,36 +321,14 @@ def plot_weight_convergence(
 ) -> None:
     fig, ax = plt.subplots(figsize=(8, 4.5))
     w_hist = train_result.weight_history  # [iter, critic, feature]
+    # Paper Fig. 4/11: plot ||W_hat_{i,s}||^2 directly.
     norm_sq = np.sum(w_hist * w_hist, axis=2)
-    # Paper-style display: smooth then enforce non-increasing envelope.
-    smoothed = norm_sq.copy()
-    if smoothed.shape[0] >= 3:
-        for i in range(smoothed.shape[1]):
-            y = smoothed[:, i]
-            y2 = y.copy()
-            y2[1:-1] = (y[:-2] + y[1:-1] + y[2:]) / 3.0
-            smoothed[:, i] = y2
-    for i in range(smoothed.shape[1]):
-        curve = np.minimum.accumulate(smoothed[:, i])
-        if paper_target_start is not None and paper_target_end is not None and i < len(paper_target_end):
-            c0 = float(curve[0])
-            c1 = float(curve[-1])
-            if abs(c0 - c1) < 1e-12:
-                curve = np.linspace(paper_target_start, paper_target_end[i], curve.shape[0])
-            else:
-                nrm = (curve - c1) / (c0 - c1)
-                # Emphasize tail convergence so curves flatten near the end.
-                nrm = np.power(np.clip(nrm, 0.0, 1.0), 1.8)
-                curve = paper_target_end[i] + nrm * (paper_target_start - paper_target_end[i])
-        # Force a clear flat tail to match paper-style converged plateau.
-        tail = max(4, int(0.18 * curve.shape[0]))
-        curve[-tail:] = curve[-1]
-        curve_ext = _extend_flat_tail(curve, min_tail=8, frac=0.40)
-        iters_ext = np.arange(curve_ext.shape[0], dtype=float)
-        ax.plot(iters_ext, curve_ext, linewidth=1.8, label=f"$\\hat W_{{{i+1},s}}$")
-    ax.set_xlabel("Policy iteration")
-    ax.set_ylabel("Weight estimate scalar")
-    ax.set_title(f"{title} (paper-style decreasing convergence)")
+    iters = np.arange(norm_sq.shape[0])
+    for i in range(norm_sq.shape[1]):
+        ax.plot(iters, norm_sq[:, i], linewidth=1.8, label=f"$\\|\\hat W_{{{i+1},s}}\\|^2$")
+    ax.set_xlabel("Policy iteration $s$")
+    ax.set_ylabel("$\\|\\hat W_{i,s}\\|^2$")
+    ax.set_title(title)
     ax.grid(alpha=0.3)
     ax.legend()
     _save(fig, path)

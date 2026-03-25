@@ -1,0 +1,104 @@
+{
+  "case": {
+    "name": "3v3",
+    "n_pursuers": 3,
+    "n_evaders": 3,
+    "seed": 17,
+    "assignment_mode": "shifted",
+    "layout_mode": "structured"
+  },
+  "scenario": {
+    "name": "scenario_3v3_generalized",
+    "initial_assignment": [
+      1,
+      2,
+      0
+    ],
+    "capture_radius": 220.0,
+    "swap_threshold": 5.0,
+    "t_final": 140.0
+  },
+  "train": {
+    "iterations": 28,
+    "final_weight_norms": [
+      0.7055256075656481,
+      0.5834965254446317,
+      0.6100219099362426
+    ],
+    "final_weight_norm_squares": [
+      0.4977663829308769,
+      0.3404681952059577,
+      0.37212673060226126
+    ],
+    "final_weight_vectors": [
+      [
+        0.2581,
+        0.224,
+        0.3579,
+        0.364,
+        0.2267,
+        0.2626
+      ],
+      [
+        0.2372,
+        0.2463,
+        0.2525,
+        0.2168,
+        0.2286,
+        0.2459
+      ],
+      [
+        0.2202,
+        0.2654,
+        0.2921,
+        0.2183,
+        0.2441,
+        0.2462
+      ]
+    ],
+    "final_delta_per_critic": [
+      0.0009795976828539746,
+      0.0011311565138998544,
+      0.0009844474077190166
+    ],
+    "mean_residual_per_critic": [
+      24.309762686602546,
+      27.122785227556,
+      34.90890782790446
+    ]
+  },
+  "dynamic_eval": {
+    "capture_time_s": 36.4,
+    "final_team_error": 205.55425421587745,
+    "final_max_assigned_error": 102.84905208430035,
+    "mean_assigned_error": 564.4338237139209
+  },
+  "fixed_eval": {
+    "capture_time_s": 66.65,
+    "final_team_error": 207.40351951846037,
+    "final_max_assigned_error": 113.7100896738418,
+    "mean_assigned_error": 749.3502416255388
+  },
+  "network": {
+    "v_snac_networks": 3,
+    "ac_networks_estimated": 12,
+    "network_reduction_percent": 75.0
+  },
+  "runtime": {
+    "wall_time_s": 34.57520627905615,
+    "train_wall_time_s": 17.62216827296652,
+    "eval_dynamic_wall_time_s": 9.091671203030273,
+    "eval_fixed_wall_time_s": 7.8612877449486405,
+    "train_iterations": 28,
+    "simulated_steps_total": 11060,
+    "ms_per_step_total": 3.126148849824245,
+    "ms_per_step_train": 3.2275033466971648,
+    "ms_per_step_eval_dynamic": 3.247025429653669,
+    "ms_per_step_eval_fixed": 2.807602766053086
+  },
+  "dynamic_switch_count": 1,
+  "dynamic_switch_times_s": [
+    0.0
+  ],
+  "same_weights_same_seed_baseline": true
+}

@@ -399,7 +399,8 @@ class MPESimulator:
                 min_samples=self.learning.min_samples_per_evader,
             )
 
-            alpha = float(np.clip(self.learning.critic_learning_rate, 0.0, 1.0))
+            alpha_base = float(np.clip(self.learning.critic_learning_rate, 0.0, 1.0))
+            alpha = alpha_base * (float(self.learning.critic_lr_decay) ** s)
             updated = []
             for j in range(n_critics):
                 w = weights[j] + alpha * (solved_weights[j] - weights[j])

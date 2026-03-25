@@ -125,14 +125,15 @@ def main() -> None:
     learning = LearningParams(
         policy_iterations=18 if args.quick else 40,
         rollout_steps=100 if args.quick else 200,
-        min_samples_per_evader=160 if args.quick else 400,
+        min_samples_per_evader=50,
     )
     learning_3v1 = LearningParams(
         policy_iterations=36 if args.quick else 110,
         rollout_steps=110 if args.quick else 220,
-        min_samples_per_evader=220 if args.quick else 520,
+        min_samples_per_evader=50,
         convergence_tol=1e-5,
-        critic_learning_rate=0.01,
+        critic_learning_rate=0.05,
+        critic_lr_decay=0.90,
         exploration_std_start=0.5,
         exploration_std_end=0.05,
     )
@@ -179,10 +180,11 @@ def main() -> None:
     learning_3v3 = LearningParams(
         policy_iterations=30 if args.quick else 90,
         rollout_steps=100 if args.quick else 240,
-        min_samples_per_evader=160 if args.quick else 520,
+        min_samples_per_evader=50,
         graph_update_interval=1,
         graph_update_start_step=0,
-        critic_learning_rate=0.01,
+        critic_learning_rate=0.05,
+        critic_lr_decay=0.90,
     )
     # Strict apples-to-apples 3v3 comparison:
     # same trained weights + same initial state + same eval seed,
@@ -225,7 +227,7 @@ def main() -> None:
     sat_learning = LearningParams(
         policy_iterations=10 if args.quick else 22,
         rollout_steps=70 if args.quick else 120,
-        min_samples_per_evader=120 if args.quick else 260,
+        min_samples_per_evader=50,
         exploration_std_start=0.8,
         exploration_std_end=0.08,
     )

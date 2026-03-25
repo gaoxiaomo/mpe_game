@@ -127,20 +127,22 @@ def _learning_params(n_p: int, n_e: int, quick: bool) -> LearningParams:
         return LearningParams(
             policy_iterations=12,
             rollout_steps=70 + 10 * size,
-            min_samples_per_evader=120,
+            min_samples_per_evader=50,
             graph_update_interval=1,
             graph_update_start_step=0,
-            critic_learning_rate=0.01,
+            critic_learning_rate=0.05,
+            critic_lr_decay=0.90,
             convergence_tol=5e-4,
             random_perturb_scale=0.02,
         )
     return LearningParams(
         policy_iterations=28 + 2 * max(0, size - 3),
         rollout_steps=150 + 15 * size,
-        min_samples_per_evader=320 + 40 * size,
+        min_samples_per_evader=50,
         graph_update_interval=1,
         graph_update_start_step=0,
-        critic_learning_rate=0.01,
+        critic_learning_rate=0.05,
+        critic_lr_decay=0.90,
         convergence_tol=1e-4,
         random_perturb_scale=0.02,
     )

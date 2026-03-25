@@ -23,12 +23,13 @@ class LearningParams:
     dt: float = 0.05
     ridge_lambda: float = 1e-3
     replay_capacity: int = 30000
-    min_samples_per_evader: int = 400
+    min_samples_per_evader: int = 50
     policy_iterations: int = 40
     rollout_steps: int = 200
     exploration_std_start: float = 1.0
     exploration_std_end: float = 0.1
-    critic_learning_rate: float = 0.01
+    critic_learning_rate: float = 0.05
+    critic_lr_decay: float = 0.90
     convergence_tol: float = 1e-3
     random_perturb_scale: float = 0.03
     graph_update_interval: int = 10
