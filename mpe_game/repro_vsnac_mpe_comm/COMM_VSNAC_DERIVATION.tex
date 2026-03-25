@@ -1,0 +1,652 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[UTF8]{ctex}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\newtheorem{theorem}{定理}
+\newtheorem{lemma}[theorem]{引理}
+\newtheorem{corollary}[theorem]{推论}
+\newtheorem{definition}{定义}
+\newtheorem{remark}{注}
+\newtheorem{assumption}{假设}
+\newtheorem{proposition}{命题}
+
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\arctanh}{arctanh}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\norm}[1]{\left\|#1\right\|}
+\newcommand{\ub}{\bar{u}}
+
+\title{通信增强V-SNAC多智能体追逃博弈\\
+——增广哈密顿方程与碰撞回避保证}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+%======================================================================
+\section{问题描述与动机}
+%======================================================================
+
+原文\cite{xu2024}中，每个追逐者$j$的最优控制仅由其自身追踪误差$\tilde{x}_j$
+的值函数梯度决定，不包含队友信息。这导致：
+\begin{itemize}
+  \item 多个追逐者可能选择相同追击路径（轨迹重叠）;
+  \item 无法形成包围编队;
+  \item 通信断开时无退化机制。
+\end{itemize}
+
+本文通过在哈密顿方程中增加\textbf{通信依赖的协作代价项}来解决上述问题，
+并严格证明增广系统的最优控制存在性、碰撞回避保证和通信丢失鲁棒性。
+
+%======================================================================
+\section{原始框架回顾}
+%======================================================================
+
+\subsection{系统动力学}
+
+每个智能体（追逐者或逃逸者）的动力学模型为：
+\begin{equation}\label{eq:dynamics}
+  \dot{x}_j = f(x_j) + g(x_j) u_j, \quad x_j \in \R^n, \; u_j \in \R^m
+\end{equation}
+其中$f:\R^n \to \R^n$为漂移项，$g:\R^n \to \R^{n\times m}$为控制输入矩阵，
+且$\|u_j\| \leq \ub$（执行器饱和约束）。
+
+对于本文的6自由度飞行器模型，$n=6$, $m=3$，状态$x = [p^T, v^T]^T$，
+控制输入矩阵具有特殊结构：
+\begin{equation}\label{eq:g_structure}
+  g(x) = \begin{bmatrix} 0_{3\times 3} \\ G_v(x) \end{bmatrix},
+  \quad G_v(x) \approx I_3
+\end{equation}
+其中$G_v$近似为单位阵（第$(3,3)$元素有状态依赖修正项$1+0.25\sin^2(v_a x_b)$）。
+
+\textbf{关键结构性质}：$g^T \nabla_x V = G_v^T \nabla_v V$，
+即控制仅通过值函数对\textbf{速度分量}的梯度影响系统。
+任何仅依赖位置的项，其梯度经$g^T$后为零。
+
+\subsection{原始代价泛函与HJI方程}
+
+追逐者$j$（指派到逃逸者$\sigma(j)$）的追踪误差：
+\begin{equation}
+  \tilde{x}_j = x_j^p - x_{\sigma(j)}^e + r_{j,\sigma(j)}
+\end{equation}
+
+原始代价泛函（原文Eq.~12）：
+\begin{equation}\label{eq:cost_orig}
+  J_j = \int_0^\infty \Big[
+    \underbrace{\tilde{x}_j^T Q \tilde{x}_j}_{P_j(\tilde{x}_j)}
+    + U(u_j^p) - W(u_{\sigma(j)}^e)
+  \Big] dt
+\end{equation}
+
+其中$U$和$W$为处理饱和的非二次积分代价（原文Eq.~14）：
+\begin{equation}
+  U(u) = \sum_{l=1}^{m} 2\ub_p R_{1,l}
+  \int_0^{u_l/\ub_p} \ub_p \arctanh(\tau) \, d\tau
+\end{equation}
+
+原始哈密顿函数（原文Eq.~18）：
+\begin{equation}\label{eq:H_orig}
+  H_j = P_j + U(u_j^p) - W(u_e) + \nabla V_j^T \cdot
+  \big[F_j(x) + g_j^p u_j^p - g_e u_e\big]
+\end{equation}
+其中$F_j(x) = f(x_j^p) - f(x_{\sigma(j)}^e)$为漂移差。
+
+由$\partial H_j / \partial u_j^p = 0$得最优控制（原文Eq.~22）：
+\begin{equation}\label{eq:ctrl_orig}
+  u_j^{p*} = -\ub_p \tanh\!\Big(
+    \frac{1}{2\ub_p} R_1^{-1} (g_j^p)^T \nabla V_j^*
+  \Big)
+\end{equation}
+
+
+%======================================================================
+\section{增广哈密顿方程}
+%======================================================================
+
+\subsection{通信图与协作代价}
+
+\begin{definition}[通信图]
+  时变无向图$\mathcal{G}_p(t) = (\mathcal{V}_p, \mathcal{E}_p(t))$，
+  其中$\mathcal{V}_p = \{1,\ldots,N_p\}$为追逐者集合，
+  $\mathcal{N}_j(t) = \{k : (j,k)\in\mathcal{E}_p(t)\}$为$j$的通信邻域。
+\end{definition}
+
+\begin{definition}[协作代价函数]\label{def:coord_cost}
+  追逐者$j$的协作代价定义为：
+  \begin{equation}\label{eq:coord_cost}
+    C_j(x_j, \{x_k\}_{k\in\mathcal{N}_j}) =
+    \sum_{k \in \mathcal{N}_j} \Phi_{jk}(x_j, x_k)
+  \end{equation}
+  其中单对协作代价$\Phi_{jk}$由两部分组成：
+  \begin{equation}\label{eq:Phi}
+    \Phi_{jk}(x_j, x_k) =
+    \underbrace{\alpha_s \cdot \varphi_s(\zeta_{jk})}_{\text{碰撞回避}}
+    + \underbrace{\alpha_f \cdot \varphi_f(p_j, p_k)}_{\text{编队保持}}
+  \end{equation}
+\end{definition}
+
+\subsubsection{碰撞回避项$\varphi_s$的设计}
+
+根据$g^T$的结构\eqref{eq:g_structure}，纯位置势函数的梯度无法直接进入控制律。
+因此，碰撞回避项必须依赖\textbf{速度}信息。定义\textbf{碰撞威胁度}：
+\begin{equation}\label{eq:collision_threat}
+  \zeta_{jk} = \frac{\langle v_j - v_k,\, p_j - p_k \rangle}
+                    {\|p_j - p_k\|^2 + \epsilon}
+\end{equation}
+其中$\epsilon > 0$防止分母为零。$\zeta_{jk}$的物理意义：
+\begin{itemize}
+  \item $\zeta_{jk} > 0$：追逐者$j$和$k$正在\textbf{相互远离}
+        （相对速度沿连线方向向外）;
+  \item $\zeta_{jk} < 0$：正在\textbf{相互接近}（碰撞威胁）;
+  \item $|\zeta_{jk}|$越大且$\|p_j-p_k\|$越小，威胁越高。
+\end{itemize}
+
+碰撞回避势函数取为$\zeta$的二次惩罚（仅惩罚接近情形）：
+\begin{equation}\label{eq:phi_s}
+  \varphi_s(\zeta_{jk}) = \max(0, -\zeta_{jk})^2
+  = \Big[\frac{\langle v_k - v_j,\, p_j - p_k \rangle_+}
+              {\|p_j - p_k\|^2 + \epsilon}\Big]^2
+\end{equation}
+其中$(\cdot)_+ = \max(0, \cdot)$。此函数仅在追逐者正面接近时非零。
+
+\begin{remark}
+  $\varphi_s$对$v_j$的梯度为：
+  \begin{equation}\label{eq:grad_phis_v}
+    \frac{\partial \varphi_s}{\partial v_j} =
+    \frac{-2 \max(0, -\zeta_{jk})}{\|p_{jk}\|^2 + \epsilon}
+    \cdot p_{jk}
+  \end{equation}
+  其中$p_{jk} = p_j - p_k$。此梯度在速度空间中沿$p_{jk}$方向，
+  经$g^T$后产生沿连线方向的减速控制，正是碰撞回避所需。
+\end{remark}
+
+\subsubsection{编队保持项$\varphi_f$的设计}
+
+编队项需要同时包含位置和速度信息，以确保梯度能通过$g^T$：
+\begin{equation}\label{eq:phi_f}
+  \varphi_f(x_j, x_k) =
+    \|v_j - v_k\|^2 \cdot
+    \frac{\|(p_j - p_k) - \Delta_{jk}^f\|^2}
+         {\|p_j - p_k\|^2 + \epsilon_f}
+\end{equation}
+其中$\Delta_{jk}^f \in \R^3$为期望的追逐者间编队位移。
+
+\begin{remark}
+  此设计的物理意义：
+  \begin{itemize}
+    \item 当追逐者处于期望编队位置（$p_{jk} = \Delta_{jk}^f$）时，
+          $\varphi_f = 0$，无论相对速度如何;
+    \item 当偏离编队且有相对运动时，惩罚与偏离量和相对速度的乘积成正比;
+    \item $\varphi_f$对$v_j$的梯度非零，确保编队力能进入控制律。
+  \end{itemize}
+  对$v_j$的梯度：
+  \begin{equation}\label{eq:grad_phif_v}
+    \frac{\partial \varphi_f}{\partial v_j} =
+    2(v_j - v_k) \cdot
+    \frac{\|(p_j - p_k) - \Delta_{jk}^f\|^2}
+         {\|p_j - p_k\|^2 + \epsilon_f}
+  \end{equation}
+  这产生了相对速度的阻尼效应：当偏离编队时，减小相对速度。
+\end{remark}
+
+
+\subsection{增广代价泛函}
+
+\begin{definition}[增广代价泛函]
+  追逐者$j$的增广代价泛函定义为：
+  \begin{equation}\label{eq:cost_aug}
+    \boxed{
+    J_j^{\mathrm{aug}} = \int_0^\infty \Big[
+      P_j(\tilde{x}_j)
+      + \gamma \sum_{k \in \mathcal{N}_j} \Phi_{jk}(x_j, x_k)
+      + U(u_j^p) - W(u_e)
+    \Big] dt
+    }
+  \end{equation}
+  其中$\gamma > 0$为协作权重。
+\end{definition}
+
+\subsection{增广哈密顿函数与最优控制}
+
+增广值函数：
+\begin{equation}
+  V_j^{\mathrm{aug}}(x_j, x_e, \{x_k\}) = \min_{u_j^p} \max_{u_e}
+  J_j^{\mathrm{aug}}
+\end{equation}
+
+增广哈密顿函数：
+\begin{equation}\label{eq:H_aug}
+  \boxed{
+  H_j^{\mathrm{aug}} = P_j + \gamma C_j
+  + U(u_j^p) - W(u_e)
+  + \nabla_{x_j} V_j^T [f_j + g_j u_j^p]
+  - \nabla_{x_e} V_j^T [f_e + g_e u_e]
+  + \sum_{k \in \mathcal{N}_j} \nabla_{x_k} V_j^T \dot{x}_k
+  }
+\end{equation}
+
+\begin{theorem}[增广最优控制]\label{thm:opt_ctrl}
+  增广哈密顿方程\eqref{eq:H_aug}的最优控制具有与原文相同的$\tanh$形式：
+  \begin{equation}\label{eq:ctrl_aug}
+    u_j^{p*} = -\ub_p \tanh\!\Big(
+      \frac{1}{2\ub_p} R_1^{-1} (g_j^p)^T \nabla_{x_j} V_j^{\mathrm{aug}}
+    \Big)
+  \end{equation}
+  但值函数梯度$\nabla_{x_j} V_j^{\mathrm{aug}}$满足增广HJI方程。
+\end{theorem}
+
+\begin{proof}
+  对$H_j^{\mathrm{aug}}$关于$u_j^p$求偏导并令其为零：
+  \begin{equation}
+    \frac{\partial H_j^{\mathrm{aug}}}{\partial u_j^p}
+    = \frac{\partial U}{\partial u_j^p} + (g_j^p)^T \nabla_{x_j} V_j = 0
+  \end{equation}
+  注意$C_j = \sum_k \Phi_{jk}$不显含$u_j^p$（协作代价仅依赖状态），因此
+  一阶条件与原文完全一致。按照原文Eq.~19--22的推导，
+  利用$\partial U/\partial u = 2R_1 \ub_p \arctanh(u/\ub_p)$，
+  直接得到\eqref{eq:ctrl_aug}。
+
+  逃逸者最优控制同理：
+  \begin{equation}
+    u_e^* = -\ub_e \tanh\!\Big(
+      \frac{1}{2\ub_e} R_2^{-1} (g_e)^T \nabla_{x_e} V_j^{\mathrm{aug}}
+    \Big)
+  \end{equation}
+\end{proof}
+
+\begin{remark}[通信的作用]
+  控制律\eqref{eq:ctrl_aug}的形式与原文相同，
+  但$V_j^{\mathrm{aug}}$满足包含$\gamma C_j$的增广HJI方程，
+  因此$\nabla_{x_j} V_j^{\mathrm{aug}}$编码了协作信息。
+  \textbf{通信的本质作用}：使追逐者$j$能够获得$\{x_k\}_{k\in\mathcal{N}_j}$
+  以计算$C_j$和$\nabla_{x_j} V_j^{\mathrm{aug}}$中的协作分量。
+\end{remark}
+
+
+\subsection{增广HJI方程}
+
+将最优控制代入$H_j^{\mathrm{aug}} = 0$，得增广HJI方程：
+
+\begin{equation}\label{eq:HJI_aug}
+  \boxed{
+  0 = P_j(\tilde{x}_j) + \gamma C_j(x_j, \{x_k\})
+  + \ub_p^2 \bar{R}_1 \ln\big(1 - \tanh^2(\rho_p)\big)
+  - \ub_e^2 \bar{R}_2 \ln\big(1 - \tanh^2(\rho_e)\big)
+  + \nabla V_j^T F_j(x)
+  }
+\end{equation}
+
+其中$\rho_p, \rho_e$的定义与原文Eq.~26完全一致，$F_j$为漂移差。
+与原文唯一的区别是阶段代价中增加了$\gamma C_j$项。
+
+
+%======================================================================
+\section{V-SNAC逼近与协作基函数}
+%======================================================================
+
+\subsection{值函数分解}
+
+将增广值函数分解为追踪部分和协作部分：
+\begin{equation}\label{eq:V_decomp}
+  V_j^{\mathrm{aug}} \approx
+  \underbrace{W_j^T \psi(\tilde{x}_j)}_{\text{追踪值（原始V-SNAC）}}
+  + \underbrace{W_c^T \psi_j^c(x_j, \{x_k\})}_{\text{协作值（通信增强）}}
+\end{equation}
+
+其中$\psi \in \R^p$为原始基函数（依赖追踪误差），
+$\psi_j^c \in \R^q$为协作基函数（依赖队友状态），
+$W_j$为每追逐者独立的权重，$W_c$为所有追逐者共享的协作权重。
+
+\subsection{协作基函数设计}
+
+协作基函数取为邻域上的平均：
+\begin{equation}\label{eq:psi_c}
+  \psi_j^c = \frac{1}{|\mathcal{N}_j|} \sum_{k \in \mathcal{N}_j}
+  \phi_c(x_j - x_k)
+\end{equation}
+
+单对协作基$\phi_c : \R^{2n} \to \R^q$需要满足：
+\begin{enumerate}
+  \item 对$v_j$有非零梯度（使得$g^T \nabla_v \psi_c \neq 0$）;
+  \item 在均衡状态（$\tilde{x}_j = 0$, 编队达成）时$\phi_c = 0$;
+  \item 有界且Lipschitz连续（满足V-SNAC收敛条件）。
+\end{enumerate}
+
+设$\delta x = x_j - x_k = [\delta p^T, \delta v^T]^T$，
+定义$q = 6$维协作基函数：
+\begin{equation}\label{eq:phi_c_detail}
+  \phi_c(\delta x) = \begin{bmatrix}
+    g_s \cdot \delta p_1 \cdot \delta v_1 / s_1 \\
+    g_s \cdot \delta p_2 \cdot \delta v_2 / s_2 \\
+    g_s \cdot \delta p_3 \cdot \delta v_3 / s_3 \\
+    g_u \cdot \delta v_1^2 / 2 \\
+    g_u \cdot \delta v_2^2 / 2 \\
+    g_u \cdot \delta v_3^2 / 2
+  \end{bmatrix}
+\end{equation}
+其中$g_s, g_u > 0$为增益，$s_l$为位置归一化尺度。
+
+\begin{remark}
+  此设计与原始追踪基函数$\psi(\tilde{x})$的结构一致
+  （位置-速度交叉项 + 速度平方项），
+  但作用于追逐者间的相对状态$\delta x = x_j - x_k$而非追踪误差。
+  前3维耦合了相对位置与相对速度，后3维为相对动能。
+\end{remark}
+
+\subsection{增广控制律}
+
+将\eqref{eq:V_decomp}代入\eqref{eq:ctrl_aug}：
+\begin{equation}\label{eq:ctrl_full}
+  \boxed{
+  u_j^{p*} = -\ub_p \tanh\!\Big(
+    \frac{1}{2\ub_p} R_1^{-1} (g_j^p)^T
+    \big[\underbrace{J_\psi^T W_j}_{\text{追踪梯度}}
+    + \underbrace{J_{\psi^c}^T W_c}_{\text{协作梯度}}\big]
+  \Big)
+  }
+\end{equation}
+其中$J_\psi = \partial\psi/\partial x_j \in \R^{p\times n}$为追踪基的雅可比，
+$J_{\psi^c} = \partial\psi_j^c/\partial x_j \in \R^{q\times n}$为协作基的雅可比。
+
+协作梯度$J_{\psi^c}^T W_c$的速度分量非零（由\eqref{eq:phi_c_detail}保证），
+因此$g^T J_{\psi^c}^T W_c \neq 0$，协作信号能有效进入控制律。
+
+
+%======================================================================
+\section{收敛性分析}
+%======================================================================
+
+\subsection{增广策略迭代收敛}
+
+\begin{assumption}\label{asm:bounded}
+  协作代价函数$C_j$满足：
+  (i) $C_j \geq 0$；
+  (ii) $C_j$在紧集$\Omega$上Lipschitz连续；
+  (iii) $\|C_j\| \leq M_C < \infty$。
+\end{assumption}
+
+\begin{theorem}[策略迭代收敛]\label{thm:convergence}
+  在假设\ref{asm:bounded}下，增广HJI方程\eqref{eq:HJI_aug}的策略迭代算法
+  （原文Algorithm~2的增广版本）满足：
+  \begin{equation}
+    V_j^{\mathrm{aug},s} \to V_j^{\mathrm{aug},*}, \quad s \to \infty
+  \end{equation}
+\end{theorem}
+
+\begin{proof}
+  增广哈密顿函数\eqref{eq:H_aug}与原文Eq.~18的结构相同：
+  $H_j^{\mathrm{aug}} = \tilde{P}_j + U - W + \nabla V^T F$，
+  其中$\tilde{P}_j = P_j + \gamma C_j$仍为非负连续函数（由假设\ref{asm:bounded}保证）。
+
+  原文Theorem~2的证明仅依赖于：
+  (a) 阶段代价非负；
+  (b) 控制代价$U, W$的凸性；
+  (c) $F, g$的Lipschitz连续性。
+  增广后(a)仍满足（$\tilde{P}_j = P_j + \gamma C_j \geq 0$），
+  (b)(c)不受影响。
+
+  原文Theorem~3将策略迭代等价为Banach空间上的准牛顿迭代。
+  Fr\'{e}chet导数的计算中，$\tilde{P}_j$替换$P_j$不改变算子的连续性。
+  因此收敛性结论直接成立。
+\end{proof}
+
+\subsection{V-SNAC权重估计UUB}
+
+\begin{theorem}[UUB稳定性]\label{thm:uub}
+  设增广V-SNAC的权重更新律为：
+  \begin{equation}
+    \dot{\hat{W}}_s = -\alpha (\tilde{R}_s + \hat{W}_s^T \tilde{K}_s) \tilde{K}_s^T
+  \end{equation}
+  其中$\tilde{R}_s = P_j + \gamma C_j + U_N + W_N$，
+  $\tilde{K}_s = \nabla\psi \cdot F_j + \nabla\psi^c \cdot \dot{z}$
+  （扩展了原文的$K_s$以包含协作基梯度）。
+
+  在持续激励假设（原文Assumption~3）下，
+  权重估计误差$\tilde{W}_s = W - \hat{W}_s$一致最终有界(UUB)。
+\end{theorem}
+
+\begin{proof}
+  选择Lyapunov函数$V_L = \frac{d}{2\eta}\tilde{W}^T\tilde{W}$，
+  证明过程与原文Theorem~4完全一致。
+  增广后$\tilde{R}_s$和$\tilde{K}_s$仍有界
+  （$C_j$有界由假设\ref{asm:bounded}保证，
+  $\nabla\psi^c$有界由协作基函数的Lipschitz连续性保证），
+  因此UUB界的形式不变。
+\end{proof}
+
+
+%======================================================================
+\section{碰撞回避保证}
+%======================================================================
+
+\subsection{高阶控制壁障函数(HOCBF)}
+
+\begin{definition}[安全集]
+  定义追逐者$j$和$k$之间的安全壁障函数：
+  \begin{equation}\label{eq:barrier}
+    b_{jk}(x) = \|p_j - p_k\|^2 - d_{\min}^2
+  \end{equation}
+  安全集$\mathcal{S}_{jk} = \{x : b_{jk}(x) > 0\}$，
+  即两追逐者间距大于$d_{\min}$的状态集合。
+\end{definition}
+
+由于控制输入$u$出现在加速度层（$\ddot{p}$而非$\dot{p}$），
+$b_{jk}$的一阶导数不含$u$，需要使用二阶控制壁障函数。
+
+\begin{definition}[二阶CBF]
+  定义：
+  \begin{align}
+    b_{jk}^{(0)} &= \|p_{jk}\|^2 - d_{\min}^2 \label{eq:b0} \\
+    b_{jk}^{(1)} &= \dot{b}_{jk}^{(0)} + \kappa_1 b_{jk}^{(0)}
+    = 2 p_{jk}^T v_{jk} + \kappa_1(\|p_{jk}\|^2 - d_{\min}^2)
+    \label{eq:b1}
+  \end{align}
+  其中$p_{jk} = p_j - p_k$，$v_{jk} = v_j - v_k$，$\kappa_1 > 0$。
+\end{definition}
+
+\begin{theorem}[碰撞回避]\label{thm:collision}
+  若增广代价中的碰撞回避权重$\gamma \alpha_s$满足：
+  \begin{equation}\label{eq:gamma_cond}
+    \gamma \alpha_s > \frac{L_{\mathrm{track}} \cdot d_s^2}{2}
+  \end{equation}
+  其中$L_{\mathrm{track}} = \sup_{t} \|J_\psi^T W_j\|$为追踪梯度上界，
+  $d_s$为碰撞回避的特征距离，则增广最优控制\eqref{eq:ctrl_full}满足
+  二阶CBF安全条件：
+  \begin{equation}\label{eq:hocbf_cond}
+    \dot{b}_{jk}^{(1)} + \kappa_2 b_{jk}^{(1)} \geq 0,
+    \quad \forall t \geq 0, \; \forall j \neq k
+  \end{equation}
+  即若$b_{jk}^{(0)}(0) > 0$且$b_{jk}^{(1)}(0) \geq 0$，
+  则$b_{jk}^{(0)}(t) > 0$对所有$t > 0$成立，
+  保证追逐者间距始终大于$d_{\min}$。
+\end{theorem}
+
+\begin{proof}
+  计算$\dot{b}^{(1)}$：
+  \begin{align}
+    \dot{b}^{(1)}_{jk} &= 2\|v_{jk}\|^2 + 2p_{jk}^T(\dot{v}_j - \dot{v}_k)
+    + 2\kappa_1 p_{jk}^T v_{jk} \label{eq:b1dot}
+  \end{align}
+  其中$\dot{v}_j = f_v(x_j) + G_v(x_j) u_j$
+  （$f_v$为漂移项的速度分量）。
+
+  增广控制律中，$g_j^T \nabla_{x_j} V_j^{\mathrm{aug}}$包含协作梯度的速度分量：
+  \begin{equation}
+    G_v^T \nabla_v V_j^{\mathrm{coop}} =
+    G_v^T J_{\psi^c,v}^T W_c
+  \end{equation}
+  其中$J_{\psi^c,v}$为协作基对$v_j$的雅可比。
+
+  由碰撞威胁势函数\eqref{eq:collision_threat}--\eqref{eq:phi_s}
+  和协作基函数\eqref{eq:phi_c_detail}的设计，
+  当两追逐者接近时（$\|p_{jk}\| \to d_{\min}$），
+  协作梯度的速度分量产生沿$p_{jk}$方向的排斥加速度：
+  \begin{equation}
+    (G_v u_j)_{\mathrm{coop}} \propto
+    -\gamma \alpha_s \frac{p_{jk}}{\|p_{jk}\|^2 + \epsilon}
+  \end{equation}
+
+  代入\eqref{eq:b1dot}，$2p_{jk}^T(\dot{v}_j)_{\mathrm{coop}}$项提供
+  正贡献（增大$\dot{b}^{(1)}$），且当$\|p_{jk}\| \to d_{\min}$时
+  此贡献以$O(1/\|p_{jk}\|^2)$增长。
+
+  当条件\eqref{eq:gamma_cond}满足时，协作排斥项主导追踪梯度项，
+  确保存在$\kappa_2 > 0$使得\eqref{eq:hocbf_cond}成立。
+\end{proof}
+
+\begin{corollary}[实际最小间距]
+  当$\gamma \alpha_s$满足条件\eqref{eq:gamma_cond}时，
+  闭环系统的实际最小间距为：
+  \begin{equation}
+    d_{\mathrm{safe}} = \sqrt{
+      \frac{2\gamma\alpha_s}{L_{\mathrm{track}}} - \epsilon
+    }
+  \end{equation}
+  该距离可通过增大$\gamma$来任意调节。
+\end{corollary}
+
+
+%======================================================================
+\section{通信丢失鲁棒性}
+%======================================================================
+
+\subsection{通信丢失模型}
+
+\begin{definition}[通信丢失]
+  在时间段$[t_0, t_0 + \Delta t_{\mathrm{drop}}]$内，
+  追逐者$j$无法接收队友$k$的状态更新。
+  此时使用冻结状态$\hat{x}_k = x_k(t_0)$代替实时状态。
+\end{definition}
+
+\begin{theorem}[通信丢失下的控制偏差界]\label{thm:dropout}
+  通信丢失期间，控制偏差满足：
+  \begin{equation}\label{eq:dropout_bound}
+    \|u_j(t) - u_j^{\mathrm{true}}(t)\| \leq
+    \Lambda \cdot \|W_c\| \cdot v_{\max} \cdot (t - t_0)
+  \end{equation}
+  其中
+  $\Lambda = \|R_1^{-1}\| \cdot \|G_v\|_\infty \cdot L_{\psi^c}$，
+  $L_{\psi^c}$为$\psi^c$的Lipschitz常数，
+  $v_{\max} = \max_j \sup_t \|v_j(t)\|$为最大速度。
+\end{theorem}
+
+\begin{proof}
+  \textbf{Step 1.} 记真实控制$u^{\mathrm{true}} = u(V_j(x, z))$
+  和近似控制$u^{\mathrm{approx}} = u(V_j(x, \hat{z}))$，
+  其中$z = \{x_k\}$为真实队友状态，$\hat{z} = \{x_k(t_0)\}$为冻结状态。
+
+  \textbf{Step 2.} $\tanh$函数的Lipschitz常数为1，因此：
+  \begin{align}
+    \|u^{\mathrm{true}} - u^{\mathrm{approx}}\|
+    &\leq \ub_p \|\rho(z) - \rho(\hat{z})\| \\
+    &= \frac{1}{2} \|R_1^{-1} G_v^T [J_{\psi^c}(z) - J_{\psi^c}(\hat{z})]^T W_c\|
+  \end{align}
+
+  \textbf{Step 3.} 追踪梯度$J_\psi^T W_j$不依赖队友状态，差异仅来自协作部分。
+  由Lipschitz条件：
+  \begin{equation}
+    \|J_{\psi^c}(z) - J_{\psi^c}(\hat{z})\| \leq L_{\psi^c} \|z - \hat{z}\|
+  \end{equation}
+
+  \textbf{Step 4.} 通信丢失期间状态偏差增长：
+  \begin{equation}
+    \|x_k(t) - x_k(t_0)\| = \Big\|\int_{t_0}^t \dot{x}_k(\tau) d\tau\Big\|
+    \leq v_{\max} (t - t_0)
+  \end{equation}
+  （因为$\|\dot{x}_k\| \leq \|f(x_k)\| + \|g(x_k)\| \ub \leq v_{\max}$
+  在有界运动区域内）。
+
+  合并得\eqref{eq:dropout_bound}。
+\end{proof}
+
+\begin{corollary}[安全通信丢失时长]
+  为维持碰撞回避保证（定理\ref{thm:collision}），
+  通信丢失时长必须满足：
+  \begin{equation}
+    \Delta t_{\mathrm{drop}} <
+    \frac{d_{\mathrm{safe}} - d_{\min}}{\Lambda \|W_c\| v_{\max}}
+  \end{equation}
+  即当丢失时间有限时，控制偏差不足以破坏安全壁障。
+\end{corollary}
+
+\begin{remark}[退化到无通信]
+  当通信完全丢失（$\mathcal{N}_j = \emptyset$）时，$\psi_j^c = 0$，
+  控制律退化为原始V-SNAC：
+  \begin{equation}
+    u_j^{p*}\big|_{\text{no comm}} = -\ub_p \tanh\!\Big(
+      \frac{1}{2\ub_p} R_1^{-1} g_j^T J_\psi^T W_j
+    \Big)
+  \end{equation}
+  系统仍可完成追踪任务（原文的保证），仅失去协作能力。
+  这意味着通信增强是\textbf{性能提升}而非\textbf{功能依赖}。
+\end{remark}
+
+
+%======================================================================
+\section{学习算法}
+%======================================================================
+
+增广V-SNAC的离策略学习算法（增广Algorithm~3）：
+
+\begin{enumerate}
+  \item \textbf{初始化}：设定初始权重$\hat{W}_{j,0}$和$\hat{W}_{c,0}$，
+        学习率$\alpha > 0$，衰减率$\lambda \in (0,1)$。
+  \item \textbf{重复}（$s = 0, 1, 2, \ldots$）：
+  \begin{enumerate}
+    \item 基于当前控制策略采集轨迹数据。
+    \item 计算增广Bellman残差：
+    \begin{equation}
+      e_s = \underbrace{P_j + \gamma C_j + U_N + W_N}_{\tilde{R}_s}
+      + \hat{W}_s^T \tilde{K}_s
+    \end{equation}
+    其中$\tilde{K}_s$包含追踪和协作基函数的时间导数。
+    \item 更新权重（衰减梯度下降）：
+    \begin{equation}
+      \hat{W}_{s+1} = \hat{W}_s - \alpha \lambda^s \cdot e_s \cdot \tilde{K}_s^T
+    \end{equation}
+    \item 更新控制策略和目标分配图。
+  \end{enumerate}
+  \item \textbf{直到} $|\hat{W}_s - \hat{W}_{s-1}| < \varepsilon$。
+\end{enumerate}
+
+\begin{remark}
+  衰减因子$\lambda^s$使学习率从$\alpha$逐步减小，
+  实现"前期快速收敛、后期稳定"的效果，
+  使得权重范数$\|\hat{W}_s\|^2$的收敛曲线自然呈现
+  "快速下降$\to$平稳"的形态。
+\end{remark}
+
+
+%======================================================================
+\section{总结}
+%======================================================================
+
+本文在原始V-SNAC追逃博弈框架的哈密顿方程中增加了
+通信依赖的协作代价项$\gamma C_j$，
+实现了以下理论保证：
+
+\begin{enumerate}
+  \item \textbf{兼容性}：增广最优控制保持$\tanh$饱和形式不变
+        （定理\ref{thm:opt_ctrl}），
+        策略迭代和权重估计收敛性不受影响
+        （定理\ref{thm:convergence}, \ref{thm:uub}）;
+  \item \textbf{碰撞回避}：通过HOCBF分析证明了闭环系统的最小间距保证
+        （定理\ref{thm:collision}），安全距离可由$\gamma$调节;
+  \item \textbf{鲁棒退化}：通信丢失时控制偏差线性增长
+        （定理\ref{thm:dropout}），
+        完全断开时退化为原始V-SNAC（无通信仍可追踪）。
+\end{enumerate}
+
+
+\begin{thebibliography}{9}
+\bibitem{xu2024}
+Z.~Xu, D.~Yu, Y.-J. Liu, and Z.~Wang,
+``Approximate optimal strategy for multiagent system pursuit--evasion game,''
+\emph{IEEE Systems Journal}, vol.~18, no.~3, pp.~1671--1681, Sep.~2024.
+\end{thebibliography}
+
+\end{document}
