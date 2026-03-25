@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 
 from .dynamics import AircraftDynamics
-from .features import SigmoidFeatureMap
+from .features import CouplingFeatureMap, SigmoidFeatureMap
 
 
 def safe_atanh(x: np.ndarray) -> np.ndarray:
@@ -18,73 +18,28 @@ def nonquadratic_integral_cost(u: np.ndarray, u_bar: float, r_diag: np.ndarray) 
     return float(np.sum(2.0 * u_bar * r_diag * term))
 
 
-def _separation_gradient(
-    pursuer_j_state: np.ndarray,
-    teammate_states: np.ndarray,
-    alpha: float,
-    d_ref: float,
-    evader_pos: np.ndarray | None = None,
-) -> np.ndarray:
-    """Lateral separation gradient injected into velocity components (3,4,5).
-
-    To avoid slowing down the pursuit, the repulsive force is projected
-    PERPENDICULAR to the pursuit direction.  This steers the pursuer
-    sideways rather than decelerating it.
-
-    The Gaussian kernel focuses the effect on close proximity only.
-    """
-    grad = np.zeros(6, dtype=float)
-    if teammate_states.shape[0] == 0 or alpha == 0.0:
-        return grad
-
-    # Pursuit direction (toward evader).
-    if evader_pos is not None:
-        pursuit_vec = evader_pos[:3] - pursuer_j_state[:3]
-        pn = float(np.linalg.norm(pursuit_vec))
-        if pn > 1e-6:
-            pursuit_dir = pursuit_vec / pn
-        else:
-            pursuit_dir = np.array([1.0, 0.0, 0.0])
-    else:
-        pursuit_dir = np.array([1.0, 0.0, 0.0])
-
-    d_ref_sq = d_ref * d_ref
-    for k in range(teammate_states.shape[0]):
-        delta_pos = pursuer_j_state[:3] - teammate_states[k, :3]
-        d_sq = float(np.dot(delta_pos, delta_pos))
-        d = np.sqrt(d_sq + 1e-8)
-        raw_dir = delta_pos / d  # away from teammate
-
-        # Project out the pursuit component → lateral only.
-        proj = float(np.dot(raw_dir, pursuit_dir))
-        lateral = raw_dir - proj * pursuit_dir
-        lat_norm = float(np.linalg.norm(lateral))
-        if lat_norm > 1e-8:
-            lateral = lateral / lat_norm
-        else:
-            # Teammate exactly on pursuit line → pick arbitrary perpendicular.
-            perp = np.array([0.0, 1.0, 0.0]) if abs(pursuit_dir[1]) < 0.9 else np.array([1.0, 0.0, 0.0])
-            lateral = perp - float(np.dot(perp, pursuit_dir)) * pursuit_dir
-            ln = float(np.linalg.norm(lateral))
-            lateral = lateral / max(ln, 1e-8)
-
-        kernel = np.exp(-d_sq / (2.0 * d_ref_sq))
-        # Negative sign: steers u in the lateral direction AWAY from teammate.
-        # u = -ū tanh(R⁻¹ g^T ∇V), so adding NEGATIVE to ∇V[3:6]
-        # makes u more positive in that direction → accelerate laterally.
-        grad[3:6] -= alpha * lateral * kernel
-
-    grad[3:6] /= max(teammate_states.shape[0], 1)
-    return grad
+def separation_penalty(pursuer_states: np.ndarray, d_ref: float) -> np.ndarray:
+    """Gaussian separation penalty S_j for each pursuer."""
+    n_p = pursuer_states.shape[0]
+    S = np.zeros(n_p, dtype=float)
+    d_ref_sq_2 = 2.0 * d_ref * d_ref
+    for j in range(n_p):
+        for k in range(n_p):
+            if k == j:
+                continue
+            d_sq = float(np.sum((pursuer_states[j, :3] - pursuer_states[k, :3]) ** 2))
+            S[j] += np.exp(-d_sq / d_ref_sq_2)
+    return S
 
 
 class TeamVSNACController:
-    """V-SNAC controller with optional analytical separation gradient.
+    """V-SNAC controller with two-stage team value function.
 
-    The value function is the standard 6-feature V-SNAC (proven convergence).
-    Communication enables an additional **separation gradient** that pushes
-    pursuers apart during control computation.  This separation is an
-    analytical potential-field correction, not a learned coupling.
+    Stage 1 (individual): V_j = W_j^T phi(x̃_j)
+    Stage 2 (coupling):   V_j^team = W_j^T phi(x̃_j) + W_c^T psi_j
+
+    The control law is always u_j = -ū tanh(1/(2ū) R⁻¹ g^T ∇V_j),
+    where ∇V_j includes the coupling gradient when W_c is provided.
     """
 
     def __init__(
@@ -104,8 +59,6 @@ class TeamVSNACController:
         k_pos_e: float,
         k_vel_e: float,
         state_cost_scale: np.ndarray,
-        sep_alpha: float = 0.0,
-        sep_d_ref: float = 400.0,
     ) -> None:
         self.dynamics = dynamics
         self.features = features
@@ -126,8 +79,6 @@ class TeamVSNACController:
         self.k_pos_e = k_pos_e
         self.k_vel_e = k_vel_e
         self.state_cost_scale = state_cost_scale
-        self.sep_alpha = sep_alpha
-        self.sep_d_ref = sep_d_ref
 
     def individual_error(
         self,
@@ -156,33 +107,51 @@ class TeamVSNACController:
         weights: List[np.ndarray],
         rng: np.random.Generator,
         exploration_std: float = 0.0,
-        use_separation: bool = False,
-        teammate_cache: np.ndarray | None = None,
+        # --- coupling parameters (Stage 2 / eval) ---
+        coupling: Optional[CouplingFeatureMap] = None,
+        w_c: Optional[np.ndarray] = None,
+        prev_controls: Optional[np.ndarray] = None,
+        teammate_cache: Optional[np.ndarray] = None,
+        control_cache: Optional[np.ndarray] = None,
+        comm_mode: str = "full",
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         n_p = pursuer_states.shape[0]
         n_e = evader_states.shape[0]
+
+        use_coupling = (
+            coupling is not None
+            and w_c is not None
+            and comm_mode != "local"
+        )
+        state_only = comm_mode == "state_only"
 
         x_err = np.zeros((n_p, 6), dtype=float)
         grad_p = np.zeros((n_p, 6), dtype=float)
         for j in range(n_p):
             i = int(assignment[j])
             x_err[j] = self.individual_error(j, i, pursuer_states, evader_states, displacements)
-            # Standard V-SNAC gradient.
+            # Individual V-SNAC gradient.
             grad_p[j] = self.value_gradient(x_err[j], weights[j])
 
-            # Add analytical separation gradient if communication available.
-            if use_separation and self.sep_alpha > 0.0:
-                src = teammate_cache if teammate_cache is not None else pursuer_states
+            # Add coupling gradient from team value function.
+            if use_coupling:
                 mask = np.ones(n_p, dtype=bool)
                 mask[j] = False
-                tm = src[mask]
-                i = int(assignment[j])
-                sep_grad = _separation_gradient(
-                    pursuer_states[j], tm, self.sep_alpha, self.sep_d_ref,
-                    evader_pos=evader_states[i],
+                # Use cached teammate data during dropout; live data otherwise.
+                src_states = teammate_cache if teammate_cache is not None else pursuer_states
+                src_controls = control_cache if control_cache is not None else prev_controls
+                tm_states = src_states[mask]
+                tm_controls = (
+                    np.zeros((n_p - 1, 3), dtype=float)
+                    if src_controls is None
+                    else src_controls[mask]
                 )
-                grad_p[j] = grad_p[j] + sep_grad
+                jac_psi = coupling.jac_psi(
+                    pursuer_states[j], tm_states, tm_controls, state_only=state_only
+                )  # (9, 6)
+                grad_p[j] += jac_psi.T @ w_c  # (6,)
 
+        # Pursuer controls.
         u_p = np.zeros((n_p, 3), dtype=float)
         u_p_tanh = np.zeros((n_p, 3), dtype=float)
         for j in range(n_p):
@@ -195,6 +164,7 @@ class TeamVSNACController:
             u_p[j] = np.clip(u, -self.u_bar_p, self.u_bar_p)
             u_p_tanh[j] = u_rl
 
+        # Evader controls — uses sum of team gradients.
         u_e = np.zeros((n_e, 3), dtype=float)
         u_e_tanh = np.zeros((n_e, 3), dtype=float)
         for i in range(n_e):

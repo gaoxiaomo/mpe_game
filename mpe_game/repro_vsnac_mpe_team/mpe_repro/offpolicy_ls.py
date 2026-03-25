@@ -63,3 +63,53 @@ class ReplayLeastSquares:
             stats.append(LSSolveStats(sample_count=sample_count, residual_rms=rms))
 
         return new_weights, stats
+
+
+class CouplingReplayLS:
+    """Shared LS buffer for the coupling weight W_c (Stage 2).
+
+    All pursuers contribute samples to one buffer.
+    Bellman: (ψ_{t+1} - ψ_t)^T W_c = -γ S_j dt
+    """
+
+    def __init__(self, n_features: int, capacity: int) -> None:
+        self.n_features = n_features
+        self.a_buf: Deque[np.ndarray] = deque(maxlen=capacity)
+        self.b_buf: Deque[float] = deque(maxlen=capacity)
+
+    def clear(self) -> None:
+        self.a_buf.clear()
+        self.b_buf.clear()
+
+    def add_sample(self, psi_t: np.ndarray, psi_tp1: np.ndarray, sep_penalty: float, gamma: float, dt: float) -> None:
+        a_row = psi_tp1 - psi_t
+        b_val = -gamma * sep_penalty * dt
+        self.a_buf.append(a_row.astype(float))
+        self.b_buf.append(float(b_val))
+
+    def solve(
+        self,
+        current_w: np.ndarray,
+        ridge_lambda: float,
+        min_samples: int,
+        w_min: float = -0.30,
+        w_max: float = 0.30,
+    ) -> Tuple[np.ndarray, LSSolveStats]:
+        n = len(self.a_buf)
+        if n < min_samples:
+            return current_w.copy(), LSSolveStats(sample_count=n, residual_rms=np.nan)
+
+        A = np.vstack(self.a_buf)
+        b = np.asarray(self.b_buf, dtype=float)
+        col_scale = np.maximum(np.std(A, axis=0), 1e-6)
+        A_sc = A / col_scale[None, :]
+
+        lhs = A_sc.T @ A_sc + ridge_lambda * np.eye(self.n_features)
+        rhs = A_sc.T @ b + ridge_lambda * (current_w * col_scale)
+        w_sc = np.linalg.solve(lhs, rhs)
+        w = w_sc / col_scale
+        w = np.clip(w, w_min, w_max)
+
+        residual = A @ w - b
+        rms = float(np.sqrt(np.mean(residual * residual)))
+        return w, LSSolveStats(sample_count=n, residual_rms=rms)

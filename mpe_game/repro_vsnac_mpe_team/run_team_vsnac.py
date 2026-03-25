@@ -1,7 +1,9 @@
-"""Team V-SNAC: Communication-coupled team value function experiments.
+"""Team V-SNAC: Two-stage communication-coupled value function experiments.
 
-Runs team (full comm) vs local (no comm) vs dropout comparisons
-for configurable m-vs-n pursuit-evasion scenarios.
+Stage 1: Standard V-SNAC (individual W_j, proven convergence)
+Stage 2: Fix W_j, train shared coupling W_c (9-dim: 6 state + 3 control)
+
+Evaluates: team (full comm) vs local (no comm) vs state-only vs dropout.
 """
 from __future__ import annotations
 
@@ -71,27 +73,27 @@ def _control_params() -> ControlParams:
 def _learning_params(n_p: int, n_e: int) -> LearningParams:
     size = max(n_p, n_e)
     return LearningParams(
-        policy_iterations=36 + 3 * max(0, size - 3),
-        rollout_steps=220 + 25 * size,
-        min_samples_per_critic=500 + 80 * size,
+        policy_iterations=55 + 3 * max(0, size - 3),
+        rollout_steps=200 + 20 * size,
+        min_samples_per_critic=400 + 60 * size,
         graph_update_interval=1,
         graph_update_start_step=0,
-        critic_learning_rate=0.012,
-        convergence_tol=8e-5,
+        critic_learning_rate=0.01,
+        convergence_tol=5e-3,
         random_perturb_scale=0.02,
     )
 
 
-def _team_params(comm_mode: str = "full") -> TeamParams:
+def _team_params() -> TeamParams:
     return TeamParams(
-        comm_mode=comm_mode,
-        coupling_gain=0.0,  # unused in revised approach
-        gamma_sep=4.5,      # separation gradient alpha (competes with ∇V ~3.5)
-        d_ref=380.0,        # range of repulsion (m) - focused on close proximity
+        comm_mode="full",
+        coupling_gain=2.0,
+        gamma_sep=0.5,
+        d_ref=2000.0,
         dropout_start_s=12.0,
         dropout_end_s=22.0,
-        coupling_w_min=-0.35,
-        coupling_w_max=0.35,
+        coupling_w_min=-0.20,
+        coupling_w_max=0.20,
     )
 
 
@@ -134,8 +136,9 @@ def run_case(
     control = _control_params()
     learning = _learning_params(n_p, n_e)
     feature = _feature_params()
-    team = _team_params("full")
+    team = _team_params()
     dynamic_graph = scenario.n_evaders > 1
+    size = max(n_p, n_e)
 
     # ---- Build simulator ----
     sim = TeamMPESimulator(
@@ -147,31 +150,55 @@ def run_case(
         team_params=team,
     )
 
-    # ---- Train standard V-SNAC (no separation), proven convergence ----
+    # ---- Stage 1: Standard V-SNAC ----
     t0 = time.perf_counter()
-    train_result = sim.train_policy(seed=seed, dynamic_graph=dynamic_graph, use_separation=False)
-    train_s = time.perf_counter() - t0
-    print(f"  [{case_name}] training done ({train_s:.1f}s, {len(train_result.exploration_history)} iters)")
+    train1 = sim.train_policy(seed=seed, dynamic_graph=dynamic_graph)
+    t1 = time.perf_counter() - t0
+    print(f"  [{case_name}] Stage 1 done ({t1:.1f}s, {len(train1.exploration_history)} iters)")
+
+    # ---- Stage 2: Coupling W_c ----
+    t0 = time.perf_counter()
+    train2 = sim.train_policy_stage2(
+        stage1_weights=train1.weights,
+        seed=seed,
+        dynamic_graph=dynamic_graph,
+        stage2_iters=30 + 2 * max(0, size - 3),
+        stage2_rollout_steps=220 + 15 * size,
+        stage2_lr=0.03,
+        stage2_explore_start=0.5,
+        stage2_explore_end=0.05,
+        stage2_tol=3e-3,
+    )
+    t2 = time.perf_counter() - t0
+    wc_iters = len(train2.w_c_delta_history) if train2.w_c_delta_history is not None else 0
+    print(f"  [{case_name}] Stage 2 done ({t2:.1f}s, {wc_iters} iters, W_c={np.round(train2.w_c, 4).tolist()})")
 
     eval_seed = seed + 1000
-    weights = train_result.weights
+    weights = train1.weights
+    w_c = train2.w_c
 
-    # ---- Evaluate: TEAM (full comm, separation gradient ON) ----
+    # ---- Evaluate: TEAM (full comm) ----
     eval_team = sim.evaluate_policy(
         weights=weights, seed=eval_seed, dynamic_graph=dynamic_graph,
-        use_separation=True, comm_mode="full", stop_on_capture=False,
+        w_c=w_c, comm_mode="full", stop_on_capture=False,
     )
 
-    # ---- Evaluate: LOCAL (no comm, separation gradient OFF) ----
+    # ---- Evaluate: LOCAL (no comm) ----
     eval_local = sim.evaluate_policy(
         weights=weights, seed=eval_seed, dynamic_graph=dynamic_graph,
-        use_separation=False, comm_mode="local", stop_on_capture=False,
+        w_c=None, comm_mode="local", stop_on_capture=False,
     )
 
-    # ---- Evaluate: DROPOUT (separation ON, but frozen states during dropout) ----
+    # ---- Evaluate: STATE-ONLY (state coupling only, no control coupling) ----
+    eval_state = sim.evaluate_policy(
+        weights=weights, seed=eval_seed, dynamic_graph=dynamic_graph,
+        w_c=w_c, comm_mode="state_only", stop_on_capture=False,
+    )
+
+    # ---- Evaluate: DROPOUT ----
     eval_dropout = sim.evaluate_policy(
         weights=weights, seed=eval_seed, dynamic_graph=dynamic_graph,
-        use_separation=True, comm_mode="dropout",
+        w_c=w_c, comm_mode="dropout",
         dropout_start_s=team.dropout_start_s, dropout_end_s=team.dropout_end_s,
         stop_on_capture=False,
     )
@@ -182,13 +209,15 @@ def run_case(
     dt = learning.dt
     sum_team = eval_summary(eval_team, "team_full_comm")
     sum_local = eval_summary(eval_local, "local_no_comm")
+    sum_state = eval_summary(eval_state, "team_state_only")
     sum_dropout = eval_summary(eval_dropout, "team_dropout")
 
     # ---- Plots ----
     results = {
-        "Team (full comm)": eval_team,
-        "Local (no comm)": eval_local,
-        "Team (dropout)": eval_dropout,
+        "Team (full)": eval_team,
+        "Local": eval_local,
+        "State-only": eval_state,
+        "Dropout": eval_dropout,
     }
 
     plot_trajectory_xy(eval_team, case_dir / "fig_trajectory_team.png", f"{case_name} Team trajectory")
@@ -197,7 +226,7 @@ def run_case(
     plot_assigned_errors(eval_team, dt, case_dir / "fig_errors_team.png", f"{case_name} Team assigned errors")
     plot_assigned_errors(eval_local, dt, case_dir / "fig_errors_local.png", f"{case_name} Local assigned errors")
 
-    plot_weight_convergence(train_result, case_dir / "fig_weight_convergence.png", f"{case_name} weight convergence")
+    plot_weight_convergence(train1, case_dir / "fig_weight_convergence.png", f"{case_name} Stage 1 weights")
 
     plot_team_error_compare(results, dt, case_dir / "fig_team_error_compare.png", f"{case_name} Team Error Comparison")
     plot_d_min(results, dt, case_dir / "fig_d_min_compare.png", f"{case_name} Min Inter-Pursuer Distance")
@@ -208,7 +237,7 @@ def run_case(
         plot_assignment_timeline(eval_team, dt, case_dir / "fig_assignment_team.png", f"{case_name} Team assignments")
 
     plot_comparison_bars(
-        {"Team": sum_team, "Local": sum_local, "Dropout": sum_dropout},
+        {"Team": sum_team, "Local": sum_local, "State": sum_state, "Dropout": sum_dropout},
         case_dir / "fig_bars.png",
         f"{case_name} Metric Comparison",
     )
@@ -216,12 +245,15 @@ def run_case(
     # ---- JSON ----
     summary = {
         "case": {"name": case_name, "n_pursuers": n_p, "n_evaders": n_e, "seed": seed},
-        "train": train_summary(train_result),
+        "train": train_summary(train1),
+        "w_c": np.round(w_c, 6).tolist() if w_c is not None else None,
+        "w_c_iters": wc_iters,
         "eval_team": sum_team,
         "eval_local": sum_local,
+        "eval_state_only": sum_state,
         "eval_dropout": sum_dropout,
         "network": network_summary(n_p, n_e, sim.features.n_features),
-        "timing": {"train_s": train_s},
+        "timing": {"stage1_s": t1, "stage2_s": t2},
     }
     dump_json(case_dir / "summary.json", summary)
 
@@ -230,19 +262,30 @@ def run_case(
         f"# Team V-SNAC Report: {case_name}",
         "",
         "## Capture Time",
-        f"| Mode | Capture (s) |",
-        f"|---|---:|",
+        "| Mode | Capture (s) |",
+        "|---|---:|",
         f"| Team (full comm) | {sum_team['capture_time_s']} |",
         f"| Local (no comm) | {sum_local['capture_time_s']} |",
-        f"| Team (dropout) | {sum_dropout['capture_time_s']} |",
+        f"| State-only | {sum_state['capture_time_s']} |",
+        f"| Dropout | {sum_dropout['capture_time_s']} |",
         "",
-        "## Coordination Metrics (mean over trajectory)",
-        f"| Metric | Team | Local | Dropout |",
-        f"|---|---:|---:|---:|",
-        f"| d_min (m) | {sum_team.get('d_min_mean',0):.1f} | {sum_local.get('d_min_mean',0):.1f} | {sum_dropout.get('d_min_mean',0):.1f} |",
-        f"| angular coverage | {sum_team.get('angular_coverage_mean',0):.3f} | {sum_local.get('angular_coverage_mean',0):.3f} | {sum_dropout.get('angular_coverage_mean',0):.3f} |",
-        f"| path overlap | {sum_team.get('path_overlap_mean',0):.3f} | {sum_local.get('path_overlap_mean',0):.3f} | {sum_dropout.get('path_overlap_mean',0):.3f} |",
-        f"| team error (final) | {sum_team['final_team_error']:.1f} | {sum_local['final_team_error']:.1f} | {sum_dropout['final_team_error']:.1f} |",
+        "## Coordination Metrics (mean)",
+        "| Metric | Team | Local | State-only | Dropout |",
+        "|---|---:|---:|---:|---:|",
+        "| d_min (m) | {:.1f} | {:.1f} | {:.1f} | {:.1f} |".format(
+            sum_team.get('d_min_mean', 0), sum_local.get('d_min_mean', 0),
+            sum_state.get('d_min_mean', 0), sum_dropout.get('d_min_mean', 0)),
+        "| angular coverage | {:.3f} | {:.3f} | {:.3f} | {:.3f} |".format(
+            sum_team.get('angular_coverage_mean', 0), sum_local.get('angular_coverage_mean', 0),
+            sum_state.get('angular_coverage_mean', 0), sum_dropout.get('angular_coverage_mean', 0)),
+        "| path overlap | {:.3f} | {:.3f} | {:.3f} | {:.3f} |".format(
+            sum_team.get('path_overlap_mean', 0), sum_local.get('path_overlap_mean', 0),
+            sum_state.get('path_overlap_mean', 0), sum_dropout.get('path_overlap_mean', 0)),
+        "",
+        f"## Coupling Weights W_c",
+        f"```",
+        f"{np.round(w_c, 4).tolist() if w_c is not None else 'None'}",
+        f"```",
     ]
     dump_markdown(case_dir / "REPORT.md", "\n".join(md))
 
@@ -255,10 +298,10 @@ def run_case(
 # ------------------------------------------------------------------
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Team V-SNAC experiments")
+    parser = argparse.ArgumentParser(description="Team V-SNAC two-stage experiments")
     parser.add_argument(
         "--cases", nargs="*", default=None,
-        help="Case tokens like 3v1 4v1 5v1 4v2 6v3. Default: 3v1, 4v1, 5v1, 4v2.",
+        help="Case tokens like 3v1 4v1 5v1 4v2 6v3. Default: 3v1, 4v1, 5v1.",
     )
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--output", type=str, default=None)
@@ -274,7 +317,7 @@ def main() -> None:
                     cases.append((int(left), int(right)))
                     break
     else:
-        cases = [(3, 1), (4, 1), (5, 1), (4, 2)]
+        cases = [(3, 1), (4, 1), (5, 1)]
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     root = Path(__file__).resolve().parent
@@ -301,16 +344,16 @@ def main() -> None:
         "# Team V-SNAC Batch Report",
         "",
         "## Summary",
-        "| Case | Team cap (s) | Local cap (s) | Dropout cap (s) | Team d_min | Local d_min | Team ang_cov | Local ang_cov |",
+        "| Case | Team cap (s) | Local cap (s) | State cap (s) | Team d_min | Local d_min | Team ang_cov | Local ang_cov |",
         "|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for s in all_summaries:
         md.append(
-            "| {name} | {tc} | {lc} | {dc} | {td:.0f} | {ld:.0f} | {ta:.3f} | {la:.3f} |".format(
+            "| {name} | {tc} | {lc} | {sc} | {td:.0f} | {ld:.0f} | {ta:.3f} | {la:.3f} |".format(
                 name=s["case"]["name"],
                 tc=s["eval_team"]["capture_time_s"] or "-",
                 lc=s["eval_local"]["capture_time_s"] or "-",
-                dc=s["eval_dropout"]["capture_time_s"] or "-",
+                sc=s["eval_state_only"]["capture_time_s"] or "-",
                 td=s["eval_team"].get("d_min_mean", 0),
                 ld=s["eval_local"].get("d_min_mean", 0),
                 ta=s["eval_team"].get("angular_coverage_mean", 0),

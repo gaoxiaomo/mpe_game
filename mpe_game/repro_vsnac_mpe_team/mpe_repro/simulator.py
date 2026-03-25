@@ -14,11 +14,11 @@ from .config import (
     ScenarioConfig,
     TeamParams,
 )
-from .controller import TeamVSNACController
+from .controller import TeamVSNACController, separation_penalty
 from .dynamics import AircraftDynamics
-from .features import SigmoidFeatureMap
+from .features import CouplingFeatureMap, SigmoidFeatureMap
 from .graph_switch import DynamicTargetGraph
-from .offpolicy_ls import ReplayLeastSquares
+from .offpolicy_ls import CouplingReplayLS, ReplayLeastSquares
 
 
 # ---------------------------------------------------------------------------
@@ -49,6 +49,10 @@ class TrainResult:
     residual_history: np.ndarray
     sample_history: np.ndarray
     exploration_history: np.ndarray
+    # Stage 2 coupling weights.
+    w_c: Optional[np.ndarray] = None
+    w_c_history: Optional[np.ndarray] = None
+    w_c_delta_history: Optional[np.ndarray] = None
 
 
 @dataclass
@@ -129,12 +133,11 @@ def _path_overlap_fraction(pursuer_states: np.ndarray, d_thresh: float = 300.0) 
 # ---------------------------------------------------------------------------
 
 class TeamMPESimulator:
-    """V-SNAC simulator with communication-enabled separation gradient.
+    """Two-stage V-SNAC simulator.
 
-    Training uses standard 6-feature V-SNAC (proven convergence).
-    At control time, the ``use_separation`` flag adds an analytical
-    potential-based repulsive gradient, which requires communication
-    (teammate absolute states).
+    Stage 1: Standard 6-feature V-SNAC  ->  individual weights W_j
+    Stage 2: Fix W_j, train shared 9-dim coupling weight W_c
+             using Bellman: (psi_{t+1} - psi_t)^T W_c = -gamma S_j dt
     """
 
     def __init__(
@@ -152,6 +155,10 @@ class TeamMPESimulator:
 
         self.dynamics = AircraftDynamics(aircraft_params)
         self.features = SigmoidFeatureMap(feature_params, state_dim=6)
+        self.coupling = CouplingFeatureMap(
+            state_gain=team_params.coupling_gain,
+            control_gain=team_params.coupling_gain * 0.6,
+        )
         self.controller = TeamVSNACController(
             dynamics=self.dynamics,
             features=self.features,
@@ -168,8 +175,6 @@ class TeamMPESimulator:
             k_pos_e=control_params.k_pos_e,
             k_vel_e=control_params.k_vel_e,
             state_cost_scale=self.features.state_scale,
-            sep_alpha=team_params.gamma_sep,
-            sep_d_ref=team_params.d_ref,
         )
 
         self.displacements = scenario.displacement_matrix.copy()
@@ -199,9 +204,7 @@ class TeamMPESimulator:
         u = u * np.exp(-decay * t) + drift
         return np.clip(u, -self.controller.u_bar_e, self.controller.u_bar_e)
 
-    def _reactive_evader_input(
-        self, step_idx, evader_idx, pursuer_states, evader_states, assignment, u_p,
-    ) -> np.ndarray:
+    def _reactive_evader_input(self, step_idx, evader_idx, pursuer_states, evader_states, assignment, u_p):
         pursuers_targeting = np.where(assignment == evader_idx)[0]
         if pursuers_targeting.size == 0:
             pursuers_targeting = np.arange(pursuer_states.shape[0])
@@ -283,11 +286,7 @@ class TeamMPESimulator:
         ep[:, :3] += tau * ep[:, 3:6]
         return pp, ep
 
-    # ------------------------------------------------------------------
-    # Step
-    # ------------------------------------------------------------------
-    def _step(self, p, e, graph, weights, rng, explore, dynamic_graph, step_idx,
-              use_separation=False, teammate_cache=None):
+    def _update_graph(self, graph, p, e, dynamic_graph, step_idx):
         start = max(int(self.learning.graph_update_start_step), 0)
         interval = max(int(self.learning.graph_update_interval), 1)
         if dynamic_graph and step_idx >= start and (step_idx - start) % interval == 0:
@@ -295,10 +294,15 @@ class TeamMPESimulator:
             graph.update(pg, eg, self.displacements,
                          self.scenario.swap_threshold, self.scenario.max_switch_worsening, self.nu_graph)
 
+    # ------------------------------------------------------------------
+    # Step (Stage 1 -- no coupling)
+    # ------------------------------------------------------------------
+    def _step(self, p, e, graph, weights, rng, explore, dynamic_graph, step_idx):
+        self._update_graph(graph, p, e, dynamic_graph, step_idx)
         assigned = graph.assignment.copy()
+
         u_p, u_e_v, x_err, u_p_tanh, u_e_tanh = self.controller.policy(
             p, e, assigned, self.displacements, weights, rng, explore,
-            use_separation=use_separation, teammate_cache=teammate_cache,
         )
         u_e_app = self._applied_evader_inputs(step_idx, u_e_v, p, e, assigned, u_p)
         stage = self.controller.stage_costs(x_err, u_p, u_e_v, assigned)
@@ -327,9 +331,9 @@ class TeamMPESimulator:
         return next_p, next_e, rec
 
     # ------------------------------------------------------------------
-    # Training (standard 6-feature V-SNAC, with optional separation during rollouts)
+    # Training -- Stage 1 (standard V-SNAC, no coupling)
     # ------------------------------------------------------------------
-    def train_policy(self, seed=0, dynamic_graph=True, use_separation=False) -> TrainResult:
+    def train_policy(self, seed=0, dynamic_graph=True) -> TrainResult:
         rng = np.random.default_rng(seed)
         n_c = self.scenario.n_pursuers
         weights = self._init_weights(rng)
@@ -349,10 +353,7 @@ class TeamMPESimulator:
             graph = self._new_graph()
 
             for k in range(self.learning.rollout_steps):
-                p, e, rec = self._step(
-                    p, e, graph, weights, rng, explore, dynamic_graph, k,
-                    use_separation=use_separation,
-                )
+                p, e, rec = self._step(p, e, graph, weights, rng, explore, dynamic_graph, k)
                 for j in range(n_c):
                     replay.add_sample(j, rec.phi_t[j], rec.phi_tp1[j], rec.stage_costs[j], self.learning.dt)
 
@@ -375,73 +376,224 @@ class TeamMPESimulator:
                            np.asarray(r_hist), np.asarray(s_hist), np.asarray(e_hist))
 
     # ------------------------------------------------------------------
-    # Evaluation
+    # Training -- Stage 2 (fix W_j, train shared W_c)
+    # ------------------------------------------------------------------
+    def train_policy_stage2(
+        self,
+        stage1_weights: List[np.ndarray],
+        seed: int = 0,
+        dynamic_graph: bool = True,
+        stage2_iters: int = 35,
+        stage2_rollout_steps: int = 250,
+        stage2_lr: float = 0.03,
+        stage2_explore_start: float = 0.6,
+        stage2_explore_end: float = 0.05,
+        stage2_tol: float = 3e-3,
+    ) -> TrainResult:
+        rng = np.random.default_rng(seed + 5000)
+        n_p = self.scenario.n_pursuers
+        n_c_feat = self.coupling.n_features  # 9
+        dt = self.learning.dt
+        gamma = self.team.gamma_sep
+        d_ref = self.team.d_ref
+
+        w_c = np.zeros(n_c_feat, dtype=float)
+        coupling_ls = CouplingReplayLS(n_c_feat, capacity=60000)
+
+        wc_hist = [w_c.copy()]
+        wc_d_hist: List[float] = []
+
+        for it in range(stage2_iters):
+            frac = 1.0 if stage2_iters == 1 else it / (stage2_iters - 1)
+            explore = stage2_explore_start + frac * (stage2_explore_end - stage2_explore_start)
+
+            p, e = self._reset_states(rng, self.learning.random_perturb_scale)
+            graph = self._new_graph()
+            prev_controls = np.zeros((n_p, 3), dtype=float)
+
+            # One-step-delayed Bellman storage.
+            prev_psi: List[np.ndarray] = []
+            prev_sep: List[float] = []
+
+            for step in range(stage2_rollout_steps):
+                self._update_graph(graph, p, e, dynamic_graph, step)
+                assigned = graph.assignment.copy()
+
+                # 1. Coupling features psi_j(t).
+                cur_psi: List[np.ndarray] = []
+                for j in range(n_p):
+                    mask = np.ones(n_p, dtype=bool)
+                    mask[j] = False
+                    psi_j = self.coupling.psi(p[j], p[mask], prev_controls[mask])
+                    cur_psi.append(psi_j)
+
+                # 2. Separation penalty S_j(t).
+                sep = separation_penalty(p, d_ref)
+
+                # 3. Form Bellman samples from previous step.
+                if step > 0:
+                    for j in range(n_p):
+                        coupling_ls.add_sample(prev_psi[j], cur_psi[j], prev_sep[j], gamma, dt)
+
+                prev_psi = cur_psi
+                prev_sep = sep.tolist()
+
+                # 4. Team controls using (W_j, W_c).
+                u_p, u_e_v, x_err, _, _ = self.controller.policy(
+                    p, e, assigned, self.displacements, stage1_weights, rng, explore,
+                    coupling=self.coupling, w_c=w_c, prev_controls=prev_controls,
+                )
+                u_e_app = self._applied_evader_inputs(step, u_e_v, p, e, assigned, u_p)
+
+                # 5. Step dynamics.
+                next_p = p.copy()
+                next_e = e.copy()
+                for j in range(n_p):
+                    next_p[j] = self.dynamics.rk4_step(p[j], u_p[j], dt)
+                for i in range(self.scenario.n_evaders):
+                    next_e[i] = self.dynamics.rk4_step(e[i], u_e_app[i], dt)
+
+                prev_controls = u_p.copy()
+                p, e = next_p, next_e
+
+            # 6. Solve shared LS for W_c.
+            min_samp = max(n_p * 80, 200)
+            solved_wc, stats = coupling_ls.solve(
+                w_c, self.learning.ridge_lambda * 2.0, min_samp,
+                w_min=self.team.coupling_w_min, w_max=self.team.coupling_w_max,
+            )
+            new_wc = w_c + stage2_lr * (solved_wc - w_c)
+            delta = float(np.linalg.norm(new_wc - w_c))
+            w_c = new_wc
+            wc_hist.append(w_c.copy())
+            wc_d_hist.append(delta)
+
+            if delta < stage2_tol and stats.sample_count >= min_samp:
+                break
+
+        return TrainResult(
+            weights=stage1_weights,
+            weight_history=np.zeros((0, 0, 0)),
+            delta_history=np.zeros((0, 0)),
+            residual_history=np.zeros((0, 0)),
+            sample_history=np.zeros((0, 0)),
+            exploration_history=np.zeros(0),
+            w_c=w_c,
+            w_c_history=np.asarray(wc_hist),
+            w_c_delta_history=np.asarray(wc_d_hist),
+        )
+
+    # ------------------------------------------------------------------
+    # Evaluation (team / local / state_only / dropout)
     # ------------------------------------------------------------------
     def evaluate_policy(
-        self, weights, seed=1, dynamic_graph=True,
-        use_separation=False, comm_mode: CommMode = "full",
-        dropout_start_s=10.0, dropout_end_s=20.0,
-        stop_on_capture=True,
+        self,
+        weights: List[np.ndarray],
+        seed: int = 1,
+        dynamic_graph: bool = True,
+        w_c: Optional[np.ndarray] = None,
+        comm_mode: CommMode = "full",
+        dropout_start_s: float = 10.0,
+        dropout_end_s: float = 20.0,
+        stop_on_capture: bool = True,
     ) -> EvalResult:
         rng = np.random.default_rng(seed)
         p, e = self._reset_states(rng, 0.0)
         graph = self._new_graph()
         steps = int(self.scenario.t_final / self.learning.dt)
         dt = self.learning.dt
+        n_p = self.scenario.n_pursuers
+        n_e = self.scenario.n_evaders
 
         p_traj, e_traj = [p.copy()], [e.copy()]
         pu, eu, pu_t, eu_t = [], [], [], []
         te_list, pw_list, as_list, ae_list, ie_list = [], [], [], [], []
         dm, ac, ol = [], [], []
         cap_time = None
-        frozen = None
+        prev_controls = np.zeros((n_p, 3), dtype=float)
+        frozen_states = None
+        frozen_controls = None
 
         for t_s in range(steps):
             cur_t = t_s * dt
-            sep = use_separation
-            tc = None
-            if comm_mode == "local":
-                sep = False
-            elif comm_mode == "dropout" and use_separation:
-                if dropout_start_s <= cur_t < dropout_end_s:
-                    if frozen is None:
-                        frozen = p.copy()
-                    tc = frozen
-                else:
-                    frozen = None
+            self._update_graph(graph, p, e, dynamic_graph, t_s)
+            assigned = graph.assignment.copy()
 
-            p, e, rec = self._step(
-                p, e, graph, weights, rng, 0.0, dynamic_graph, t_s,
-                use_separation=sep, teammate_cache=tc,
+            # Determine effective comm mode and teammate data source.
+            eff_mode = comm_mode
+            tm_cache = None
+            ctrl_cache = None
+            if comm_mode == "dropout":
+                if dropout_start_s <= cur_t < dropout_end_s:
+                    if frozen_states is None:
+                        frozen_states = p.copy()
+                        frozen_controls = prev_controls.copy()
+                    # During dropout: use frozen teammate data.
+                    tm_cache = frozen_states
+                    ctrl_cache = frozen_controls
+                    eff_mode = "full"  # keep coupling active, but with stale data
+                else:
+                    frozen_states = None
+                    frozen_controls = None
+
+            use_w_c = w_c if eff_mode not in ("local",) else None
+            use_coupling = self.coupling if use_w_c is not None else None
+
+            u_p, u_e_v, x_err, u_p_tanh, u_e_tanh = self.controller.policy(
+                p, e, assigned, self.displacements, weights, rng, 0.0,
+                coupling=use_coupling,
+                w_c=use_w_c,
+                prev_controls=prev_controls,
+                teammate_cache=tm_cache,
+                control_cache=ctrl_cache,
+                comm_mode=eff_mode,
             )
-            p_traj.append(p.copy())
-            e_traj.append(e.copy())
-            pu.append(rec.u_p); eu.append(rec.u_e)
-            pu_t.append(rec.u_p_tanh); eu_t.append(rec.u_e_tanh)
-            te_list.append(rec.team_error)
-            pw_list.append(rec.pairwise_errors)
-            as_list.append(rec.assigned_targets)
-            ae_list.append(rec.assigned_errors)
-            ie_list.append(rec.initial_target_errors)
+            u_e_app = self._applied_evader_inputs(t_s, u_e_v, p, e, assigned, u_p)
+
+            # Step dynamics.
+            next_p = p.copy()
+            next_e = e.copy()
+            for j in range(n_p):
+                next_p[j] = self.dynamics.rk4_step(p[j], u_p[j], dt)
+            for i in range(n_e):
+                next_e[i] = self.dynamics.rk4_step(e[i], u_e_app[i], dt)
+
+            prev_controls = u_p.copy()
+
+            # Record.
+            pw = self._pairwise_errors(p, e)
+            ae = np.array([pw[j, assigned[j]] for j in range(n_p)])
+            ie = np.array([pw[j, self.initial_assignment[j]] for j in range(n_p)])
+            te = graph.team_error(p, e, self.displacements, self.nu_display, pw)
+
+            p_traj.append(next_p.copy())
+            e_traj.append(next_e.copy())
+            pu.append(u_p); eu.append(u_e_app)
+            pu_t.append(u_p_tanh); eu_t.append(u_e_tanh)
+            te_list.append(te)
+            pw_list.append(pw)
+            as_list.append(assigned)
+            ae_list.append(ae)
+            ie_list.append(ie)
 
             dm.append(_min_inter_pursuer_distance(p))
-            if self.scenario.n_evaders == 1:
+            if n_e == 1:
                 ac.append(_angular_coverage(p, e[0]))
             else:
-                a = rec.assigned_targets
-                cnts = np.bincount(a.astype(int), minlength=self.scenario.n_evaders)
+                cnts = np.bincount(assigned.astype(int), minlength=n_e)
                 me = int(np.argmax(cnts))
-                mp = np.where(a == me)[0]
+                mp = np.where(assigned == me)[0]
                 ac.append(_angular_coverage(p[mp], e[me]) if mp.size >= 2 else 1.0)
             ol.append(_path_overlap_fraction(p, 300.0))
 
-            if cap_time is None and float(np.max(rec.assigned_errors)) <= self.scenario.capture_radius:
+            p, e = next_p, next_e
+
+            if cap_time is None and float(np.max(ae)) <= self.scenario.capture_radius:
                 cap_time = cur_t
                 if stop_on_capture:
                     break
 
         coord = CoordMetrics(np.asarray(dm), np.asarray(ac), np.asarray(ol))
-        n_p, n_e = self.scenario.n_pursuers, self.scenario.n_evaders
         return EvalResult(
             np.asarray(p_traj), np.asarray(e_traj),
             np.asarray(pu) if pu else np.zeros((0, n_p, 3)),
