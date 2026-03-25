@@ -1,0 +1,106 @@
+{
+  "case": {
+    "name": "4v2",
+    "n_pursuers": 4,
+    "n_evaders": 2,
+    "seed": 47
+  },
+  "train": {
+    "iterations": 39,
+    "n_features_per_critic": 6,
+    "final_weight_norms": [
+      0.7230988289079212,
+      0.7636417014486863,
+      0.7005941261700545,
+      0.6937296901827021
+    ],
+    "final_weight_vectors": [
+      [
+        0.2587,
+        0.2593,
+        0.2547,
+        0.3485,
+        0.2702,
+        0.3596
+      ],
+      [
+        0.3368,
+        0.2646,
+        0.247,
+        0.3524,
+        0.2592,
+        0.3838
+      ],
+      [
+        0.2491,
+        0.2628,
+        0.317,
+        0.2429,
+        0.2366,
+        0.3798
+      ],
+      [
+        0.3559,
+        0.2307,
+        0.252,
+        0.3464,
+        0.2489,
+        0.2366
+      ]
+    ],
+    "final_delta_per_critic": [
+      0.004536902959424314,
+      0.0039695918695985075,
+      0.004260317250106145,
+      0.004061154465525233
+    ],
+    "mean_residual_per_critic": [
+      30.057002371645044,
+      32.39129185795148,
+      29.594384790836497,
+      32.27166707826848
+    ]
+  },
+  "eval_team": {
+    "label": "team_full_comm",
+    "capture_time_s": 34.25,
+    "final_team_error": 314.7966737176944,
+    "final_max_assigned_error": 95.21444291415575,
+    "mean_assigned_error": 585.835147803091,
+    "d_min_mean": 259.18598570261037,
+    "d_min_min": 171.38378427792216,
+    "angular_coverage_mean": 0.1700698670791117,
+    "path_overlap_mean": 0.3006547619047619
+  },
+  "eval_local": {
+    "label": "local_no_comm",
+    "capture_time_s": 34.25,
+    "final_team_error": 297.9900938901322,
+    "final_max_assigned_error": 98.3313734886924,
+    "mean_assigned_error": 584.7384232581362,
+    "d_min_mean": 244.07095868777134,
+    "d_min_min": 169.6631559828019,
+    "angular_coverage_mean": 0.15204422965206224,
+    "path_overlap_mean": 0.30309523809523814
+  },
+  "eval_dropout": {
+    "label": "team_dropout",
+    "capture_time_s": 34.25,
+    "final_team_error": 314.52330704737585,
+    "final_max_assigned_error": 95.18363747864055,
+    "mean_assigned_error": 585.7393022153332,
+    "d_min_mean": 258.6681832359504,
+    "d_min_min": 171.10957757575488,
+    "angular_coverage_mean": 0.16962174792526064,
+    "path_overlap_mean": 0.30154761904761906
+  },
+  "network": {
+    "v_snac_team_critics": 4,
+    "features_per_critic": 6,
+    "total_parameters": 24,
+    "ac_networks_estimated": 12
+  },
+  "timing": {
+    "train_s": 31.99380618194118
+  }
+}
