@@ -2,8 +2,8 @@
 
 - Output folder: `outputs/comm_structured`
 - Parallel workers: `5`
-- Total wall time (s): `208.534`
-- Sum of per-case wall times (s): `327.285`
+- Total wall time (s): `214.703`
+- Sum of per-case wall times (s): `327.086`
 
 ## Case Summary
 | case | cap(full) | cap(none) | cap(drop) | err(full) | err(none) | err(drop) | d_min(full) | d_min(none) | switches |

@@ -101,17 +101,17 @@
     "network_reduction_percent": 68.75
   },
   "runtime": {
-    "wall_time_s": 67.27652393800236,
-    "train_wall_time_s": 31.87189645699982,
+    "wall_time_s": 65.5886616209973,
+    "train_wall_time_s": 32.859527816999616,
     "eval_wall_times_s": {
-      "full_comm": 12.528145118001703,
-      "no_comm": 11.465375518000656,
-      "dropout": 11.410948028002167
+      "full_comm": 11.162784452000778,
+      "no_comm": 10.513568512000347,
+      "dropout": 11.052647921998869
     },
     "train_iterations": 35,
     "simulated_steps_total": 16625,
-    "ms_per_step_total": 4.046708206797134,
-    "ms_per_step_train": 3.8750026087537774
+    "ms_per_step_total": 3.9451826538945745,
+    "ms_per_step_train": 3.9950793698479776
   },
   "eval_full_comm": {
     "capture_time_s": 36.45,

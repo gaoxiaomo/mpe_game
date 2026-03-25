@@ -8,9 +8,9 @@
 - Gamma (training): 0.3
 
 ## Runtime
-- Total wall time (s): 45.309
-- Total ms/step: 2.9091
-- Train ms/step: 2.7826
+- Total wall time (s): 45.512
+- Total ms/step: 2.9221
+- Train ms/step: 3.0080
 
 ## Evaluation Modes
 ### full_comm

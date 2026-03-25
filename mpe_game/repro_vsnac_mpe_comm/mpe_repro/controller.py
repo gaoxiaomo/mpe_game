@@ -28,15 +28,16 @@ def formation_gradient(
 ) -> np.ndarray:
     """Compute formation potential gradient in velocity space for pursuer j.
 
-    The gradient drives pursuer j's velocity toward maintaining the desired
-    formation displacement Δ_{jk} relative to each communicating teammate k.
+    PD-like coordination that drives inter-pursuer relative states toward
+    the desired formation displacement Δ_{jk} = r_j - r_k:
 
-    grad_v = gamma * (1/d_j) * sum_k a_{jk} * (v_j - v_k
-             + kp * ((p_j - p_k) - Delta_{jk}) / ref_dist)
+        grad_v = gamma/d_j * sum_k a_{jk} * (dv + kp * pos_err / ref_dist)
 
-    The position deviation enters as a proportional correction (kp) scaled
-    by ref_dist, converting position error into a velocity-space signal
-    that passes through g^T.  This is a PD-like formation controller.
+    where pos_err = (p_j - p_k) - Δ_{jk} and kp scales position deviation
+    into a velocity correction.  This naturally provides:
+    - Repulsion when too close (pos_err points outward)
+    - Damping of relative velocity (dv term)
+    - Formation convergence when near the evader
     """
     n_p = pursuer_states.shape[0]
     grad = np.zeros(6, dtype=float)
@@ -49,19 +50,17 @@ def formation_gradient(
 
     p_j = pursuer_states[j, :3]
     v_j = pursuer_states[j, 3:]
-    kp = 1.0  # proportional gain for position-to-velocity mapping
+    kp = 1.0
 
     for k in range(n_p):
         if k == j or A_p[j, k] <= 0.0:
             continue
         p_k = pursuer_states[k, :3]
         v_k = pursuer_states[k, 3:]
-        dp = p_j - p_k
         dv = v_j - v_k
         delta_p = delta_matrix[j, k, :3] if delta_matrix is not None else np.zeros(3)
-        pos_err = dp - delta_p  # formation position deviation
+        pos_err = (p_j - p_k) - delta_p
 
-        # PD-like: velocity damping + proportional position correction
         grad[3:] += A_p[j, k] * (dv + kp * pos_err / ref_dist)
 
     grad[3:] *= gamma / d_j
