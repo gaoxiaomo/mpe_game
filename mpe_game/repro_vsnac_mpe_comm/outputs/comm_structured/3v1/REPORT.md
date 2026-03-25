@@ -8,31 +8,31 @@
 - Gamma (training): 0.3
 
 ## Runtime
-- Total wall time (s): 24.179
-- Total ms/step: 2.0217
-- Train ms/step: 2.0170
+- Total wall time (s): 25.652
+- Total ms/step: 2.0400
+- Train ms/step: 2.0312
 
 ## Evaluation Modes
 ### full_comm
-- Capture time (s): 55.650000000000006
-- Final Eteam: 329.441
-- Mean assigned error: 1737.065
-- Min d_min: 269.563
-- Mean formation error: 2210.525
+- Capture time (s): 55.050000000000004
+- Final Eteam: 299.202
+- Mean assigned error: 1736.329
+- Min d_min: 282.240
+- Mean formation error: 2216.713
 
 ### no_comm
-- Capture time (s): 45.25
-- Final Eteam: 326.669
-- Mean assigned error: 1694.103
-- Min d_min: 126.720
+- Capture time (s): 47.150000000000006
+- Final Eteam: 296.795
+- Mean assigned error: 1693.165
+- Min d_min: 135.639
 - Mean formation error: 0.000
 
 ### dropout
-- Capture time (s): 55.5
-- Final Eteam: 328.996
-- Mean assigned error: 1732.225
-- Min d_min: 270.503
-- Mean formation error: 1675.379
+- Capture time (s): 53.85
+- Final Eteam: 298.659
+- Mean assigned error: 1731.802
+- Min d_min: 282.744
+- Mean formation error: 1680.343
 
 ## Networks
 - V-SNAC critics: 3

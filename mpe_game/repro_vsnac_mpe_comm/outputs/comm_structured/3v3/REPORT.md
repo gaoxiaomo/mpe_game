@@ -8,30 +8,30 @@
 - Gamma (training): 0.3
 
 ## Runtime
-- Total wall time (s): 40.231
-- Total ms/step: 2.6892
-- Train ms/step: 2.8366
+- Total wall time (s): 45.309
+- Total ms/step: 2.9091
+- Train ms/step: 2.7826
 
 ## Evaluation Modes
 ### full_comm
-- Capture time (s): 33.15
-- Final Eteam: 208.190
-- Mean assigned error: 564.611
-- Min d_min: 1393.875
+- Capture time (s): 33.45
+- Final Eteam: 190.872
+- Mean assigned error: 553.513
+- Min d_min: 1380.600
 - Mean formation error: 0.000
 
 ### no_comm
-- Capture time (s): 33.15
-- Final Eteam: 208.190
-- Mean assigned error: 564.611
-- Min d_min: 1393.875
+- Capture time (s): 33.45
+- Final Eteam: 190.872
+- Mean assigned error: 553.513
+- Min d_min: 1380.600
 - Mean formation error: 0.000
 
 ### dropout
-- Capture time (s): 33.15
-- Final Eteam: 208.190
-- Mean assigned error: 564.611
-- Min d_min: 1393.875
+- Capture time (s): 33.45
+- Final Eteam: 190.872
+- Mean assigned error: 553.513
+- Min d_min: 1380.600
 - Mean formation error: 0.000
 
 ## Networks

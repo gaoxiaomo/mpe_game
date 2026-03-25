@@ -21,52 +21,52 @@
     "t_final": 90.0
   },
   "train": {
-    "iterations": 32,
+    "iterations": 35,
     "final_weight_norms": [
-      0.7220218417929047,
-      0.6987713212907841,
-      0.5979234549039748
+      0.7542872275803763,
+      0.7325076405075162,
+      0.6642963691017373
     ],
     "final_weight_norm_squares": [
-      0.5213155400260183,
-      0.4882813594584682,
-      0.35751245792430564
+      0.5689492216908902,
+      0.5365674434018886,
+      0.44128966600175157
     ],
     "final_weight_vectors": [
       [
-        0.3758,
-        0.2588,
-        0.2529,
-        0.3575,
-        0.2296,
-        0.2621
+        0.369,
+        0.2883,
+        0.2814,
+        0.3472,
+        0.2542,
+        0.2921
       ],
       [
-        0.2151,
-        0.2551,
-        0.3855,
-        0.2378,
-        0.2297,
-        0.345
+        0.2374,
+        0.284,
+        0.3798,
+        0.2638,
+        0.2544,
+        0.3478
       ],
       [
-        0.2273,
-        0.2367,
-        0.2396,
-        0.242,
-        0.2636,
-        0.2537
+        0.2516,
+        0.2625,
+        0.2659,
+        0.2687,
+        0.294,
+        0.2824
       ]
     ],
     "final_delta_per_critic": [
-      0.0006665908012493789,
-      0.0006385209611991464,
-      0.0007689043490589616
+      8.127664140361831e-05,
+      7.296639552545567e-05,
+      9.336619968232462e-05
     ],
     "mean_residual_per_critic": [
-      40.47228958064075,
-      50.355293812313,
-      66.2107553865736
+      40.48350776676407,
+      50.320554494729826,
+      66.21775041587794
     ]
   },
   "network": {
@@ -75,43 +75,43 @@
     "network_reduction_percent": 62.5
   },
   "runtime": {
-    "wall_time_s": 24.17931284199949,
-    "train_wall_time_s": 13.231246773999374,
+    "wall_time_s": 25.652472646001115,
+    "train_wall_time_s": 14.57377308300056,
     "eval_wall_times_s": {
-      "full_comm": 3.8157338020009774,
-      "no_comm": 3.458240351999848,
-      "dropout": 3.672658778999903
+      "full_comm": 3.7643608809994475,
+      "no_comm": 3.2977117049995286,
+      "dropout": 4.016549411997403
     },
-    "train_iterations": 32,
-    "simulated_steps_total": 11960,
-    "ms_per_step_total": 2.0216816757524656,
-    "ms_per_step_train": 2.0169583496950265
+    "train_iterations": 35,
+    "simulated_steps_total": 12575,
+    "ms_per_step_total": 2.0399580633002876,
+    "ms_per_step_train": 2.031187886132482
   },
   "eval_full_comm": {
-    "capture_time_s": 55.650000000000006,
-    "final_team_error": 329.4407029645921,
-    "final_max_assigned_error": 124.51537211203159,
-    "mean_assigned_error": 1737.0653693230001,
-    "min_d_min": 269.5630944400073,
-    "mean_formation_error": 2210.524781609937,
+    "capture_time_s": 55.050000000000004,
+    "final_team_error": 299.2019843667209,
+    "final_max_assigned_error": 110.43083367758533,
+    "mean_assigned_error": 1736.3285778396328,
+    "min_d_min": 282.24016510999104,
+    "mean_formation_error": 2216.713232487408,
     "comm_mode": "full_comm"
   },
   "eval_no_comm": {
-    "capture_time_s": 45.25,
-    "final_team_error": 326.66869990108677,
-    "final_max_assigned_error": 119.79898725918717,
-    "mean_assigned_error": 1694.1034121563848,
-    "min_d_min": 126.72049732029261,
+    "capture_time_s": 47.150000000000006,
+    "final_team_error": 296.7950583251842,
+    "final_max_assigned_error": 107.42884764962564,
+    "mean_assigned_error": 1693.1646497962365,
+    "min_d_min": 135.63861988707183,
     "mean_formation_error": 0.0,
     "comm_mode": "no_comm"
   },
   "eval_dropout": {
-    "capture_time_s": 55.5,
-    "final_team_error": 328.99638182352044,
-    "final_max_assigned_error": 123.86142814643611,
-    "mean_assigned_error": 1732.2247129216087,
-    "min_d_min": 270.50300444667414,
-    "mean_formation_error": 1675.379495960839,
+    "capture_time_s": 53.85,
+    "final_team_error": 298.6591935808559,
+    "final_max_assigned_error": 109.9798004241659,
+    "mean_assigned_error": 1731.802413325448,
+    "min_d_min": 282.74357378536973,
+    "mean_formation_error": 1680.3434930063254,
     "comm_mode": "dropout"
   },
   "dynamic_switch_times_s": [],

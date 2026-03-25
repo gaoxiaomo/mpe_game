@@ -103,18 +103,18 @@ def _learning_params(n_p: int, n_e: int, quick: bool) -> LearningParams:
             graph_update_interval=1,
             graph_update_start_step=0,
             critic_learning_rate=0.05,
-            critic_lr_decay=0.90,
+            critic_lr_decay=0.85,
             convergence_tol=5e-4,
             random_perturb_scale=0.02,
         )
     return LearningParams(
-        policy_iterations=32 + 2 * max(0, size - 3),
+        policy_iterations=50 + 2 * max(0, size - 3),
         rollout_steps=160 + 15 * size,
         min_samples_per_evader=50,
         graph_update_interval=1,
         graph_update_start_step=0,
         critic_learning_rate=0.05,
-        critic_lr_decay=0.90,
+        critic_lr_decay=0.85,
         convergence_tol=1e-4,
         random_perturb_scale=0.02,
     )
