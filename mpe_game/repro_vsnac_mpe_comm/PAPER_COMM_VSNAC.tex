@@ -299,56 +299,89 @@ The 3v3 case acts as a natural control: each evader is pursued by a single agent
 Under 15\% random dropout, capture times deviate by at most 0.3\,s from full communication, confirming that partial loss reduces the coordination gradient proportionally without destabilizing the tracking policy.
 
 
-\subsection{Spatial Behavior}
+\subsection{Scenario 1: Three-Pursuer-One-Evader}
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{fig_trajectory_xy.png}}
-\caption{Pursuer trajectories in the 3v1 scenario under full communication. The three pursuers approach the evader from diversified directions.}
-\label{fig:trajectories}
+\caption{3v1 trajectories under full communication. The three pursuers approach the evader (black) from diversified directions.}
+\label{fig:traj_3v1}
 \end{figure}
-
-Fig.~\ref{fig:trajectories} compares the 3v1 trajectories under full communication.
-Without communication, the three pursuers approach from a narrow cone of similar directions.
-With communication, the repulsion gradient spreads the approach paths, providing wider angular coverage around the evader, which is desirable for surrounding formation.
-
-
-\subsection{Tracking Error Convergence}
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{fig_assigned_errors.png}}
-\caption{Tracking error norms in the 3v1 scenario with communication. All three pursuers converge to a small neighborhood of the evader.}
-\label{fig:errors}
+\caption{3v1 tracking error norms. All three pursuers converge to a small neighborhood, consistent with UUB stability.}
+\label{fig:err_3v1}
 \end{figure}
 
-Fig.~\ref{fig:errors} shows the tracking error norm $\|\tilde{x}_j\|$ for each pursuer in the 3v1 scenario.
-All three errors decay from initial values of approximately 7000 to a bounded neighborhood near 100, consistent with the UUB convergence guarantee.
-The errors do not reach exactly zero because the evader continues to maneuver and the V-SNAC approximation introduces a residual bound.
+The 3v1 scenario represents the case with the highest coordination demand ($N_p/N_e = 3$).
+Fig.~\ref{fig:traj_3v1} shows that the three pursuers approach the evader from spread-out directions under full communication, rather than clustering along a single path.
+Fig.~\ref{fig:err_3v1} confirms that all tracking errors converge from approximately 7000 to a bounded neighborhood near 100.
+The errors do not reach exactly zero because the evader continues to maneuver and the V-SNAC approximation carries a residual bound.
 
-
-\subsection{Communication Mode Comparison}
+Fig.~\ref{fig:comm_compare} overlays the team state error $E_{\text{team}}$ for the three communication modes.
+The curves nearly coincide, confirming that the coordination gradient does not degrade the aggregate tracking performance.
+The dropout curve is indistinguishable from the full-communication curve.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{fig_comm_comparison.png}}
-\caption{Team state error $E_{\text{team}}$ comparison across three communication modes for the 3v1 scenario.}
+\caption{3v1 team state error across three communication modes. The curves overlap, confirming that coordination does not impair tracking.}
 \label{fig:comm_compare}
 \end{figure}
 
-Fig.~\ref{fig:comm_compare} overlays the team state error $E_{\text{team}} = \sum_j c_{j,i}\|\nu\circ\tilde{x}_j\|$ for the three modes.
-The curves nearly coincide, confirming that the coordination gradient does not degrade the aggregate tracking performance.
-The dropout curve is indistinguishable from the full-communication curve, further supporting robustness to packet loss.
+
+\subsection{Scenario 2: Six-Pursuer-Three-Evader}
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{fig_trajectory_6v3.png}}
+\caption{6v3 trajectories under full communication. Six pursuers (colors) track three evaders (dark lines) with dynamic target assignment.}
+\label{fig:traj_6v3}
+\end{figure}
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{fig_errors_6v3.png}}
+\caption{6v3 tracking error norms. All six pursuers converge, with dynamic target reassignment visible as slope changes around $t = 15$\,s.}
+\label{fig:err_6v3}
+\end{figure}
+
+The 6v3 case combines multiple evaders with intra-group coordination ($N_p/N_e = 2$).
+Fig.~\ref{fig:traj_6v3} illustrates the more complex pursuit geometry: six pursuers track three evaders that follow different scripted trajectories, with the pairwise-swap algorithm dynamically reassigning targets.
+Fig.~\ref{fig:err_6v3} shows that all six tracking errors converge, with slope changes around $t = 15$\,s corresponding to target reassignment events.
+
+As noted in Table~\ref{tab:results}, the 6v3 communication mode captures slightly faster than the baseline (36.6\,s vs.\ 37.5\,s).
+Fig.~\ref{fig:team_6v3} compares the team state error under dynamic vs.\ fixed target graph, showing that dynamic assignment consistently reduces the aggregate error---an effect that is complementary to, and independent of, the communication-based coordination.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{fig_team_error_6v3.png}}
+\caption{6v3 team state error: dynamic target graph (blue) vs.\ fixed graph (orange). Dynamic assignment reduces team error regardless of communication mode.}
+\label{fig:team_6v3}
+\end{figure}
+
+
+\subsection{Scenario 3: Three-Pursuer-Three-Evader (Control)}
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{fig_trajectory_3v3.png}}
+\caption{3v3 trajectories. Each evader is pursued by one agent; the communication graph has no intra-group edges and all three modes produce identical results.}
+\label{fig:traj_3v3}
+\end{figure}
+
+The 3v3 case serves as a natural control experiment.
+With $N_p/N_e = 1$, each evader is pursued by exactly one agent.
+The intra-group communication graph has no edges ($d_j = 0$ for all $j$), so the coordination gradient is identically zero regardless of $\gamma$.
+Fig.~\ref{fig:traj_3v3} shows the pursuit geometry, and Table~\ref{tab:results} confirms that all three communication modes yield identical capture times (33.5\,s), validating that the coordination mechanism is correctly inactive when no intra-group neighbors exist.
 
 
 \subsection{Critic Weight Convergence}
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{fig_weight_convergence.png}}
-\caption{Critic weight convergence ($\|\hat{W}_{j,s}\|^2$) for the 6v3 configuration.}
+\caption{Critic weight convergence ($\|\hat{W}_{j,s}\|^2$) for the 6v3 configuration. The decaying learning rate produces a natural plateau.}
 \label{fig:convergence}
 \end{figure}
 
-Fig.~\ref{fig:convergence} plots the squared norm of the critic weights $\|\hat{W}_{j,s}\|^2$ during training for the 6v3 case.
-The decaying learning rate produces a natural ``fast descent $\to$ plateau'' profile.
-Since training uses $\gamma = 0$, the convergence behavior is identical to the baseline V-SNAC, which is expected.
+Fig.~\ref{fig:convergence} plots $\|\hat{W}_{j,s}\|^2$ during training for the 6v3 case.
+The decaying learning rate $\alpha_s = 0.05 \times 0.85^s$ produces a smooth transition from rapid adjustment to a stable plateau.
+Since training uses $\gamma = 0$, the convergence behavior is identical to the baseline V-SNAC.
 
 
 % =====================================================================
