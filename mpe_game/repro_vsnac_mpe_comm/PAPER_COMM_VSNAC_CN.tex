@@ -453,6 +453,11 @@ $\gamma$ & 0 & 0.5 & 1.0 & 2.0 & 5.0 & 10.0 \\
 15\%丢包下，捕获时间偏差均在0.3秒以内，
 与式(\ref{eq:dropout})的有界扰动分析一致。
 
+下面对三个代表性场景进行详细分析：
+3追1（$N_p/N_e = 3$，协调需求最高）、
+6追3（$N_p/N_e = 2$，多逃逸者与动态重分配）和
+3追3（$N_p/N_e = 1$，对照组）。
+其余配置（5追3、8追4）呈现一致趋势，如表~\ref{tab:results}所示。
 
 \subsection{三追一场景分析}
 
@@ -518,50 +523,71 @@ $\alpha_s = 0.05 \times 0.85^s$所致的特征性"快速下降$\to$平台"形态
 
 \subsection{六追三场景分析}
 
+6追3场景同时运用全部三个层面：V-SNAC追踪、动态目标分配和组内协调。
+初始分配采用故意偏移的模式$A_{pe} = [1,2,0,1,2,0]$
+（每个追逐者初始指派到非最近逃逸者），以验证动态重分配机制。
+
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_trajectory_6v3.png}}
-\caption{6追3全通信下的追踪轨迹。六个追逐者追踪三个逃逸者，动态目标重分配事件表现为轨迹拐点。}
+\caption{6追3全通信下的追踪轨迹。六个追逐者追踪三个逃逸者，伴随动态目标重分配。}
 \label{fig:traj_6v3}
 \end{figure}
 
-6追3场景同时运用全部三个层面：V-SNAC追踪、动态分配和组内协调。
-图~\ref{fig:traj_6v3}展示了追逃几何，每个逃逸者由一对追逐者追踪。
-轨迹拐点对应逐对交换算法重新分配目标的时刻。
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_assignment_6v3.png}}
+\caption{6追3目标分配时间线。逐对交换算法在$t = 0$秒时检测到初始偏移分配的次优性，
+立即将全部六个追逐者重分配到距离最优的目标。}
+\label{fig:assign_6v3}
+\end{figure}
+
+图~\ref{fig:traj_6v3}展示了追逃几何，
+图~\ref{fig:assign_6v3}显示了分配时间线。
+在$t = 0$秒时，逐对交换算法检测到初始偏移分配$A_{pe} = [1,2,0,1,2,0]$
+的次优性，立即将所有追逐者重分配到各自最近的逃逸者。
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_oldnew_6v3.png}}
+\caption{6追3目标重分配前后的追踪误差对比。虚线表示原始（次优）分配下的误差，
+实线表示重分配后的误差。原始分配下多个追逐者的误差发散（超过30000），
+重分配后全部收敛，验证了动态目标切换的有效性。}
+\label{fig:oldnew_6v3}
+\end{figure}
+
+重分配的效果如图~\ref{fig:oldnew_6v3}所示。
+虚线表示各追逐者在原始偏移分配下的追踪误差，实线表示重分配后的误差。
+在原始分配下，多个追逐者因被指派到远处逃逸者而误差持续发散（超过30000）；
+重分配后所有误差均收敛到有界邻域，
+表明在初始分配次优的多逃逸者场景中动态目标切换是必要的。
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_errors_6v3.png}}
-\caption{6追3追踪误差范数。$t \approx 15$秒处的斜率变化对应目标重分配事件。全部六个追逐者收敛到有界邻域。}
+\caption{6追3追踪误差范数（重分配后）。全部六个追逐者收敛到有界邻域，符合UUB稳定性。}
 \label{fig:err_6v3}
 \end{figure}
 
-图~\ref{fig:err_6v3}显示六个追逐者的追踪误差。
-$t \approx 15$秒处的斜率变化对应目标重分配：
-当追逐者切换到更近的逃逸者时，其误差下降更陡。
-全部六个误差均收敛到有界邻域，确认了在博弈中途重分配下的稳定追踪。
-
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_control_6v3.png}}
-\caption{6追3控制输入。追逐者在初始接触和重分配瞬态时呈现饱和。逃逸者控制饱和于$\pm\bar{u}_e$，反映最坏情况逃逸。}
+\caption{6追3控制输入。追逐者控制饱和于$\pm\bar{u}_p{=}\pm 25$；
+逃逸者控制饱和于$\pm\bar{u}_e{=}\pm 15$，反映由HJI方程推导的最坏情况逃逸策略。}
 \label{fig:ctrl_6v3}
 \end{figure}
 
-图~\ref{fig:ctrl_6v3}显示6追3场景的控制输入。
-追逐者控制在初始接触阶段和目标重分配后的短暂瞬态中呈现饱和，
-此时新的追踪误差突然变化。
-逃逸者控制始终在饱和极限$\pm\bar{u}_e = \pm 15$附近运行，
-反映了对抗性最坏情况策略。
-控制特征表明$\tanh$饱和机制无需修改即可处理更复杂的多目标场景。
+图~\ref{fig:err_6v3}确认重分配后全部六个追踪误差收敛。
+图~\ref{fig:ctrl_6v3}显示控制输入：
+追逐者在初始激进机动阶段饱和于$\pm 25$，
+逃逸者控制始终在$\pm 15$附近运行，
+反映了由式(\ref{eq:ctrl_evader})推导的最坏情况策略。
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_team_error_6v3.png}}
-\caption{6追3团队误差：动态分配（蓝）vs 固定分配（橙）。动态重分配持续降低总体追踪误差，与协调势互补。}
+\caption{6追3团队状态误差：动态分配（蓝）vs 固定分配（橙）。
+动态重分配持续降低总体误差，与通信协调构成互补。}
 \label{fig:team_6v3}
 \end{figure}
 
 图~\ref{fig:team_6v3}比较了动态与固定目标分配下的团队状态误差。
-动态重分配始终实现更低的总体误差，
-在$t \approx 15$秒的重分配事件后差距进一步拉大。
-这表明动态分配和通信协调作为互补机制运作：
+动态重分配始终实现更低的总体误差。
+这表明动态分配和通信协调作为互补层面运作：
 前者优化每个追逐者追踪\emph{哪个}逃逸者，
 后者优化同组追逐者\emph{如何}接近其共享目标。
 

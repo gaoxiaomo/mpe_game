@@ -308,6 +308,8 @@ The 3v3 scenario (ratio 1) serves as a natural control group: each evader has ex
 
 Under 15\% dropout, capture times deviate by at most 0.3\,s from the full-communication case, consistent with the bounded perturbation analysis in (\ref{eq:dropout}).
 
+We present detailed analysis for three representative scenarios: 3v1 ($N_p/N_e = 3$, highest coordination demand), 6v3 ($N_p/N_e = 2$, multi-evader with dynamic reassignment), and 3v3 ($N_p/N_e = 1$, control group). The remaining configurations (5v3, 8v4) exhibit consistent trends as shown in Table~\ref{tab:results}.
+
 
 \subsection{Three-Pursuer-One-Evader Analysis}
 
@@ -354,37 +356,51 @@ Fig.~\ref{fig:comm_compare} overlays the team state error $E_{\mathrm{team}}(t)$
 
 \subsection{Six-Pursuer-Three-Evader Analysis}
 
+The 6v3 scenario exercises all three layers simultaneously: V-SNAC tracking, dynamic target assignment, and intra-group coordination. The initial assignment uses a deliberately suboptimal shifted pattern $A_{pe} = [1,2,0,1,2,0]$ (each pursuer initially targets a non-nearest evader) to demonstrate the dynamic reassignment mechanism.
+
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_trajectory_6v3.png}}
-\caption{6v3 pursuit trajectories under full communication. Six pursuers track three evaders with dynamic target reassignment events visible as trajectory inflection points.}
+\caption{6v3 pursuit trajectories under full communication. Six pursuers track three evaders with dynamic target reassignment.}
 \label{fig:traj_6v3}
 \end{figure}
 
-The 6v3 scenario exercises all three layers simultaneously: V-SNAC tracking, dynamic assignment, and intra-group coordination. Fig.~\ref{fig:traj_6v3} shows the pursuit geometry, with each evader tracked by a pair of pursuers. Trajectory inflection points correspond to moments when the pairwise swap algorithm reassigns targets.
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_assignment_6v3.png}}
+\caption{6v3 target assignment timeline. The pairwise swap algorithm reassigns targets at $t = 0$\,s, switching from the suboptimal shifted pattern to the distance-optimal assignment.}
+\label{fig:assign_6v3}
+\end{figure}
+
+Fig.~\ref{fig:traj_6v3} shows the pursuit geometry, and Fig.~\ref{fig:assign_6v3} displays the assignment timeline. At $t = 0$\,s, the pairwise swap algorithm detects that the initial shifted assignment is suboptimal and immediately reassigns all six pursuers to their nearest evaders. This single reassignment event transforms the adjacency matrix from $A_{pe} = [1,2,0,1,2,0]$ to the distance-optimal pattern.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_oldnew_6v3.png}}
+\caption{6v3 tracking errors before and after target reassignment. Dashed lines show errors under the original (suboptimal) assignment; solid lines show errors after reassignment. The old-assignment errors diverge while the new-assignment errors converge, confirming the effectiveness of dynamic target switching.}
+\label{fig:oldnew_6v3}
+\end{figure}
+
+The benefit of this reassignment is shown in Fig.~\ref{fig:oldnew_6v3}. Dashed lines represent the tracking error each pursuer would have under the original shifted assignment; solid lines show the errors after reassignment. Under the original assignment, several pursuers' errors grow unboundedly (exceeding 30000) because they are assigned to distant evaders. After reassignment, all errors converge to bounded neighborhoods, demonstrating that dynamic target switching is essential for multi-evader scenarios with suboptimal initial assignments.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_errors_6v3.png}}
-\caption{6v3 tracking error norms. Slope changes near $t = 15$\,s correspond to target reassignment events. All six pursuers converge to bounded neighborhoods.}
+\caption{6v3 tracking error norms (post-reassignment). All six pursuers converge to bounded neighborhoods consistent with UUB stability.}
 \label{fig:err_6v3}
 \end{figure}
 
-Fig.~\ref{fig:err_6v3} shows the tracking errors for all six pursuers. The slope changes near $t = 15$\,s correspond to target reassignment: when a pursuer switches to a closer evader, its error drops more steeply. All six errors converge to bounded neighborhoods, confirming stable tracking despite the mid-game reassignment.
-
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_control_6v3.png}}
-\caption{6v3 control inputs. Pursuers exhibit saturation during initial engagement and after reassignment transients. The evader controls saturate at $\pm\bar{u}_e$, reflecting worst-case evasion.}
+\caption{6v3 control inputs. Pursuer controls saturate at $\pm\bar{u}_p{=}\pm 25$ during initial engagement; evader controls saturate at $\pm\bar{u}_e{=}\pm 15$, reflecting the worst-case evasion strategy derived from the HJI equation.}
 \label{fig:ctrl_6v3}
 \end{figure}
 
-Fig.~\ref{fig:ctrl_6v3} displays the control inputs for the 6v3 scenario. The pursuer controls show saturation during the initial engagement phase and brief transients after target reassignment, when the new tracking error suddenly changes. The evader controls consistently operate near the saturation limits $\pm\bar{u}_e = \pm 15$, reflecting the adversarial worst-case strategy. The control profiles demonstrate that the $\tanh$ saturation mechanism handles the more complex multi-target scenario without modification.
+Fig.~\ref{fig:err_6v3} confirms that all six tracking errors converge after reassignment. Fig.~\ref{fig:ctrl_6v3} shows the control inputs: pursuers saturate at $\pm 25$ during the aggressive initial maneuver phase, while evader controls consistently operate near $\pm 15$, reflecting the worst-case strategy from (\ref{eq:ctrl_evader}).
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_team_error_6v3.png}}
-\caption{6v3 team error: dynamic assignment (blue) vs.\ fixed assignment (orange). Dynamic reassignment consistently reduces the aggregate tracking error, complementing the coordination potential.}
+\caption{6v3 team state error: dynamic target assignment (blue) vs.\ fixed assignment (orange). Dynamic reassignment reduces the aggregate error, complementing the communication coordination.}
 \label{fig:team_6v3}
 \end{figure}
 
-Fig.~\ref{fig:team_6v3} compares the team state error under dynamic vs.\ fixed target assignment. Dynamic reassignment consistently achieves lower aggregate error, with the gap widening after the reassignment event near $t = 15$\,s. This demonstrates that dynamic assignment and communication coordination operate as complementary mechanisms: the former optimizes \emph{which} evader each pursuer tracks, while the latter optimizes \emph{how} co-assigned pursuers approach their shared target.
+Fig.~\ref{fig:team_6v3} compares the team state error under dynamic vs.\ fixed target assignment. Dynamic reassignment achieves consistently lower aggregate error. This demonstrates that dynamic assignment and communication coordination operate as complementary layers: the former optimizes \emph{which} evader each pursuer tracks, while the latter optimizes \emph{how} co-assigned pursuers approach their shared target.
 
 
 \subsection{Three-Pursuer-Three-Evader Control Group}
