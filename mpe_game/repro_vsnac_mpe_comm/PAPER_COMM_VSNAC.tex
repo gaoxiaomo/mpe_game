@@ -235,7 +235,7 @@ The same trained weights are evaluated under three modes: \textbf{full communica
 \subsection{Illustrative Scenario: Path Degeneracy}
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{fig_collision_comparison.png}}
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_comparison.png}}
 \caption{Path degeneracy scenario. Left: without communication, both pursuers follow the same trajectory. Middle: with communication ($\gamma{=}5$), trajectories diverge. Right: inter-pursuer distance over time.}
 \label{fig:collision}
 \end{figure}
@@ -302,13 +302,13 @@ Under 15\% random dropout, capture times deviate by at most 0.3\,s from full com
 \subsection{Scenario 1: Three-Pursuer-One-Evader}
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{fig_trajectory_xy.png}}
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_trajectory_xy.png}}
 \caption{3v1 trajectories under full communication. The three pursuers approach the evader (black) from diversified directions.}
 \label{fig:traj_3v1}
 \end{figure}
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{fig_assigned_errors.png}}
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_assigned_errors.png}}
 \caption{3v1 tracking error norms. All three pursuers converge to a small neighborhood, consistent with UUB stability.}
 \label{fig:err_3v1}
 \end{figure}
@@ -323,7 +323,7 @@ The curves nearly coincide, confirming that the coordination gradient does not d
 The dropout curve is indistinguishable from the full-communication curve.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{fig_comm_comparison.png}}
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_comm_comparison.png}}
 \caption{3v1 team state error across three communication modes. The curves overlap, confirming that coordination does not impair tracking.}
 \label{fig:comm_compare}
 \end{figure}
@@ -332,13 +332,13 @@ The dropout curve is indistinguishable from the full-communication curve.
 \subsection{Scenario 2: Six-Pursuer-Three-Evader}
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{fig_trajectory_6v3.png}}
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_trajectory_6v3.png}}
 \caption{6v3 trajectories under full communication. Six pursuers (colors) track three evaders (dark lines) with dynamic target assignment.}
 \label{fig:traj_6v3}
 \end{figure}
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{fig_errors_6v3.png}}
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_errors_6v3.png}}
 \caption{6v3 tracking error norms. All six pursuers converge, with dynamic target reassignment visible as slope changes around $t = 15$\,s.}
 \label{fig:err_6v3}
 \end{figure}
@@ -351,7 +351,7 @@ As noted in Table~\ref{tab:results}, the 6v3 communication mode captures slightl
 Fig.~\ref{fig:team_6v3} compares the team state error under dynamic vs.\ fixed target graph, showing that dynamic assignment consistently reduces the aggregate error---an effect that is complementary to, and independent of, the communication-based coordination.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{fig_team_error_6v3.png}}
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_team_error_6v3.png}}
 \caption{6v3 team state error: dynamic target graph (blue) vs.\ fixed graph (orange). Dynamic assignment reduces team error regardless of communication mode.}
 \label{fig:team_6v3}
 \end{figure}
@@ -360,7 +360,7 @@ Fig.~\ref{fig:team_6v3} compares the team state error under dynamic vs.\ fixed t
 \subsection{Scenario 3: Three-Pursuer-Three-Evader (Control)}
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{fig_trajectory_3v3.png}}
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_trajectory_3v3.png}}
 \caption{3v3 trajectories. Each evader is pursued by one agent; the communication graph has no intra-group edges and all three modes produce identical results.}
 \label{fig:traj_3v3}
 \end{figure}
@@ -374,7 +374,7 @@ Fig.~\ref{fig:traj_3v3} shows the pursuit geometry, and Table~\ref{tab:results} 
 \subsection{Critic Weight Convergence}
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{fig_weight_convergence.png}}
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_weight_convergence.png}}
 \caption{Critic weight convergence ($\|\hat{W}_{j,s}\|^2$) for the 6v3 configuration. The decaying learning rate produces a natural plateau.}
 \label{fig:convergence}
 \end{figure}
