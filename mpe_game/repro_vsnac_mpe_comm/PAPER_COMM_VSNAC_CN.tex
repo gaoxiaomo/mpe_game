@@ -44,7 +44,7 @@ zhangkun22@buaa.edu.cn}
 本文提出一种基于增广值函数的分层协同控制框架。
 该框架集成三个层面：
 （一）采用V-SNAC结构从值函数梯度直接推导饱和Nash均衡控制策略，
-相比传统actor-critic架构减少约31\%的网络数量；
+将网络数量从$2(N_p{+}N_e)$降至$N_p$；
 （二）基于图论的逐对交换算法实现动态目标重分配，改善团队内聚性；
 （三）在同组追逐者间通过通信图引入解析协调势函数，
 与学习得到的追踪值函数构成增广值函数，
@@ -197,7 +197,8 @@ u_e^{*} = -\bar{u}_e\,\tanh\!\bigg(\frac{1}{2\bar{u}_e}\,R_2^{-1}\,g_e^T\,\nabla
 其中$g_\psi$为缩放常数，$(p_i, v_i)$为$\tilde{x}$的位置和速度分量。
 该基函数捕捉了驱动最优拦截的位置误差-速度耦合的本质特征。
 相比传统actor-critic结构（需要$2(N_p + N_e)$个网络），
-V-SNAC仅需$N_p$个critic网络——对典型配置减少约31\%。
+V-SNAC仅需$N_p$个critic网络。
+例如3追3配置从12个减少到3个（75\%），6追3从18个减少到6个（67\%）。
 
 权重通过带衰减学习率的离策略最小二乘梯度下降更新：
 \begin{equation}\label{eq:weight_update}
@@ -331,10 +332,11 @@ u_e^{*} = -\bar{u}_e\,\tanh\!\bigg(\frac{1}{2\bar{u}_e}\,R_2^{-1}\,g_e^T\,\nabla
 在本文设定中，$\Phi_j$将追踪轨迹重新引导向空间多样性，
 而不改变渐近追踪保证。
 
-\textit{训练与执行分离}。
-V-SNAC权重在$\gamma = 0$（纯追踪）下训练。
-协调势仅在执行时引入。
-这一分离保持了训练阶段的UUB收敛保证\cite{b_lewis1998}，
+\textit{学习与协调的独立性}。
+V-SNAC权重更新仅依赖追踪Bellman残差，与$\Phi$无关。
+由于$\Phi$是解析的（无需学习），可在任何阶段——在线学习或部署中——
+根据队友位置实时计算，不影响权重收敛。
+这保持了UUB收敛保证\cite{b_lewis1998}，
 并允许运行时调整$\gamma$而无需重新训练。
 
 \textit{通信丢失鲁棒性}。
@@ -533,15 +535,7 @@ $\alpha_s = 0.05 \times 0.85^s$所致的特征性"快速下降$\to$平台"形态
 \label{fig:traj_6v3}
 \end{figure}
 
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_assignment_6v3.png}}
-\caption{6追3目标分配时间线。逐对交换算法在$t = 0$秒时检测到初始偏移分配的次优性，
-立即将全部六个追逐者重分配到距离最优的目标。}
-\label{fig:assign_6v3}
-\end{figure}
-
-图~\ref{fig:traj_6v3}展示了追逃几何，
-图~\ref{fig:assign_6v3}显示了分配时间线。
+图~\ref{fig:traj_6v3}展示了追逃几何。
 在$t = 0$秒时，逐对交换算法检测到初始偏移分配$A_{pe} = [1,2,0,1,2,0]$
 的次优性，立即将所有追逐者重分配到各自最近的逃逸者。
 

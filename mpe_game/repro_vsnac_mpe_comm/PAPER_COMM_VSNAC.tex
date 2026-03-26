@@ -39,7 +39,7 @@ zhangkun22@buaa.edu.cn}
 \maketitle
 
 \begin{abstract}
-This paper presents a cooperative control framework for multi-pursuer multi-evader pursuit--evasion (PE) games under nonlinear dynamics with actuator saturation. The framework integrates three layers: (i)~efficient value-function approximation via the V-SNAC architecture, which derives saturated Nash equilibrium control policies directly from the value-function gradient and reduces the number of neural networks by approximately 31\% compared to conventional actor-critic structures; (ii)~dynamic target assignment through a graph-theoretic pairwise swap algorithm that improves team cohesion in real time; and (iii)~communication-based coordination among pursuers targeting the same evader, realized through an augmented value function that combines the learned tracking value with an analytical coordination potential. The augmented value function decomposes into a learned component capturing individual pursuit optimality and an analytical repulsion potential encoding spatial diversity, with the pursuer control derived from the combined gradient inside a $\tanh$ saturation. We prove that this decomposition satisfies an augmented Hamilton--Jacobi--Isaacs equation and connects to potential-based reward shaping. Experiments on a six-degree-of-freedom nonlinear aircraft model across five team configurations (3-vs-1 through 8-vs-4) demonstrate effective cooperative pursuit with diversified approach directions, graceful degradation under 30\% communication packet loss, and robust capture performance across all scenarios.
+This paper presents a cooperative control framework for multi-pursuer multi-evader pursuit--evasion (PE) games under nonlinear dynamics with actuator saturation. The framework integrates three layers: (i)~efficient value-function approximation via the V-SNAC architecture, which derives saturated Nash equilibrium control policies directly from the value-function gradient and reduces the number of neural networks from $2(N_p{+}N_e)$ to $N_p$ compared to conventional actor-critic structures; (ii)~dynamic target assignment through a graph-theoretic pairwise swap algorithm that improves team cohesion in real time; and (iii)~communication-based coordination among pursuers targeting the same evader, realized through an augmented value function that combines the learned tracking value with an analytical coordination potential. The augmented value function decomposes into a learned component capturing individual pursuit optimality and an analytical repulsion potential encoding spatial diversity, with the pursuer control derived from the combined gradient inside a $\tanh$ saturation. We prove that this decomposition satisfies an augmented Hamilton--Jacobi--Isaacs equation and connects to potential-based reward shaping. Experiments on a six-degree-of-freedom nonlinear aircraft model across five team configurations (3-vs-1 through 8-vs-4) demonstrate effective cooperative pursuit with diversified approach directions, graceful degradation under 30\% communication packet loss, and robust capture performance across all scenarios.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -136,7 +136,7 @@ with six polynomial basis functions:
 \begin{equation}\label{eq:basis}
 \psi(\tilde{x}) = g_\psi\!\cdot\!\big[p_1 v_1,\; p_2 v_2,\; p_3 v_3,\; \tfrac{1}{2}v_1^2,\; \tfrac{1}{2}v_2^2,\; \tfrac{1}{2}v_3^2\big]^T
 \end{equation}
-where $g_\psi$ is a scaling constant and $(p_i, v_i)$ denote the position and velocity components of $\tilde{x}$. This basis captures the essential coupling between position error and velocity that drives optimal interception. Compared to actor-critic structures requiring $2(N_p + N_e)$ networks, V-SNAC needs only $N_p$ critic networks---a reduction of approximately 31\% for typical configurations.
+where $g_\psi$ is a scaling constant and $(p_i, v_i)$ denote the position and velocity components of $\tilde{x}$. This basis captures the essential coupling between position error and velocity that drives optimal interception. Compared to actor-critic structures requiring $2(N_p + N_e)$ networks, V-SNAC needs only $N_p$ critic networks. For example, the 3v3 configuration reduces from 12 to 3 networks (75\%), and the 6v3 from 18 to 6 (67\%).
 
 Weights are updated via off-policy least-squares gradient descent:
 \begin{equation}\label{eq:weight_update}
@@ -226,7 +226,7 @@ where $\ell_\Phi = \dot{\Phi}_j - (\nabla \Phi_j)^T g_j u_j^{p*}$ absorbs the ti
 
 \textit{Connection to potential-based reward shaping.} The decomposition (\ref{eq:vaug}) is an instance of potential-based reward shaping in the sense of Ng et al.\ \cite{b_ng1999}: the coordination potential $\Phi_j$ depends only on the state (pursuer positions), not on actions. A classical result in reward shaping theory states that adding a state-dependent potential to the value function preserves the optimal policy structure while redirecting exploration \cite{b_ng1999}. In our setting, $\Phi_j$ redirects the pursuit trajectories toward spatial diversity without altering the asymptotic tracking guarantee.
 
-\textit{Training-execution separation.} V-SNAC weights are trained with $\gamma = 0$ (pure tracking). The coordination potential is introduced only at execution time. This separation preserves the UUB convergence guarantee of the training phase \cite{b_lewis1998} and allows runtime tuning of $\gamma$ without retraining.
+\textit{Independence of learning and coordination.} The V-SNAC weight update depends only on the tracking Bellman residual and is independent of $\Phi$. Since $\Phi$ is analytical (not learned), it can be computed in real time from teammate positions at any stage---during online learning or deployment---without affecting the weight convergence. This preserves the UUB guarantee \cite{b_lewis1998} and allows runtime tuning of $\gamma$ without retraining.
 
 \textit{Communication loss robustness.} Edge removal in $\mathcal{G}_p$ reduces $d_j$ and the coordination gradient proportionally. Complete communication loss sets $\nabla \Phi_j = 0$, recovering the V-SNAC baseline. For partial dropout with probability $p_d$, the Lipschitz property of $\tanh$ (Lipschitz constant 1) yields:
 \begin{equation}\label{eq:dropout}
@@ -364,13 +364,7 @@ The 6v3 scenario exercises all three layers simultaneously: V-SNAC tracking, dyn
 \label{fig:traj_6v3}
 \end{figure}
 
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_assignment_6v3.png}}
-\caption{6v3 target assignment timeline. The pairwise swap algorithm reassigns targets at $t = 0$\,s, switching from the suboptimal shifted pattern to the distance-optimal assignment.}
-\label{fig:assign_6v3}
-\end{figure}
-
-Fig.~\ref{fig:traj_6v3} shows the pursuit geometry, and Fig.~\ref{fig:assign_6v3} displays the assignment timeline. At $t = 0$\,s, the pairwise swap algorithm detects that the initial shifted assignment is suboptimal and immediately reassigns all six pursuers to their nearest evaders. This single reassignment event transforms the adjacency matrix from $A_{pe} = [1,2,0,1,2,0]$ to the distance-optimal pattern.
+Fig.~\ref{fig:traj_6v3} shows the pursuit geometry. At $t = 0$\,s, the pairwise swap algorithm detects that the initial shifted assignment is suboptimal and immediately reassigns all six pursuers to their nearest evaders, transforming $A_{pe}$ from $[1,2,0,1,2,0]$ to the distance-optimal pattern.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_oldnew_6v3.png}}
