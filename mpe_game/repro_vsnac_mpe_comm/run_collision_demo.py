@@ -128,47 +128,51 @@ def _compute_d_min(p_states: np.ndarray) -> float:
 
 
 def plot_demo(res_none, res_comm, gamma, dt, displacements, out_path):
-    fig, axes = plt.subplots(1, 3, figsize=(18, 5.5))
+    fig = plt.figure(figsize=(14, 9))
+    gs = fig.add_gridspec(2, 2, height_ratios=[1.1, 0.8],
+                          hspace=0.35, wspace=0.30)
     p_colors = ["#d62728", "#1f77b4", "#2ca02c"]
     e_color = "#333333"
 
     d_min_none = res_none["min_d_min"]
     d_min_comm = res_comm["min_d_min"]
 
+    # Top row: two trajectory plots side by side
     for ax_idx, (res, title) in enumerate([
         (res_none, f"No communication\n$d_{{\\min}}$ = {d_min_none:.1f}"),
         (res_comm, f"With communication ($\\gamma$={gamma})\n$d_{{\\min}}$ = {d_min_comm:.1f}"),
     ]):
-        ax = axes[ax_idx]
+        ax = fig.add_subplot(gs[0, ax_idx])
         n_p = res["p_traj"].shape[1]
         for j in range(n_p):
             traj = res["p_traj"][:, j, :2]
             c = p_colors[j % len(p_colors)]
             ax.plot(traj[:, 0], traj[:, 1], color=c, linewidth=2.0, label=f"P{j+1}")
-            ax.scatter(traj[0, 0], traj[0, 1], color=c, s=100, marker="o",
+            ax.scatter(traj[0, 0], traj[0, 1], color=c, s=120, marker="o",
                        edgecolors="k", linewidths=1.0, zorder=5)
-            ax.scatter(traj[-1, 0], traj[-1, 1], color=c, s=70, marker="s", zorder=5)
+            ax.scatter(traj[-1, 0], traj[-1, 1], color=c, s=80, marker="s", zorder=5)
             # Mark target position at final evader location
             e_final = res["e_traj"][-1, :2]
             target = e_final - displacements[j]
-            ax.scatter(target[0], target[1], color=c, s=40, marker="*", alpha=0.5, zorder=4)
+            ax.scatter(target[0], target[1], color=c, s=50, marker="*", alpha=0.5, zorder=4)
 
         e_traj = res["e_traj"][:, :2]
         ax.plot(e_traj[:, 0], e_traj[:, 1], color=e_color, linewidth=2.5,
                 linestyle="--", label="Evader")
-        ax.scatter(e_traj[0, 0], e_traj[0, 1], color=e_color, s=100,
+        ax.scatter(e_traj[0, 0], e_traj[0, 1], color=e_color, s=120,
                    marker="x", linewidths=2, zorder=5)
 
-        ax.set_xlabel("X")
+        ax.set_xlabel("X", fontsize=13)
         if ax_idx == 0:
-            ax.set_ylabel("Y")
-        ax.set_title(title, fontsize=12)
-        ax.legend(fontsize=9)
+            ax.set_ylabel("Y", fontsize=13)
+        ax.set_title(title, fontsize=14, pad=10)
+        ax.legend(fontsize=11)
+        ax.tick_params(labelsize=11)
         ax.grid(alpha=0.3)
         ax.set_aspect("equal")
 
-    # Panel 3: d_min over time
-    ax = axes[2]
+    # Bottom row: d_min over time spanning full width
+    ax = fig.add_subplot(gs[1, :])
     n_none = len(res_none["d_min"])
     n_comm = len(res_comm["d_min"])
     t_none = np.arange(n_none) * dt
@@ -180,15 +184,15 @@ def plot_demo(res_none, res_comm, gamma, dt, displacements, out_path):
     ax.axhline(0.5, color="red", linestyle=":", linewidth=1.5, alpha=0.8,
                label="Collision zone")
     ax.fill_between(t_none, 0, 0.5, color="red", alpha=0.1)
-    ax.set_xlabel("Time (s)")
-    ax.set_ylabel("$d_{min}$ (distance between pursuers)")
-    ax.set_title("Inter-pursuer minimum distance", fontsize=12)
-    ax.legend(fontsize=9)
+    ax.set_xlabel("Time (s)", fontsize=13)
+    ax.set_ylabel("$d_{min}$ (distance between pursuers)", fontsize=13)
+    ax.set_title("Inter-pursuer minimum distance", fontsize=14, pad=10)
+    ax.legend(fontsize=11)
+    ax.tick_params(labelsize=11)
     ax.grid(alpha=0.3)
 
     fig.suptitle("2D pursuit: communication prevents path overlap",
-                 fontsize=14, y=1.02)
-    fig.tight_layout()
+                 fontsize=16, y=0.98)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=220, bbox_inches="tight")
     plt.close(fig)
