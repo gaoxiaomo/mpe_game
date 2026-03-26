@@ -162,7 +162,11 @@ $W(u_e)$以惩罚矩阵$R_2$和约束$\bar{u}_e$类似定义。
 
 鞍点值函数$V_j^*(\tilde{x}_j)$满足HJI方程：
 \begin{equation}\label{eq:hji}
-0 = \tilde{x}_j^T Q\,\tilde{x}_j + (\nabla V_j^*)^T f_j + \min_{u_j^p}\max_{u_e} \Big[U(u_j^p) - W(u_e) + (\nabla V_j^*)^T g_j u_j^p - (\nabla V_j^*)^T g_e u_e\Big]
+\begin{split}
+0 ={} & \tilde{x}_j^T Q\,\tilde{x}_j + (\nabla V_j^*)^T f_j \\
+& + \min_{u_j^p}\max_{u_e} \Big[U(u_j^p) - W(u_e) \\
+& \qquad + (\nabla V_j^*)^T (g_j u_j^p - g_e u_e)\Big]
+\end{split}
 \end{equation}
 
 \subsection{V-SNAC最优控制}
@@ -309,7 +313,10 @@ u_e^{*} = -\bar{u}_e\,\tanh\!\bigg(\frac{1}{2\bar{u}_e}\,R_2^{-1}\,g_e^T\,\nabla
 增广值函数$V_j^{\mathrm{aug}}$满足增广HJI方程，
 其阶段代价在标准追踪代价之外还包含协调运行代价$\ell_\Phi$：
 \begin{equation}\label{eq:aug_hji}
-0 = \tilde{x}_j^T Q\,\tilde{x}_j + \ell_\Phi + (\nabla V_j^{\mathrm{aug}})^T [f_j + g_j u_j^{p*} - g_e u_e^*] + U(u_j^{p*}) - W(u_e^*)
+\begin{split}
+0 ={} & \tilde{x}_j^T Q\,\tilde{x}_j + \ell_\Phi + U(u_j^{p*}) - W(u_e^*) \\
+& + (\nabla V_j^{\mathrm{aug}})^T [f_j + g_j u_j^{p*} - g_e u_e^*]
+\end{split}
 \end{equation}
 其中$\ell_\Phi = \dot{\Phi}_j - (\nabla \Phi_j)^T g_j u_j^{p*}$
 吸收了势函数沿增广轨迹的时间导数。
@@ -335,7 +342,10 @@ $\mathcal{G}_p$中的边丢失使$d_j$和协调梯度成比例减小。
 完全失联时$\nabla \Phi_j = 0$，恢复V-SNAC基线。
 对于丢包率$p_d$的部分丢失，利用$\tanh$的Lipschitz性质（常数为1）：
 \begin{equation}\label{eq:dropout}
-\|u_j^{\text{full}} - u_j^{\text{drop}}\| \leq \frac{1}{2\bar{u}_p}\|R_1^{-1}\|\,\|G_v\|_\infty\,\|\nabla\Phi_j^{\text{full}} - \nabla\Phi_j^{\text{drop}}\|
+\begin{split}
+\|u_j^{\text{full}} - u_j^{\text{drop}}\| \leq {} & \frac{1}{2\bar{u}_p}\|R_1^{-1}\|\,\|G_v\|_\infty \\
+& \cdot \|\nabla\Phi_j^{\text{full}} - \nabla\Phi_j^{\text{drop}}\|
+\end{split}
 \end{equation}
 由于$\nabla \Phi_j$受$\gamma/\epsilon^2$界定，
 控制扰动有界且正比于$\gamma$，确保平滑退化。

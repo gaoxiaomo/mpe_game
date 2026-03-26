@@ -105,7 +105,11 @@ and $W(u_e)$ defined analogously with penalty matrix $R_2$ and bound $\bar{u}_e$
 
 The saddle-point value function $V_j^*(\tilde{x}_j)$ satisfies the HJI equation:
 \begin{equation}\label{eq:hji}
-0 = \tilde{x}_j^T Q\,\tilde{x}_j + (\nabla V_j^*)^T f_j + \min_{u_j^p}\max_{u_e} \Big[U(u_j^p) - W(u_e) + (\nabla V_j^*)^T g_j u_j^p - (\nabla V_j^*)^T g_e u_e\Big]
+\begin{split}
+0 ={} & \tilde{x}_j^T Q\,\tilde{x}_j + (\nabla V_j^*)^T f_j \\
+& + \min_{u_j^p}\max_{u_e} \Big[U(u_j^p) - W(u_e) \\
+& \qquad + (\nabla V_j^*)^T (g_j u_j^p - g_e u_e)\Big]
+\end{split}
 \end{equation}
 
 \subsection{V-SNAC Optimal Control}
@@ -213,7 +217,10 @@ where $\nabla V_j^*$ is the tracking value gradient only. This is physically int
 
 \textit{Augmented HJI equation.} The augmented value function $V_j^{\mathrm{aug}}$ satisfies an augmented HJI equation in which the stage cost includes a coordination running cost $\ell_\Phi$ in addition to the standard tracking cost:
 \begin{equation}\label{eq:aug_hji}
-0 = \tilde{x}_j^T Q\,\tilde{x}_j + \ell_\Phi + (\nabla V_j^{\mathrm{aug}})^T [f_j + g_j u_j^{p*} - g_e u_e^*] + U(u_j^{p*}) - W(u_e^*)
+\begin{split}
+0 ={} & \tilde{x}_j^T Q\,\tilde{x}_j + \ell_\Phi + U(u_j^{p*}) - W(u_e^*) \\
+& + (\nabla V_j^{\mathrm{aug}})^T [f_j + g_j u_j^{p*} - g_e u_e^*]
+\end{split}
 \end{equation}
 where $\ell_\Phi = \dot{\Phi}_j - (\nabla \Phi_j)^T g_j u_j^{p*}$ absorbs the time derivative of the potential along the augmented trajectory. This establishes that the augmented control is optimal with respect to a modified cost that penalizes both tracking error and inter-pursuer proximity.
 
@@ -223,7 +230,10 @@ where $\ell_\Phi = \dot{\Phi}_j - (\nabla \Phi_j)^T g_j u_j^{p*}$ absorbs the ti
 
 \textit{Communication loss robustness.} Edge removal in $\mathcal{G}_p$ reduces $d_j$ and the coordination gradient proportionally. Complete communication loss sets $\nabla \Phi_j = 0$, recovering the V-SNAC baseline. For partial dropout with probability $p_d$, the Lipschitz property of $\tanh$ (Lipschitz constant 1) yields:
 \begin{equation}\label{eq:dropout}
-\|u_j^{\text{full}} - u_j^{\text{drop}}\| \leq \frac{1}{2\bar{u}_p}\|R_1^{-1}\|\,\|G_v\|_\infty\,\|\nabla\Phi_j^{\text{full}} - \nabla\Phi_j^{\text{drop}}\|
+\begin{split}
+\|u_j^{\text{full}} - u_j^{\text{drop}}\| \leq {} & \frac{1}{2\bar{u}_p}\|R_1^{-1}\|\,\|G_v\|_\infty \\
+& \cdot \|\nabla\Phi_j^{\text{full}} - \nabla\Phi_j^{\text{drop}}\|
+\end{split}
 \end{equation}
 Since $\nabla \Phi_j$ is bounded by $\gamma/\epsilon^2$, the control perturbation is bounded and proportional to $\gamma$, ensuring graceful degradation.
 
