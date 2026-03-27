@@ -69,7 +69,7 @@ zhangkun22@buaa.edu.cn}
 
 多智能体追逃博弈是对抗决策与协同控制的交叉研究领域，
 在无人机编队拦截\cite{b_zhang2023}、卫星对抗\cite{b_gong2020}、
-边界防御\cite{b_shishika2020}以及城市空域安全\cite{b_collision_uav}等场景中具有重要应用。
+边界防御\cite{b_shishika2020}以及编队围捕\cite{b_formrl2024}等场景中具有重要应用。
 当追逐者数量大于逃逸者时，如何利用数量优势实现高效协同捕获
 是该领域的核心问题\cite{b_isaacs,b_chen2016}。
 
@@ -228,8 +228,7 @@ d(j,i) + d(j',i') - d(j,i') - d(j',i) > \varrho
 但尚未考虑同组追逐者之间的空间关系。
 当多个追逐者独立优化相似的追踪目标时，
 它们可能收敛到几乎相同的接近轨迹——
-既降低了包围效率，也增加了实际部署中飞行器间近距冲突的风险
-\cite{b_icao_separation,b_collision_uav}。
+既降低了包围效率，也增加了实际部署中飞行器间近距冲突的风险。
 通信协调层通过对值函数的原理性增广来解决这一问题。
 
 \subsection{组内通信图}
@@ -571,12 +570,6 @@ H.~Xiong and Y.~Zhang, ``Reinforcement learning-based formation-surrounding cont
 
 \bibitem{b_graphswap}
 W.~Lin, Z.~Qu, and M.~A. Simaan, ``Nash strategies for pursuit-evasion differential games involving limited observations,'' \emph{IEEE Trans. Aerosp. Electron. Syst.}, vol.~51, no.~2, pp.~1347--1356, 2015.
-
-\bibitem{b_icao_separation}
-International Civil Aviation Organization, ``Procedures for air navigation services---air traffic management,'' ICAO Doc 4444, 16th ed., 2016.
-
-\bibitem{b_collision_uav}
-S.~Feng \emph{et al.}, ``Multi-UAVs collaborative path planning in the cramped environment,'' \emph{IEEE/CAA J. Autom. Sinica}, vol.~11, no.~2, pp.~529--538, 2024.
 
 \bibitem{b_xu2024}
 Z.~Xu, D.~Yu, Y.-J.~Liu, and Z.~Wang, ``Approximate optimal strategy for multiagent system pursuit-evasion game,'' \emph{IEEE Syst. J.}, vol.~18, no.~3, pp.~1669--1680, 2024.

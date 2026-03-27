@@ -55,7 +55,7 @@ This work is supported by National Natural Science Foundation of China under Gra
 \section{Introduction}
 % =====================================================================
 
-Multi-agent pursuit--evasion (PE) games constitute a fundamental problem at the intersection of adversarial decision-making and cooperative control. Applications range from UAV swarm interception \cite{b_zhang2023} and satellite engagement \cite{b_gong2020} to perimeter defense \cite{b_shishika2020} and urban airspace security \cite{b_collision_uav}. When the pursuer team outnumbers the evaders, the central challenge is to exploit this numerical advantage through principled cooperation \cite{b_isaacs,b_chen2016}.
+Multi-agent pursuit--evasion (PE) games constitute a fundamental problem at the intersection of adversarial decision-making and cooperative control. Applications range from UAV swarm interception \cite{b_zhang2023} and satellite engagement \cite{b_gong2020} to perimeter defense \cite{b_shishika2020} and formation-surrounding pursuit \cite{b_formrl2024}. When the pursuer team outnumbers the evaders, the central challenge is to exploit this numerical advantage through principled cooperation \cite{b_isaacs,b_chen2016}.
 
 The theoretical foundation for two-player PE games rests on the Hamilton--Jacobi--Isaacs (HJI) equation \cite{b_isaacs}, whose solution yields saddle-point equilibrium strategies. However, extending HJI-based analysis to multi-agent nonlinear systems faces the curse of dimensionality. Reinforcement learning (RL) offers a data-driven route to approximate HJI solutions without requiring full model knowledge \cite{b_lewis1998,b_lopez2020,b_xu2024}. In the multi-agent RL domain, the MADDPG framework \cite{b_maddpg} introduced centralized-training decentralized-execution for mixed cooperative-competitive settings, while communication-aware architectures \cite{b_commrl2025} improve cooperation through explicit message passing. On the differential game side, graphical game formulations model strategic interactions over communication topologies \cite{b_lopez2020,b_graphgame2023}, consensus-based methods leverage the graph Laplacian for formation coordination \cite{b_ren2005,b_olfati2004}, control barrier functions provide safety guarantees \cite{b_ames2017}, cooperative tracking with weighted topology has been applied to pursuit games \cite{b_zhou2024}, and RL-based formation-surrounding control has been explored for quadrotor PE scenarios \cite{b_formrl2024}. Nash strategies under limited observations have also been studied for PE differential games \cite{b_graphswap}.
 
@@ -157,7 +157,7 @@ If so, the swap is executed. This greedy mechanism guarantees monotonic reductio
 \section{Communication-Augmented Control}
 % =====================================================================
 
-The individual control and target assignment layers address tracking optimality and assignment efficiency, respectively, but do not account for the spatial relationships among pursuers assigned to the same evader. When multiple pursuers independently optimize similar tracking objectives, they may converge to nearly identical approach trajectories---reducing encirclement efficiency and increasing the risk of inter-vehicle proximity violations in physical deployments \cite{b_icao_separation,b_collision_uav}. The communication coordination layer resolves this through a principled augmentation of the value function.
+The individual control and target assignment layers address tracking optimality and assignment efficiency, respectively, but do not account for the spatial relationships among pursuers assigned to the same evader. When multiple pursuers independently optimize similar tracking objectives, they may converge to nearly identical approach trajectories---reducing encirclement efficiency and increasing the risk of inter-vehicle proximity violations. The communication coordination layer resolves this through a principled augmentation of the value function.
 
 \subsection{Intra-Group Communication Graph}
 
@@ -389,12 +389,6 @@ H.~Xiong and Y.~Zhang, ``Reinforcement learning-based formation-surrounding cont
 
 \bibitem{b_graphswap}
 W.~Lin, Z.~Qu, and M.~A. Simaan, ``Nash strategies for pursuit-evasion differential games involving limited observations,'' \emph{IEEE Trans. Aerosp. Electron. Syst.}, vol.~51, no.~2, pp.~1347--1356, 2015.
-
-\bibitem{b_icao_separation}
-International Civil Aviation Organization, ``Procedures for air navigation services---air traffic management,'' ICAO Doc 4444, 16th ed., 2016.
-
-\bibitem{b_collision_uav}
-S.~Feng \emph{et al.}, ``Multi-UAVs collaborative path planning in the cramped environment,'' \emph{IEEE/CAA J. Autom. Sinica}, vol.~11, no.~2, pp.~529--538, 2024.
 
 \bibitem{b_xu2024}
 Z.~Xu, D.~Yu, Y.-J.~Liu, and Z.~Wang, ``Approximate optimal strategy for multiagent system pursuit-evasion game,'' \emph{IEEE Syst. J.}, vol.~18, no.~3, pp.~1669--1680, 2024.
