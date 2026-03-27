@@ -246,32 +246,32 @@ The primary metric for coordination effectiveness is the minimum inter-pursuer d
 
 \subsection{Coordination Effectiveness: Controlled Scenario}
 
-To isolate the effect of the coordination potential, we construct a controlled scenario: two pursuers start from nearby positions with identical displacement targets and initial velocities. Without coordination, their tracking errors and controls are identical at every time step, producing completely overlapping trajectories. This scenario directly demonstrates why independent optimal control is insufficient when multiple pursuers share a target.
+To isolate the effect of the coordination potential, we construct a controlled 2D double-integrator scenario that preserves the paper's control structures ($\tanh$ saturation, V-SNAC basis, coordination gradient). Two pursuers start from opposing sides with \emph{different} formation offsets: P1 targets a position above the evader while P2 targets below. Their tracking-optimal paths must cross during the approach phase, creating a near-collision risk. Without coordination, the minimum inter-pursuer distance $d_{\min}$ drops to 1.0\,km at the crossing point. With coordination, the $\delta_{jk}$ term drives early lateral separation, maintaining $d_{\min}$ above 2.1\,km.
 
 \begin{table}[htbp]
 \renewcommand\arraystretch{1.2}
-\caption{Controlled Scenario: Inter-Pursuer Separation vs.\ $\gamma$}
+\caption{Controlled Scenario: Min Inter-Pursuer Distance vs.\ $\gamma$}
 \label{tab:collision}
 \begin{center}
 \begin{tabular}{c|cccccc}
 \hline
 $\gamma$ & 0 & 0.5 & 1.0 & 2.0 & 5.0 & 10.0 \\
 \hline
-Sep.\ (km) & 0.00 & 0.96 & 1.44 & 2.00 & 2.00 & 2.00 \\
+$d_{\min}$ (km) & 1.00 & 2.14 & 2.18 & 2.20 & 2.22 & 2.22 \\
 \hline
 \end{tabular}
 \end{center}
 \end{table}
 
-Table~\ref{tab:collision} shows that any positive $\gamma$ immediately separates the trajectories, with separation increasing monotonically until saturation. The saturation occurs because the $\tanh$ bound limits the maximum deflection from the tracking-optimal path.
+Table~\ref{tab:collision} shows that any positive $\gamma$ more than doubles the minimum inter-pursuer distance. The rapid saturation beyond $\gamma = 0.5$ indicates that even modest coordination strength suffices to maintain safe separation, while the $\tanh$ bound limits the maximum deflection from the tracking-optimal path.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_comparison.png}}
-\caption{Controlled scenario demonstrating coordination effectiveness. Left: without communication ($\gamma{=}0$), both pursuers follow identical trajectories. Middle: with communication ($\gamma{=}5$), trajectories separate into distinct approach paths. Right: inter-pursuer distance over time showing monotonic separation growth.}
+\caption{Controlled scenario demonstrating coordination effectiveness. Left: without communication ($\gamma{=}0$), pursuer paths cross dangerously close ($d_{\min}=1.0$\,km). Middle: with communication ($\gamma{=}5$), the coordination potential drives early lateral separation. Right: inter-pursuer distance over time showing sustained separation improvement.}
 \label{fig:collision}
 \end{figure}
 
-Fig.~\ref{fig:collision} visualizes this effect. The left panel shows complete trajectory overlap under $\gamma = 0$; the middle panel shows clear separation under $\gamma = 5$; the right panel plots the inter-pursuer distance over time, confirming monotonic growth from zero initial separation.
+Fig.~\ref{fig:collision} visualizes this effect. The left panel shows the crossing trajectories under $\gamma = 0$ where both pursuers converge toward the crossing point; the middle panel shows the coordinated separation under $\gamma = 5$; the right panel plots the inter-pursuer distance over time, confirming that coordination maintains safe separation throughout the engagement.
 
 \subsection{Multi-Scenario Performance}
 

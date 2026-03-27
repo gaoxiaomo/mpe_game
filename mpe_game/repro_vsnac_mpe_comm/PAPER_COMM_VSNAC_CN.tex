@@ -385,40 +385,36 @@ $d_{\min} = \min_{j < k}\|p_j - p_k\|$，
 
 \subsection{协调有效性验证：受控场景}
 
-为隔离协调势的作用，构造受控场景：
-两个追逐者从相近位置出发，具有相同的指派目标和初始速度。
-无协调时，两者的追踪误差和控制在每个时刻完全相同，轨迹完全重合。
-该场景直接说明了多追逐者共享目标时独立最优控制的不足。
+为隔离协调势的作用，构造受控2D双积分器场景，保留论文的控制结构（$\tanh$饱和、V-SNAC基函数、协调梯度）。两个追逐者从对称位置出发，具有\emph{不同}的编队偏移：P1目标位于逃逸者上方，P2目标位于下方。其追踪最优路径在接近阶段必然交叉，产生近碰撞风险。无协调时，追逐者最小间距$d_{\min}$在交叉点降至1.0\,km；有协调时，$\delta_{jk}$项驱动早期横向分离，$d_{\min}$保持在2.1\,km以上。
 
 \begin{table}[htbp]
 \renewcommand\arraystretch{1.2}
-\caption{受控场景：追逐者间距随协调强度$\gamma$的变化}
+\caption{受控场景：最小追逐者间距随协调强度$\gamma$的变化}
 \label{tab:collision}
 \begin{center}
 \begin{tabular}{c|cccccc}
 \hline
 $\gamma$ & 0 & 0.5 & 1.0 & 2.0 & 5.0 & 10.0 \\
 \hline
-间距 (km) & 0.00 & 0.96 & 1.44 & 2.00 & 2.00 & 2.00 \\
+$d_{\min}$ (km) & 1.00 & 2.14 & 2.18 & 2.20 & 2.22 & 2.22 \\
 \hline
 \end{tabular}
 \end{center}
 \end{table}
 
-表~\ref{tab:collision}显示，任何正$\gamma$均可立即分离轨迹，
-间距随$\gamma$单调增长直至饱和。
-饱和现象源于$\tanh$约束限制了偏离追踪最优路径的最大幅度。
+表~\ref{tab:collision}显示，任何正$\gamma$均可将最小追逐者间距提升一倍以上。
+$\gamma = 0.5$后快速饱和表明，即使较小的协调强度即可维持安全间距，而$\tanh$约束限制了偏离追踪最优路径的最大幅度。
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_comparison.png}}
-\caption{受控场景验证协调有效性。左：无通信（$\gamma{=}0$）时轨迹完全重合。中：有通信（$\gamma{=}5$）时轨迹分离为不同接近路径。右：追逐者间距时间曲线，显示间距单调增长。}
+\caption{受控场景验证协调有效性。左：无通信（$\gamma{=}0$）时追逐者路径危险交叉（$d_{\min}=1.0$\,km）。中：有通信（$\gamma{=}5$）时协调势驱动早期横向分离。右：追逐者间距时间曲线，显示协调持续维持安全间距。}
 \label{fig:collision}
 \end{figure}
 
 图~\ref{fig:collision}可视化了这一效果。
-左图显示$\gamma = 0$下轨迹完全重合；
-中图显示$\gamma = 5$下清晰的轨迹分离；
-右图绘制了追逐者间距随时间的变化，确认了从零初始间距的单调增长。
+左图显示$\gamma = 0$下追逐者路径在交叉点危险接近；
+中图显示$\gamma = 5$下的协调分离效果；
+右图绘制了追逐者间距随时间的变化，确认协调在整个追踪过程中维持安全间距。
 
 \subsection{多场景性能}
 

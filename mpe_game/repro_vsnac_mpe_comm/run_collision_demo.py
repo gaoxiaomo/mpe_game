@@ -1,12 +1,18 @@
-"""Collision demonstration using simple 2D double-integrator dynamics.
+"""Controlled scenario: paper-consistent V-SNAC + augmented value function.
 
-Two pursuers chase the same evader from nearby starting positions.
-Without communication: both aim directly at their target offset → paths overlap.
-With communication (augmented error state): the formation coupling spreads them apart.
+Two pursuers chase the same evader from the same starting position using
+a simplified 2D double-integrator model.  Each pursuer has a DIFFERENT
+formation offset (r1 != r2), giving delta_jk != 0.  The control structures
+exactly match the paper:
 
-This is a clean, conceptual demonstration of the augmented error state
-x̃_j^c = h_j + γ * (1/d_j) * Σ_k a_{jk} * [(x_j - x_k) - Δ_{jk}]
-from the derivation in COMM_VSNAC_DERIVATION.tex.
+  - V-SNAC basis  psi = g * [p1*v1, p2*v2, v1^2/2, v2^2/2]    (eq.10)
+  - Pursuer ctrl  u = -u_bar tanh(R^-1 g^T nabla V_aug / 2u_bar) (eq.18)
+  - Coordination  nabla_v Phi = gamma/d sum[(dv)+kappa/d_ref*(dp-delta)]  (eq.13)
+  - Evader ctrl   u_e = -u_bar_e tanh(R^-1 g^T nabla V / 2u_bar_e)      (eq.19)
+
+Key insight: the PD consensus potential drives pursuers toward their
+DESIRED relative positions (delta_jk).  With delta=0, it attracts
+(same target).  With delta!=0, it separates (different formation offsets).
 """
 from __future__ import annotations
 
@@ -21,288 +27,279 @@ import numpy as np
 matplotlib.use("Agg")
 
 
-def simulate_2d(
-    p_init: np.ndarray,       # (n_p, 4): [px, py, vx, vy] for each pursuer
-    e_init: np.ndarray,       # (4,): evader state
-    displacements: np.ndarray, # (n_p, 2): formation offset r_j (position only)
-    gamma: float = 0.0,
-    dt: float = 0.02,
-    t_final: float = 30.0,
-    kp: float = 0.8,          # proportional gain on position error
-    kd: float = 1.5,          # derivative gain on velocity error
-    u_max: float = 5.0,       # control saturation
-    evader_vel: np.ndarray | None = None,
-) -> dict:
-    """Simple 2D pursuit with double-integrator dynamics.
+# ---------------------------------------------------------------------------
+# V-SNAC velocity-space gradient (matches paper eq.10 / features.py)
+# ---------------------------------------------------------------------------
 
-    Pursuer j's control (PD on augmented error):
-        h_j = (p_j - p_e + r_j, v_j - v_e)   [tracking error]
-        h_j^c = h_j + γ/(d_j) * Σ_k [(x_j - x_k) - (r_j - r_k, 0, 0)]  [augmented]
-        u_j = -kp * h_j^c[:2] - kd * h_j^c[2:]   [PD control]
-        u_j = clip(u_j, -u_max, u_max)
-    """
+def vsnac_grad_v(x_tilde: np.ndarray, W: np.ndarray,
+                 gain: float, pos_scale: float) -> np.ndarray:
+    """grad_v V = gain * [W0*p1/s + W2*v1,  W1*p2/s + W3*v2]"""
+    p = x_tilde[:2] / pos_scale
+    v = x_tilde[2:]
+    return gain * np.array([
+        W[0] * p[0] + W[2] * v[0],
+        W[1] * p[1] + W[3] * v[1],
+    ])
+
+
+# ---------------------------------------------------------------------------
+# Simulation
+# ---------------------------------------------------------------------------
+
+def simulate(
+    p_init: np.ndarray,        # (n_p, 4)
+    e_init: np.ndarray,        # (4,)
+    displacements: np.ndarray, # (n_p, 2)
+    *,
+    gamma: float = 0.0,
+    dt: float = 0.05,
+    t_final: float = 90.0,
+    u_bar_p: float = 25.0,
+    u_bar_e: float = 15.0,
+    R1: float = 0.1,
+    R2: float = 0.1,
+    kappa: float = 1.0,
+    d_ref: float = 500.0,
+    gain: float = 0.005,
+    pos_scale: float = 3.0,
+    W: np.ndarray | None = None,
+) -> dict:
     n_p = p_init.shape[0]
     steps = int(t_final / dt)
+    R1_inv, R2_inv = 1.0 / R1, 1.0 / R2
 
-    # Communication: fully connected among all pursuers
     A = np.ones((n_p, n_p)) - np.eye(n_p)
-    d_vec = A.sum(axis=1)  # degree
+    d_vec = A.sum(axis=1)
 
-    # Delta matrix: Δ_{jk} = [r_j - r_k; 0, 0] (4D: pos offset + zero vel)
-    delta = np.zeros((n_p, n_p, 4))
+    # delta_jk = desired (p_j - p_k) = (e-r_j)-(e-r_k) = r_k - r_j
+    delta_p = np.zeros((n_p, n_p, 2))
     for j in range(n_p):
         for k in range(n_p):
-            delta[j, k, :2] = displacements[j] - displacements[k]
+            delta_p[j, k] = displacements[k] - displacements[j]
 
-    # Evader: constant velocity
-    if evader_vel is None:
-        evader_vel = np.array([0.3, 0.8])
-    e_state = e_init.copy()
+    if W is None:
+        W = np.array([0.8, 0.8, 0.6, 0.6])
 
-    # Storage
+    p_st = p_init.copy().astype(float)
+    e_st = e_init.copy().astype(float)
     p_traj = np.zeros((steps + 1, n_p, 4))
     e_traj = np.zeros((steps + 1, 4))
-    d_min_hist = np.zeros(steps + 1)
+    err_hist = np.zeros((steps + 1, n_p))
+    dmin_hist = np.zeros(steps + 1)
 
-    p_states = p_init.copy()
-    p_traj[0] = p_states.copy()
-    e_traj[0] = e_state.copy()
-    d_min_hist[0] = _compute_d_min(p_states)
+    def record(idx):
+        p_traj[idx] = p_st
+        e_traj[idx] = e_st
+        for j in range(n_p):
+            xe = np.concatenate([
+                p_st[j, :2] - e_st[:2] + displacements[j],
+                p_st[j, 2:] - e_st[2:]
+            ])
+            err_hist[idx, j] = np.linalg.norm(xe)
+        dm = float("inf")
+        for j in range(n_p):
+            for k in range(j + 1, n_p):
+                dm = min(dm, float(np.linalg.norm(p_st[j, :2] - p_st[k, :2])))
+        dmin_hist[idx] = dm
+
+    record(0)
 
     for t in range(steps):
-        controls = np.zeros((n_p, 2))
+        gv = np.zeros((n_p, 2))
         for j in range(n_p):
-            # Tracking error (4D)
-            h_j = np.zeros(4)
-            h_j[:2] = p_states[j, :2] - e_state[:2] + displacements[j]
-            h_j[2:] = p_states[j, 2:] - e_state[2:]
+            xe = np.concatenate([
+                p_st[j, :2] - e_st[:2] + displacements[j],
+                p_st[j, 2:] - e_st[2:]
+            ])
+            gv[j] = vsnac_grad_v(xe, W, gain, pos_scale)
 
-            # PD control on individual tracking error (always)
-            u = -kp * h_j[:2] - kd * h_j[2:]
-
-            # Communication-based repulsion: push away from teammates
+        u_p = np.zeros((n_p, 2))
+        for j in range(n_p):
+            total = gv[j].copy()
             if gamma > 0 and d_vec[j] > 0:
-                repulsion = np.zeros(2)
+                coord = np.zeros(2)
                 for k in range(n_p):
                     if k == j or A[j, k] <= 0:
                         continue
-                    dp = p_states[j, :2] - p_states[k, :2]
-                    dist = np.linalg.norm(dp) + 0.1
-                    # Repulsion: strong 1/d force, capped to avoid explosion
-                    rep_mag = min(u_max, 1.0 / dist)
-                    repulsion += A[j, k] * (dp / dist) * rep_mag
-                u += gamma * repulsion / d_vec[j]
+                    dv = p_st[j, 2:] - p_st[k, 2:]
+                    dp = p_st[j, :2] - p_st[k, :2] - delta_p[j, k]
+                    coord += A[j, k] * (dv + kappa / d_ref * dp)
+                total += gamma / d_vec[j] * coord
+            rho = R1_inv * total / (2.0 * u_bar_p)
+            u_p[j] = -u_bar_p * np.tanh(rho)
 
-            controls[j] = np.clip(u, -u_max, u_max)
+        gv_mean = gv.mean(axis=0)
+        rho_e = R2_inv * gv_mean / (2.0 * u_bar_e)
+        u_e = -u_bar_e * np.tanh(rho_e)
 
-        # Integrate (double integrator: ẍ = u)
         for j in range(n_p):
-            p_states[j, :2] += p_states[j, 2:] * dt + 0.5 * controls[j] * dt**2
-            p_states[j, 2:] += controls[j] * dt
+            p_st[j, :2] += p_st[j, 2:] * dt
+            p_st[j, 2:] += u_p[j] * dt
+        e_st[:2] += e_st[2:] * dt
+        e_st[2:] += u_e * dt
 
-        e_state[:2] += e_state[2:] * dt
-        e_state[2:] = evader_vel  # constant velocity evader
-
-        p_traj[t + 1] = p_states.copy()
-        e_traj[t + 1] = e_state.copy()
-        d_min_hist[t + 1] = _compute_d_min(p_states)
+        record(t + 1)
 
     return {
-        "p_traj": p_traj,
-        "e_traj": e_traj,
-        "d_min": d_min_hist,
-        "min_d_min": float(np.min(d_min_hist)),
+        "p_traj": p_traj, "e_traj": e_traj,
+        "err_hist": err_hist, "d_min": dmin_hist,
+        "min_d_min": float(np.min(dmin_hist)),
+        "final_d": float(dmin_hist[-1]),
     }
 
 
-def _compute_d_min(p_states: np.ndarray) -> float:
-    n = p_states.shape[0]
-    if n < 2:
-        return float("inf")
-    dmin = float("inf")
-    for j in range(n):
-        for k in range(j + 1, n):
-            d = float(np.linalg.norm(p_states[j, :2] - p_states[k, :2]))
-            dmin = min(dmin, d)
-    return dmin
+# ---------------------------------------------------------------------------
+# Plotting
+# ---------------------------------------------------------------------------
 
+def plot_demo(res_none, res_comm, gamma_val, dt, out_path):
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
+    cp = ["#d62728", "#1f77b4"]
 
-def plot_demo(res_none, res_comm, gamma, dt, displacements, out_path):
-    fig = plt.figure(figsize=(14, 9))
-    gs = fig.add_gridspec(2, 2, height_ratios=[1.1, 0.8],
-                          hspace=0.35, wspace=0.30)
-    p_colors = ["#d62728", "#1f77b4", "#2ca02c"]
-    e_color = "#333333"
-
-    d_min_none = res_none["min_d_min"]
-    d_min_comm = res_comm["min_d_min"]
-
-    # Top row: two trajectory plots side by side
-    for ax_idx, (res, title) in enumerate([
-        (res_none, f"No communication\n$d_{{\\min}}$ = {d_min_none:.1f}"),
-        (res_comm, f"With communication ($\\gamma$={gamma})\n$d_{{\\min}}$ = {d_min_comm:.1f}"),
-    ]):
-        ax = fig.add_subplot(gs[0, ax_idx])
+    # Compute shared axis limits across both trajectory panels
+    all_x, all_y = [], []
+    for res in [res_none, res_comm]:
         n_p = res["p_traj"].shape[1]
         for j in range(n_p):
-            traj = res["p_traj"][:, j, :2]
-            c = p_colors[j % len(p_colors)]
-            ax.plot(traj[:, 0], traj[:, 1], color=c, linewidth=2.0, label=f"P{j+1}")
-            ax.scatter(traj[0, 0], traj[0, 1], color=c, s=120, marker="o",
-                       edgecolors="k", linewidths=1.0, zorder=5)
-            ax.scatter(traj[-1, 0], traj[-1, 1], color=c, s=80, marker="s", zorder=5)
-            # Mark target position at final evader location
-            e_final = res["e_traj"][-1, :2]
-            target = e_final - displacements[j]
-            ax.scatter(target[0], target[1], color=c, s=50, marker="*", alpha=0.5, zorder=4)
+            all_x.extend(res["p_traj"][:, j, 0].tolist())
+            all_y.extend(res["p_traj"][:, j, 1].tolist())
+        all_x.extend(res["e_traj"][:, 0].tolist())
+        all_y.extend(res["e_traj"][:, 1].tolist())
+    pad_x = (max(all_x) - min(all_x)) * 0.05
+    pad_y = (max(all_y) - min(all_y)) * 0.05
+    xlim = (min(all_x) - pad_x, max(all_x) + pad_x)
+    ylim = (min(all_y) - pad_y, max(all_y) + pad_y)
 
-        e_traj = res["e_traj"][:, :2]
-        ax.plot(e_traj[:, 0], e_traj[:, 1], color=e_color, linewidth=2.5,
-                linestyle="--", label="Evader")
-        ax.scatter(e_traj[0, 0], e_traj[0, 1], color=e_color, s=120,
-                   marker="x", linewidths=2, zorder=5)
+    for ax_i, (res, label) in enumerate([
+        (res_none, r"No communication ($\gamma$=0)"),
+        (res_comm, rf"With communication ($\gamma$={gamma_val})"),
+    ]):
+        ax = axes[ax_i]
+        n_p = res["p_traj"].shape[1]
+        for j in range(n_p):
+            tr = res["p_traj"][:, j, :2]
+            ax.plot(tr[:, 0], tr[:, 1], c=cp[j], lw=2, label=f"P{j+1}")
+            ax.scatter(tr[0, 0], tr[0, 1], c=cp[j], s=80, marker="o",
+                       edgecolors="k", lw=0.8, zorder=5)
+            ax.scatter(tr[-1, 0], tr[-1, 1], c=cp[j], s=60, marker="s", zorder=5)
+        et = res["e_traj"][:, :2]
+        ax.plot(et[:, 0], et[:, 1], c="#333", lw=2, ls="--", label="Evader")
+        ax.scatter(et[0, 0], et[0, 1], c="#333", s=80, marker="x", lw=2, zorder=5)
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        ax.set_xlabel("X (m)", fontsize=11)
+        if ax_i == 0:
+            ax.set_ylabel("Y (m)", fontsize=11)
+        ax.set_title(label, fontsize=12)
+        ax.legend(fontsize=9, loc="upper left")
+        ax.grid(alpha=0.25)
 
-        ax.set_xlabel("X", fontsize=13)
-        if ax_idx == 0:
-            ax.set_ylabel("Y", fontsize=13)
-        ax.set_title(title, fontsize=14, pad=10)
-        ax.legend(fontsize=11)
-        ax.tick_params(labelsize=11)
-        ax.grid(alpha=0.3)
-        ax.set_aspect("equal")
+    ax = axes[2]
+    n_steps = len(res_none["d_min"])
+    t = np.arange(n_steps) * dt
+    ax.plot(t, res_none["d_min"] / 1000, lw=2, ls="--", c="#ff7f0e",
+            label=r"$\gamma$=0")
+    ax.plot(t, res_comm["d_min"] / 1000, lw=2, c="#2ca02c",
+            label=rf"$\gamma$={gamma_val}")
+    ax.set_xlabel("Time (s)", fontsize=11)
+    ax.set_ylabel(r"$d_{\min}$ (km)", fontsize=11)
+    ax.set_title("Inter-pursuer distance", fontsize=12)
+    ax.set_xlim(0, t[-1])
+    ax.set_ylim(bottom=0)
+    ax.legend(fontsize=10)
+    ax.grid(alpha=0.25)
 
-    # Bottom row: d_min over time spanning full width
-    ax = fig.add_subplot(gs[1, :])
-    n_none = len(res_none["d_min"])
-    n_comm = len(res_comm["d_min"])
-    t_none = np.arange(n_none) * dt
-    t_comm = np.arange(n_comm) * dt
-    ax.plot(t_none, res_none["d_min"], linewidth=2.0, color="#ff7f0e",
-            linestyle="--", label="No comm")
-    ax.plot(t_comm, res_comm["d_min"], linewidth=2.0, color="#2ca02c",
-            label=f"With comm ($\\gamma$={gamma})")
-    ax.axhline(0.5, color="red", linestyle=":", linewidth=1.5, alpha=0.8,
-               label="Collision zone")
-    ax.fill_between(t_none, 0, 0.5, color="red", alpha=0.1)
-    ax.set_xlabel("Time (s)", fontsize=13)
-    ax.set_ylabel("$d_{min}$ (distance between pursuers)", fontsize=13)
-    ax.set_title("Inter-pursuer minimum distance", fontsize=14, pad=10)
-    ax.legend(fontsize=11)
-    ax.tick_params(labelsize=11)
-    ax.grid(alpha=0.3)
-
-    fig.suptitle("2D pursuit: communication prevents path overlap",
-                 fontsize=16, y=0.98)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_path, dpi=220, bbox_inches="tight")
-    plt.close(fig)
-    print(f"Saved: {out_path}")
-
-
-def plot_gamma_sweep(results, out_path):
-    gammas = [r[0] for r in results]
-    d_mins = [r[1] for r in results]
-
-    fig, ax = plt.subplots(figsize=(7, 4.5))
-    bars = ax.bar(range(len(gammas)), d_mins, color="#4c78a8", width=0.6)
-    ax.set_xticks(range(len(gammas)))
-    ax.set_xticklabels([f"{g:.1f}" for g in gammas])
-    ax.set_xlabel("$\\gamma$ (communication strength)")
-    ax.set_ylabel("$d_{min}$ (min inter-pursuer distance)")
-    ax.set_title("Minimum inter-pursuer distance vs $\\gamma$")
-    ax.axhline(0.5, color="red", linestyle=":", linewidth=1.2, label="Collision zone")
-    for bar, d in zip(bars, d_mins):
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.1,
-                f"{d:.1f}", ha="center", fontsize=10)
-    ax.legend()
-    ax.grid(alpha=0.2, axis="y")
     fig.tight_layout()
-    fig.savefig(out_path, dpi=220, bbox_inches="tight")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=200, bbox_inches="tight")
     plt.close(fig)
-    print(f"Saved: {out_path}")
+    print(f"  Saved {out_path}")
 
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=str, default=None)
     args = parser.parse_args()
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    base = Path(__file__).resolve().parent
     out_dir = Path(args.output) if args.output else (
-        Path(__file__).resolve().parent / "outputs" / f"collision_demo_{ts}")
+        base / "outputs" / f"collision_demo_{ts}")
+    fig_dir = base / "paper_figures"
 
     # ── Scenario ──
-    # Two pursuers start at the SAME position, chasing the same evader.
-    # Formation offsets require them to end up on OPPOSITE sides.
-    # Without comm: identical error → identical control → SAME path (d_min → 0).
-    # With comm: augmented error includes (x_1 - x_2 - Δ) → paths diverge.
-    # Two pursuers start close, aiming at the SAME point → near-collision
+    # Two pursuers start close together, each with a DIFFERENT formation
+    # offset: P1 should end up above E, P2 below E.  Pursuers start
+    # behind E and must fly past each other's eventual positions.
+    #
+    # Without coordination: both fly toward E along similar tracks,
+    #   then diverge late near E → small transient d_min.
+    # With coordination: the delta_jk term drives early separation.
+    # Crossing paths: P1 starts ABOVE its target, P2 BELOW its target.
+    # Tracking drives P1 DOWN and P2 UP → paths must cross near y=0.
+    # Without coordination: near-collision at the crossing point.
+    # With coordination: delta_jk drives early lateral separation.
     p_init = np.array([
-        [1.0, 0.0, 0.0, 2.0],   # P1: slightly right
-        [-1.0, 0.0, 0.0, 2.0],  # P2: slightly left (2 units apart)
-    ], dtype=float)
-    e_init = np.array([0.0, 30.0, 0.0, 0.0], dtype=float)
-    evader_vel = np.array([0.3, 0.5])
+        [0.0,  1200.0, 0.0, 0.0],  # P1: starts high (target is 800m above E)
+        [0.0, -1200.0, 0.0, 0.0],  # P2: starts low  (target is 800m below E)
+    ])
+    e_init = np.array([4000.0, 0.0, 5.0, 0.0])
 
-    # SAME target: both aim directly at evader → collision path!
+    # P1 target: e + (0, 800)  → r1 = (0, -800)
+    # P2 target: e + (0, -800) → r2 = (0, +800)
+    # P1 must drop 400m (1200→800), P2 must rise 400m (-1200→-800)
+    # Their paths cross around y=0.
     displacements = np.array([
-        [0.0, 0.0],   # P1: directly at evader
-        [0.0, 0.0],   # P2: same target!
-    ], dtype=float)
+        [0.0, -800.0],
+        [0.0, +800.0],
+    ])
 
-    dt = 0.02
-    t_final = 30.0
+    dt = 0.05
+    t_final = 120.0
 
-    # ── Gamma sweep ──
-    print("=== 2D Collision Demo ===\n")
-    print("Scenario: 2 pursuers start at SAME position, must end on opposite sides.\n")
+    print("=== Controlled Scenario (paper-consistent V-SNAC) ===\n")
+    print("  P1 offset: above evader,  P2 offset: below evader")
+    print(f"  delta_12 = r1-r2 = (0, {displacements[0,1]-displacements[1,1]:.0f}) m\n")
+
+    # ── Gamma sweep (Table I data) ──
     sweep = []
-    for gamma in [0.0, 0.5, 1.0, 2.0, 5.0, 10.0]:
-        res = simulate_2d(p_init, e_init, displacements, gamma=gamma,
-                          dt=dt, t_final=t_final, evader_vel=evader_vel)
-        sweep.append((gamma, res["min_d_min"]))
-        print(f"  gamma={gamma:.1f}: d_min = {res['min_d_min']:.2f}")
+    for g in [0.0, 0.5, 1.0, 2.0, 5.0, 10.0]:
+        res = simulate(p_init, e_init, displacements,
+                       gamma=g, dt=dt, t_final=t_final)
+        sep_km = res["min_d_min"] / 1000.0
+        sweep.append((g, sep_km))
+        print(f"  gamma={g:5.1f}:  min d_min = {res['min_d_min']:8.1f} m  "
+              f"({sep_km:.2f} km)")
 
     # ── Detailed comparison ──
     best_gamma = 5.0
-    res_none = simulate_2d(p_init, e_init, displacements, gamma=0.0,
-                           dt=dt, t_final=t_final, evader_vel=evader_vel)
-    res_comm = simulate_2d(p_init, e_init, displacements, gamma=best_gamma,
-                           dt=dt, t_final=t_final, evader_vel=evader_vel)
+    res_none = simulate(p_init, e_init, displacements,
+                        gamma=0.0, dt=dt, t_final=t_final)
+    res_comm = simulate(p_init, e_init, displacements,
+                        gamma=best_gamma, dt=dt, t_final=t_final)
 
-    print(f"\n{'='*50}")
-    print(f"No comm:   d_min = {res_none['min_d_min']:.2f}")
-    print(f"Comm γ={best_gamma}: d_min = {res_comm['min_d_min']:.2f}")
-    improve = res_comm["min_d_min"] / max(res_none["min_d_min"], 1e-9)
-    print(f"Improvement: {improve:.0f}x")
-    print(f"{'='*50}")
+    print(f"\n  No comm:         min d_min = {res_none['min_d_min']:.1f} m")
+    print(f"  Comm gamma={best_gamma}:  min d_min = {res_comm['min_d_min']:.1f} m")
 
-    # ── Plots ──
-    plot_demo(res_none, res_comm, best_gamma, dt, displacements,
+    # ── Generate figures ──
+    out_dir.mkdir(parents=True, exist_ok=True)
+    plot_demo(res_none, res_comm, best_gamma, dt,
               out_dir / "fig_collision_comparison.png")
-    plot_gamma_sweep(sweep, out_dir / "fig_d_min_vs_gamma.png")
+    fig_dir.mkdir(parents=True, exist_ok=True)
+    plot_demo(res_none, res_comm, best_gamma, dt,
+              fig_dir / "fig_collision_comparison.png")
 
-    # Also do a 3-pursuer version
-    print("\n=== 3-pursuer version ===\n")
-    p3_init = np.array([
-        [0.5, 0.0, 0.0, 2.0],
-        [-0.5, 0.0, 0.0, 2.0],
-        [0.0, -0.5, 0.0, 2.0],
-    ], dtype=float)
-    disp3 = np.array([[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], dtype=float)
+    # ── Print Table I data ──
+    print("\n  Table I (for paper):")
+    print("  gamma | Sep (km)")
+    print("  ------+---------")
+    for g, s in sweep:
+        print(f"  {g:5.1f} | {s:.2f}")
 
-    for gamma in [0.0, 1.0, 5.0, 10.0]:
-        res = simulate_2d(p3_init, e_init, disp3, gamma=gamma,
-                          dt=dt, t_final=t_final, evader_vel=evader_vel)
-        print(f"  gamma={gamma:.1f}: d_min = {res['min_d_min']:.2f}")
-
-    res3_none = simulate_2d(p3_init, e_init, disp3, gamma=0.0,
-                            dt=dt, t_final=t_final, evader_vel=evader_vel)
-    res3_comm = simulate_2d(p3_init, e_init, disp3, gamma=5.0,
-                            dt=dt, t_final=t_final, evader_vel=evader_vel)
-    plot_demo(res3_none, res3_comm, 0.5, dt, disp3,
-              out_dir / "fig_collision_3pursuer.png")
-
-    print(f"\nAll plots saved to: {out_dir}")
+    print(f"\n  Output: {out_dir}")
 
 
 if __name__ == "__main__":
