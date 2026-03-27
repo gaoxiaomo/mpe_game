@@ -145,26 +145,26 @@ g(x) = \begin{bmatrix} 0_{3\times 3} \\ G_v(x) \end{bmatrix},
 
 \subsection{代价泛函与HJI方程}
 
-追逐者$j$指派到逃逸者$\sigma(j)$，追踪误差定义为：
+追逐者$j$指派到逃逸者$i = \sigma(j)$，追踪误差定义为：
 \begin{equation}\label{eq:error}
-\tilde{x}_j = x_j^p - x_{\sigma(j)}^e + r_{j,\sigma(j)}
+\tilde{x}_j = x_j^p - x_i^e + r_{j,i}
 \end{equation}
-其中$r_{j,\sigma(j)}$为围捕编队的期望偏移量。零和代价泛函为：
+其中$r_{j,i}$为围捕编队的期望偏移量。每对追逐者-逃逸者$(j, i)$构成局部零和博弈，代价泛函为：
 \begin{equation}\label{eq:cost}
-J_j = \int_0^\infty \!\Big[\tilde{x}_j^T Q\,\tilde{x}_j + U(u_j^p) - W(u_e)\Big]\,dt
+J_j = \int_0^\infty \!\Big[\tilde{x}_j^T Q\,\tilde{x}_j + U(u_j^p) - W(u_i^e)\Big]\,dt
 \end{equation}
 其中$U$和$W$为通过Legendre变换处理有界控制的非二次代价项：
 \begin{equation}\label{eq:nq}
 U(u) = \sum_{l=1}^m 2\bar{u}\,R_{1,l}\int_0^{u_l/\bar{u}} \bar{u}\,\mathrm{arctanh}(\tau)\,d\tau
 \end{equation}
-$W(u_e)$以惩罚矩阵$R_2$和约束$\bar{u}_e$类似定义。
+$W(u_i^e)$以惩罚矩阵$R_2$和约束$\bar{u}_e$类似定义。
 
 鞍点值函数$V_j^*(\tilde{x}_j)$满足HJI方程：
 \begin{equation}\label{eq:hji}
 \begin{split}
 0 ={} & \tilde{x}_j^T Q\,\tilde{x}_j + (\nabla V_j^*)^T f_j \\
-& + \min_{u_j^p}\max_{u_e} \Big[U(u_j^p) - W(u_e) \\
-& \qquad + (\nabla V_j^*)^T (g_j u_j^p - g_e u_e)\Big]
+& + \min_{u_j^p}\max_{u_i^e} \Big[U(u_j^p) - W(u_i^e) \\
+& \qquad + (\nabla V_j^*)^T (g_j u_j^p - g_e u_i^e)\Big]
 \end{split}
 \end{equation}
 
@@ -178,12 +178,12 @@ u_j^{p*} = -\bar{u}_p\,\tanh\!\bigg(\frac{1}{2\bar{u}_p}\,R_1^{-1}\,g_j^T\,\nabl
 \end{equation}
 $\tanh$函数自然保证$\|u_j^{p*}\| \leq \bar{u}_p$。
 
-\textit{逃逸者最坏情况控制}。类似地，令$\partial H/\partial u_e = 0$可得：
+\textit{逃逸者最坏情况控制}。对于追逐者$j$所指派的逃逸者$i = \sigma(j)$，令$\partial H/\partial u_i^e = 0$可得：
 \begin{equation}\label{eq:ctrl_evader}
-u_e^{*} = -\bar{u}_e\,\tanh\!\bigg(\frac{1}{2\bar{u}_e}\,R_2^{-1}\,g_e^T\,\nabla V_j^*\bigg)
+u_i^{e*} = -\bar{u}_e\,\tanh\!\bigg(\frac{1}{2\bar{u}_e}\,R_2^{-1}\,g_e^T\,\nabla V_j^*\bigg)
 \end{equation}
-逃逸者最大化代价，但$\tanh$形式源于相同的变分结构。
-由于逃逸者控制以负号进入$J_j$，所得策略驱使逃逸者远离追逐者。
+逃逸者最大化代价，$\tanh$形式源于相同的变分结构。
+每个追逐者维护独立的值函数$V_j$，逃逸者的最坏情况响应从每个追逐者的视角分别计算。当多个追逐者共享同一逃逸者时，逃逸者的实际控制为所有指派追逐者的平均最坏情况响应。
 
 在V-SNAC框架\cite{b_xu2024}中，值函数被近似为参数线性形式：
 \begin{equation}\label{eq:vsnac}
@@ -308,11 +308,11 @@ $\Phi_j = 0$，式(\ref{eq:ctrl_aug})退化为基线(\ref{eq:ctrl_pursuer})。
 
 \textit{逃逸者最坏情况控制}。
 协调势$\Phi_j$仅依赖追逐者状态，不涉及逃逸者。
-逃逸者策略由纯追踪值梯度推导：
+因此逃逸者的最坏情况策略与式(\ref{eq:ctrl_evader})一致：
 \begin{equation}\label{eq:ctrl_evader_aug}
-u_e^{*} = -\bar{u}_e\,\tanh\!\bigg(\frac{1}{2\bar{u}_e}\,R_2^{-1}\,g_e^T\,\nabla V_j^*\bigg)
+u_i^{e*} = -\bar{u}_e\,\tanh\!\bigg(\frac{1}{2\bar{u}_e}\,R_2^{-1}\,g_e^T\,\nabla V_j^*\bigg)
 \end{equation}
-逃逸者对每个个体追逃执行最坏情况策略，不受追逐者间协调方式影响。
+逃逸者不受追逐者间协调方式影响。
 
 \subsection{理论性质}
 
@@ -320,8 +320,8 @@ u_e^{*} = -\bar{u}_e\,\tanh\!\bigg(\frac{1}{2\bar{u}_e}\,R_2^{-1}\,g_e^T\,\nabla
 将$V_j^{\mathrm{aug}}$代入HJI框架得：
 \begin{equation}\label{eq:aug_hji}
 \begin{split}
-0 ={} & \tilde{x}_j^T Q\,\tilde{x}_j + \ell_\Phi + U(u_j^{p*}) - W(u_e^*) \\
-& + (\nabla V_j^{\mathrm{aug}})^T [f_j + g_j u_j^{p*} - g_e u_e^*]
+0 ={} & \tilde{x}_j^T Q\,\tilde{x}_j + \ell_\Phi + U(u_j^{p*}) - W(u_i^{e*}) \\
+& + (\nabla V_j^{\mathrm{aug}})^T [f_j + g_j u_j^{p*} - g_e u_i^{e*}]
 \end{split}
 \end{equation}
 其中$\ell_\Phi = \dot{\Phi}_j - (\nabla \Phi_j)^T(f_j + g_j u_j^{p*})$

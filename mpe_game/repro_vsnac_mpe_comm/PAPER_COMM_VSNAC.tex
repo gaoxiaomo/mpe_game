@@ -89,26 +89,26 @@ so that control inputs act as accelerations in the velocity channels.
 
 \subsection{Cost Functional and HJI Equation}
 
-Pursuer $j$ is assigned to evader $\sigma(j)$. The tracking error is defined as:
+Pursuer $j$ is assigned to evader $i = \sigma(j)$. The tracking error is defined as:
 \begin{equation}\label{eq:error}
-\tilde{x}_j = x_j^p - x_{\sigma(j)}^e + r_{j,\sigma(j)}
+\tilde{x}_j = x_j^p - x_i^e + r_{j,i}
 \end{equation}
-where $r_{j,\sigma(j)}$ encodes a desired displacement for surrounding formation. The zero-sum cost functional for the pursuer--evader pair is:
+where $r_{j,i}$ encodes a desired displacement for surrounding formation. Each pursuer--evader pair $(j, i)$ forms a local zero-sum game with cost functional:
 \begin{equation}\label{eq:cost}
-J_j = \int_0^\infty \!\Big[\tilde{x}_j^T Q\,\tilde{x}_j + U(u_j^p) - W(u_e)\Big]\,dt
+J_j = \int_0^\infty \!\Big[\tilde{x}_j^T Q\,\tilde{x}_j + U(u_j^p) - W(u_i^e)\Big]\,dt
 \end{equation}
 with non-quadratic saturation-handling terms that arise from the Legendre transform under bounded controls:
 \begin{equation}\label{eq:nq}
 U(u) = \sum_{l=1}^m 2\bar{u}\,R_{1,l}\int_0^{u_l/\bar{u}} \bar{u}\,\mathrm{arctanh}(\tau)\,d\tau
 \end{equation}
-and $W(u_e)$ defined analogously with penalty matrix $R_2$ and bound $\bar{u}_e$.
+and $W(u_i^e)$ defined analogously with penalty matrix $R_2$ and bound $\bar{u}_e$.
 
 The saddle-point value function $V_j^*(\tilde{x}_j)$ satisfies the HJI equation:
 \begin{equation}\label{eq:hji}
 \begin{split}
 0 ={} & \tilde{x}_j^T Q\,\tilde{x}_j + (\nabla V_j^*)^T f_j \\
-& + \min_{u_j^p}\max_{u_e} \Big[U(u_j^p) - W(u_e) \\
-& \qquad + (\nabla V_j^*)^T (g_j u_j^p - g_e u_e)\Big]
+& + \min_{u_j^p}\max_{u_i^e} \Big[U(u_j^p) - W(u_i^e) \\
+& \qquad + (\nabla V_j^*)^T (g_j u_j^p - g_e u_i^e)\Big]
 \end{split}
 \end{equation}
 
@@ -122,11 +122,11 @@ u_j^{p*} = -\bar{u}_p\,\tanh\!\bigg(\frac{1}{2\bar{u}_p}\,R_1^{-1}\,g_j^T\,\nabl
 \end{equation}
 The $\tanh$ nonlinearity naturally enforces $\|u_j^{p*}\| \leq \bar{u}_p$.
 
-\textit{Evader worst-case control.} Analogously, setting $\partial H/\partial u_e = 0$ gives:
+\textit{Evader worst-case control.} For the assigned evader $i = \sigma(j)$, setting $\partial H/\partial u_i^e = 0$ yields:
 \begin{equation}\label{eq:ctrl_evader}
-u_e^{*} = -\bar{u}_e\,\tanh\!\bigg(\frac{1}{2\bar{u}_e}\,R_2^{-1}\,g_e^T\,\nabla V_j^*\bigg)
+u_i^{e*} = -\bar{u}_e\,\tanh\!\bigg(\frac{1}{2\bar{u}_e}\,R_2^{-1}\,g_e^T\,\nabla V_j^*\bigg)
 \end{equation}
-The evader maximizes the cost, but the $\tanh$ form emerges from the same variational structure. Since the evader's control enters $J_j$ with a negative sign, the resulting policy drives the evader away from the pursuer.
+The evader maximizes the cost (the $-W$ term in (\ref{eq:cost})), and the $\tanh$ form emerges from the same variational structure. Since each pursuer maintains its own value function $V_j$, the evader's worst-case response is computed from the perspective of each pursuing agent. When multiple pursuers share the same evader, the evader's applied control is the average worst-case response across all pursuers assigned to it.
 
 In the V-SNAC framework \cite{b_xu2024}, $V_j$ is approximated as a linear-in-parameter function:
 \begin{equation}\label{eq:vsnac}
@@ -203,19 +203,19 @@ Expanding via (\ref{eq:grad_aug}), $g_j^T \nabla V_j^{\mathrm{aug}} = G_v^T[(\na
 
 When $\gamma = 0$ or $d_j = 0$, $\Phi_j = 0$ and (\ref{eq:ctrl_aug}) reduces to the baseline (\ref{eq:ctrl_pursuer}).
 
-\textit{Evader worst-case control.} The coordination potential $\Phi_j$ depends only on pursuer states and does not involve any evader state. The evader's strategy is derived from the tracking value gradient alone:
+\textit{Evader worst-case control.} The coordination potential $\Phi_j$ depends only on pursuer states and does not involve any evader state. Therefore the evader's worst-case strategy remains identical to (\ref{eq:ctrl_evader}):
 \begin{equation}\label{eq:ctrl_evader_aug}
-u_e^{*} = -\bar{u}_e\,\tanh\!\bigg(\frac{1}{2\bar{u}_e}\,R_2^{-1}\,g_e^T\,\nabla V_j^*\bigg)
+u_i^{e*} = -\bar{u}_e\,\tanh\!\bigg(\frac{1}{2\bar{u}_e}\,R_2^{-1}\,g_e^T\,\nabla V_j^*\bigg)
 \end{equation}
-The evader plays the worst-case strategy against each individual pursuit, unaffected by how pursuers coordinate.
+The evader is unaffected by how pursuers coordinate among themselves.
 
 \subsection{Theoretical Properties}
 
 \textit{Augmented HJI equation.} Substituting $V_j^{\mathrm{aug}}$ into the HJI framework yields:
 \begin{equation}\label{eq:aug_hji}
 \begin{split}
-0 ={} & \tilde{x}_j^T Q\,\tilde{x}_j + \ell_\Phi + U(u_j^{p*}) - W(u_e^*) \\
-& + (\nabla V_j^{\mathrm{aug}})^T [f_j + g_j u_j^{p*} - g_e u_e^*]
+0 ={} & \tilde{x}_j^T Q\,\tilde{x}_j + \ell_\Phi + U(u_j^{p*}) - W(u_i^{e*}) \\
+& + (\nabla V_j^{\mathrm{aug}})^T [f_j + g_j u_j^{p*} - g_e u_i^{e*}]
 \end{split}
 \end{equation}
 where $\ell_\Phi = \dot{\Phi}_j - (\nabla \Phi_j)^T(f_j + g_j u_j^{p*})$ absorbs the time derivative of the potential along the augmented trajectory. Since $\Phi_j$ depends on other pursuers' states, $\dot{\Phi}_j$ involves their dynamics; within a single-step control decision, teammates' states are treated as slowly varying parameters. This establishes that the augmented control is locally optimal with respect to a modified cost that penalizes both tracking error and inter-pursuer formation deviation.
@@ -240,7 +240,7 @@ Each term in (\ref{eq:grad_phi}) is bounded by the state limits, so the control 
 
 Experiments use a six-DOF nonlinear aircraft model with state $x = [p_x, p_y, h, v_x, v_y, v_h]^T$. Pursuer saturation is $\bar{u}_p = 25$ and evader saturation is $\bar{u}_e = 15$, reflecting the pursuers' speed advantage. Each V-SNAC critic uses the six polynomial basis functions in (\ref{eq:basis}), trained for 50--56 policy iterations with decaying learning rate $\alpha_s = 0.05 \times 0.85^s$. The coordination strength is $\gamma = 0.3$, the position correction gain is $\kappa = 1$, and the reference distance is $d_{\mathrm{ref}} = 500$\,m.
 
-Five team configurations are tested: 3v1, 3v3, 5v3, 6v3, and 8v4, spanning pursuer-to-evader ratios from 1 to 3. The same trained weights are evaluated under three communication modes: full communication ($\gamma = 0.3$), no communication ($\gamma = 0$), and dropout communication ($\gamma = 0.3$, per-edge dropout probability $p_d = 0.15$). Under the dropout mode, each communication link in $\mathcal{G}_p$ is independently removed with probability $p_d$ at each time step; both directions of an edge are dropped together to maintain adjacency symmetry. The penalty matrices are $Q = I_6$, $R_1 = 0.1 I_3$, and $R_2 = 0.1 I_3$.
+The same trained weights are evaluated under two communication modes: full communication ($\gamma = 0.3$) and dropout communication ($\gamma = 0.3$, per-edge dropout probability $p_d = 0.15$). Under dropout, each communication link in $\mathcal{G}_p$ is independently removed with probability $p_d$ at each time step; both directions of an edge are dropped together to maintain adjacency symmetry. The penalty matrices are $Q = \mathrm{diag}(8,8,2.5,3,3,1.2)$, $R_1 = I_3$, and $R_2 = I_3$.
 
 The primary metric for coordination effectiveness is the minimum inter-pursuer distance $d_{\min} = \min_{j < k}\|p_j - p_k\|$, which quantifies spatial separation during the pursuit process. Capture time is reported as a secondary metric to verify that the coordination layer does not critically degrade tracking performance.
 
