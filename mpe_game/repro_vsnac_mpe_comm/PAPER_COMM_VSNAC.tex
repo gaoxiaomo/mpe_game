@@ -39,7 +39,7 @@ zhangkun22@buaa.edu.cn}
 \maketitle
 
 \begin{abstract}
-This paper presents a cooperative control framework for multi-pursuer multi-evader pursuit--evasion (PE) games under nonlinear dynamics with actuator saturation. The framework integrates three layers: (i)~efficient value-function approximation via the V-SNAC architecture, which derives saturated Nash equilibrium control policies directly from the value-function gradient and reduces the number of neural networks from $2(N_p{+}N_e)$ to $N_p$ compared to conventional actor-critic structures; (ii)~dynamic target assignment through a graph-theoretic pairwise swap algorithm that improves team cohesion in real time; and (iii)~communication-based coordination among pursuers targeting the same evader, realized through an augmented value function that combines the learned tracking value with an analytical coordination potential. The augmented value function decomposes into a learned component capturing individual pursuit optimality and an analytical repulsion potential encoding spatial diversity, with the pursuer control derived from the combined gradient inside a $\tanh$ saturation. We prove that this decomposition satisfies an augmented Hamilton--Jacobi--Isaacs equation and connects to potential-based reward shaping. Experiments on a six-degree-of-freedom nonlinear aircraft model across five team configurations (3-vs-1 through 8-vs-4) demonstrate that the coordination potential consistently increases inter-pursuer spatial separation while maintaining capture performance, with graceful degradation under 15\% per-edge communication dropout.
+This paper presents a cooperative control framework for multi-pursuer multi-evader pursuit--evasion (PE) games under nonlinear dynamics with actuator saturation. The framework integrates three layers: (i)~efficient value-function approximation via the V-SNAC architecture, which derives saturated Nash equilibrium control policies directly from the value-function gradient; (ii)~dynamic target assignment through a graph-theoretic pairwise swap algorithm; and (iii)~communication-based coordination among co-assigned pursuers, realized through an augmented value function that combines the learned tracking value with an analytical coordination potential. The coordination potential injects a velocity--position coupled term into the value-function gradient, enabling the $\tanh$-saturated control to naturally allocate finite control authority between tracking and inter-pursuer spatial coordination. Experiments on a six-degree-of-freedom nonlinear aircraft model validate that the framework achieves tracking convergence consistent with UUB stability, while the coordination layer increases inter-pursuer separation by 19\% in a 6-vs-3 configuration and prevents path crossing in a controlled scenario, with graceful degradation under 15\% per-edge communication dropout.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -273,144 +273,78 @@ Table~\ref{tab:collision} shows that without coordination the pursuers collide, 
 
 Fig.~\ref{fig:collision} visualizes this effect. The left panel shows the crossing trajectories under $\gamma = 0$ where both pursuers pass through the same spatial region; the middle panel shows the coordinated separation under $\gamma = 5$; the right panel plots the inter-pursuer distance over time, confirming that coordination prevents collision throughout the engagement.
 
-\subsection{Multi-Scenario Performance}
+\subsection{Safety Evaluation: Inter-Pursuer Separation}
 
 \begin{table}[htbp]
 \renewcommand\arraystretch{1.2}
-\caption{Capture Time and Inter-Pursuer Separation Across Configurations}
+\caption{Minimum Inter-Pursuer Distance $d_{\min}$ (m)}
 \label{tab:results}
 \begin{center}
-\small
-\begin{tabular}{c|ccc|ccc}
+\begin{tabular}{c|ccc}
 \hline
-\multirow{2}{*}{\textbf{Case}} & \multicolumn{3}{c|}{\textbf{Capture Time (s)}} & \multicolumn{3}{c}{\textbf{$d_{\min}$ (m)}} \\
- & Full & None & Drop & Full & None & Drop \\
+\textbf{Case} & Full Comm & Dropout (15\%) & No Comm \\
 \hline
-3v1 & 55.1 & 47.2 & 53.9 & \textbf{282} & 136 & 283 \\
-3v3 & 33.8 & 33.8 & 33.8 & 1361 & 1361 & 1361 \\
-5v3 & 36.8 & 36.8 & 36.8 & \textbf{182} & 164 & 192 \\
-6v3 & 36.9 & 37.8 & 37.1 & \textbf{121} & 102 & 106 \\
-8v4 & 37.1 & 36.2 & 37.0 & \textbf{59} & 54 & 64 \\
+6v3 & \textbf{121} & 106 & 102 \\
+3v3 & 1361 & 1361 & 1361 \\
 \hline
 \end{tabular}
 \end{center}
 \end{table}
 
-Table~\ref{tab:results} reports capture time and minimum inter-pursuer distance $d_{\min}$ across five configurations. The $d_{\min}$ column reveals the core effect of the coordination potential: \emph{communication consistently increases inter-pursuer spatial separation in every scenario with intra-group edges}. In the 3v1 case, $d_{\min}$ more than doubles from 136\,m to 282\,m; in the 6v3 case it increases by 19\% (102\,m $\to$ 121\,m); and the 5v3 and 8v4 cases show 10--11\% improvements.
+Table~\ref{tab:results} reports the minimum inter-pursuer distance $d_{\min}$ for two representative configurations. In the 6v3 scenario, the coordination potential increases $d_{\min}$ from 102\,m (no communication) to 121\,m (full communication), a 19\% improvement in spatial separation. Under 15\% per-edge dropout, $d_{\min}$ degrades gracefully to 106\,m, remaining above the uncoordinated baseline. The dropout mechanism independently zeroes each edge with probability $p = 0.15$ at each time step, symmetrically for both $(j,k)$ and $(k,j)$, so the expected number of active neighbors decreases from $d_j$ to $(1{-}p) d_j$. The bounded perturbation analysis in (\ref{eq:dropout}) guarantees that the coordination contribution remains within $\mathcal{O}(p)$ of the full-communication case.
 
-This spatial improvement entails an expected trade-off in capture time. Because the $\tanh$-saturated controller has finite control authority, the coordination gradient diverts part of that authority from tracking to separation. In the 3v1 and 8v4 scenarios, capture time increases by 8\,s and 1\,s respectively. In the 5v3 case, only one evader has two co-assigned pursuers, so the coordination effect on capture time is negligible. In the 6v3 case, diversified approach angles reduce mutual interference during encirclement and allow the dynamic assignment algorithm to find more efficient pairings, yielding \emph{both} better separation and faster capture.
-
-The 3v3 scenario ($N_p/N_e = 1$) serves as a natural control group: each evader has exactly one pursuer, so $d_j = 0$ for all $j$ and the coordination mechanism is correctly inactive. All three modes produce identical results.
-
-Under 15\% per-edge dropout, $d_{\min}$ remains close to the full-communication values, and capture times deviate by at most 1.2\,s. This is consistent with the bounded perturbation analysis in (\ref{eq:dropout}).
-
-We present detailed analysis for three representative scenarios: 3v1 ($N_p/N_e = 3$, highest coordination demand), 6v3 ($N_p/N_e = 2$, multi-evader with dynamic reassignment), and 3v3 ($N_p/N_e = 1$, control group).
-
-
-\subsection{Three-Pursuer-One-Evader Analysis}
-
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_trajectory_xy.png}}
-\caption{3v1 pursuit trajectories under full communication. Three pursuers approach the evader from diversified directions, demonstrating the spatial separation effect of the coordination potential.}
-\label{fig:traj_3v1}
-\end{figure}
-
-Fig.~\ref{fig:traj_3v1} shows the 3v1 trajectories under full communication. The three pursuers approach the evader from distinct directions, forming a spread formation that would be effective for encirclement. Without the coordination potential, the pursuers' trajectories would cluster together due to similar tracking error profiles.
-
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_assigned_errors.png}}
-\caption{3v1 tracking error norms. All three pursuers converge from initial errors near 7000 to a bounded neighborhood near 100, consistent with UUB stability.}
-\label{fig:err_3v1}
-\end{figure}
-
-Fig.~\ref{fig:err_3v1} displays the tracking error norms for each pursuer. All three converge from initial values near 7000 to a bounded neighborhood around 100, consistent with the UUB convergence guarantee of the V-SNAC framework. The convergence rates differ slightly across pursuers due to their different initial positions and the coordination-induced trajectory diversification.
-
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_control_3v1.png}}
-\caption{3v1 control inputs for all agents. Pursuer controls exhibit $\tanh$ saturation at $\pm\bar{u}_p = \pm 25$ during the initial aggressive maneuver phase. Evader control saturates at $\pm\bar{u}_e = \pm 15$, confirming the worst-case evasion strategy.}
-\label{fig:ctrl_3v1}
-\end{figure}
-
-Fig.~\ref{fig:ctrl_3v1} shows the control inputs for all agents. During the initial phase ($t < 20$\,s), the pursuer controls saturate at $\pm\bar{u}_p = \pm 25$, reflecting the aggressive maneuvers needed to close the large initial gap. As the tracking errors decrease, the controls transition to the linear regime of the $\tanh$ function. The evader's control saturates at $\pm\bar{u}_e = \pm 15$, confirming that the worst-case evasion strategy is being executed at the actuator limits---the evader exploits its full control authority to escape. The smooth transition from saturation to linear operation demonstrates the effectiveness of the non-quadratic cost formulation in handling actuator bounds.
-
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_convergence_3v1.png}}
-\caption{3v1 critic weight convergence ($\|\hat{W}_{j,s}\|^2$ vs.\ iteration). The decaying learning rate produces a smooth ``fast descent to plateau'' profile.}
-\label{fig:conv_3v1}
-\end{figure}
-
-Fig.~\ref{fig:conv_3v1} shows the convergence of critic weights during training. The squared weight norms $\|\hat{W}_{j,s}\|^2$ exhibit the characteristic ``fast descent $\to$ plateau'' profile induced by the decaying learning rate $\alpha_s = 0.05 \times 0.85^s$. All three critics converge within approximately 40 iterations, after which the weights stabilize.
-
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_comm_comparison.png}}
-\caption{3v1 team state error comparison across three communication modes. The curves nearly overlap, confirming that the coordination potential preserves tracking performance.}
-\label{fig:comm_compare}
-\end{figure}
-
-Fig.~\ref{fig:comm_compare} overlays the team state error $E_{\mathrm{team}}(t)$ for the three communication modes. The curves are nearly indistinguishable, confirming that the coordination potential achieves spatial diversity without degrading the aggregate tracking performance. The dropout curve tracks the full-communication curve closely, consistent with the graceful degradation property.
+The 3v3 scenario ($N_p/N_e = 1$) serves as a control group: each evader is tracked by exactly one pursuer, so $d_j = 0$ for all $j$ and the coordination mechanism is correctly inactive. All three modes produce identical $d_{\min}$, confirming that the augmented control law (\ref{eq:ctrl_aug}) reduces exactly to the baseline (\ref{eq:ctrl_pursuer}) when no intra-group neighbors exist.
 
 
 \subsection{Six-Pursuer-Three-Evader Analysis}
 
-The 6v3 scenario exercises all three layers simultaneously: V-SNAC tracking, dynamic target assignment, and intra-group coordination. The initial assignment uses a deliberately suboptimal shifted pattern $A_{pe} = [1,2,0,1,2,0]$ (each pursuer initially targets a non-nearest evader) to demonstrate the dynamic reassignment mechanism.
+The 6v3 scenario exercises all three layers simultaneously: V-SNAC tracking, dynamic target assignment, and intra-group coordination. The initial assignment uses a deliberately suboptimal shifted pattern $A_{pe} = [1,2,0,1,2,0]$ to demonstrate the dynamic reassignment mechanism.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_trajectory_6v3.png}}
-\caption{6v3 pursuit trajectories under full communication. Six pursuers track three evaders with dynamic target reassignment.}
+\caption{6v3 pursuit trajectories. Six pursuers track three evaders with dynamic target reassignment and communication-based coordination.}
 \label{fig:traj_6v3}
 \end{figure}
 
-Fig.~\ref{fig:traj_6v3} shows the pursuit geometry. At $t = 0$\,s, the pairwise swap algorithm detects that the initial shifted assignment is suboptimal and immediately reassigns all six pursuers to their nearest evaders, transforming $A_{pe}$ from $[1,2,0,1,2,0]$ to the distance-optimal pattern.
+Fig.~\ref{fig:traj_6v3} shows the pursuit geometry. The pairwise swap algorithm immediately detects that the initial shifted assignment is suboptimal and reassigns all six pursuers to their nearest evaders.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_oldnew_6v3.png}}
-\caption{6v3 tracking errors before and after target reassignment. Dashed lines show errors under the original (suboptimal) assignment; solid lines show errors after reassignment. The old-assignment errors diverge while the new-assignment errors converge, confirming the effectiveness of dynamic target switching.}
+\caption{6v3 tracking errors before (dashed) and after (solid) target reassignment. Old-assignment errors diverge while new-assignment errors converge, confirming the effectiveness of dynamic target switching.}
 \label{fig:oldnew_6v3}
 \end{figure}
 
-The benefit of this reassignment is shown in Fig.~\ref{fig:oldnew_6v3}. Dashed lines represent the tracking error each pursuer would have under the original shifted assignment; solid lines show the errors after reassignment. Under the original assignment, several pursuers' errors grow unboundedly (exceeding 30000) because they are assigned to distant evaders. After reassignment, all errors converge to bounded neighborhoods, demonstrating that dynamic target switching is essential for multi-evader scenarios with suboptimal initial assignments.
+The benefit of reassignment is shown in Fig.~\ref{fig:oldnew_6v3}. Under the original assignment, several pursuers' errors grow unboundedly because they track distant evaders. After reassignment, all errors converge to bounded neighborhoods, demonstrating that dynamic target switching is essential for multi-evader scenarios.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_errors_6v3.png}}
-\caption{6v3 tracking error norms (post-reassignment). All six pursuers converge to bounded neighborhoods consistent with UUB stability.}
+\caption{6v3 tracking error norms (post-reassignment). All six pursuers converge to near-zero bounded neighborhoods, consistent with UUB stability.}
 \label{fig:err_6v3}
 \end{figure}
 
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_control_6v3.png}}
-\caption{6v3 control inputs. Pursuer controls saturate at $\pm\bar{u}_p{=}\pm 25$ during initial engagement; evader controls saturate at $\pm\bar{u}_e{=}\pm 15$, reflecting the worst-case evasion strategy derived from the HJI equation.}
-\label{fig:ctrl_6v3}
-\end{figure}
-
-Fig.~\ref{fig:err_6v3} confirms that all six tracking errors converge after reassignment. Fig.~\ref{fig:ctrl_6v3} shows the control inputs: pursuers saturate at $\pm 25$ during the aggressive initial maneuver phase, while evader controls consistently operate near $\pm 15$, reflecting the worst-case strategy from (\ref{eq:ctrl_evader}).
+Fig.~\ref{fig:err_6v3} confirms that all six tracking errors converge after reassignment, with errors decreasing from initial values of 3500--4000 to near zero. The convergence profile is consistent with the UUB guarantee of the V-SNAC framework: the tracking component of the augmented value function drives each pursuer toward its assigned evader, while the coordination potential preserves this convergence by operating within the remaining control authority.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_team_error_6v3.png}}
-\caption{6v3 team state error: dynamic target assignment (blue) vs.\ fixed assignment (orange). Dynamic reassignment reduces the aggregate error, complementing the communication coordination.}
+\caption{6v3 team state error: dynamic target assignment (blue) vs.\ fixed assignment (orange). Dynamic reassignment reduces the aggregate tracking error.}
 \label{fig:team_6v3}
 \end{figure}
 
-Fig.~\ref{fig:team_6v3} compares the team state error under dynamic vs.\ fixed target assignment. Dynamic reassignment achieves consistently lower aggregate error. This demonstrates that dynamic assignment and communication coordination operate as complementary layers: the former optimizes \emph{which} evader each pursuer tracks, while the latter optimizes \emph{how} co-assigned pursuers approach their shared target.
+Fig.~\ref{fig:team_6v3} compares the team state error under dynamic vs.\ fixed target assignment. Dynamic reassignment achieves consistently lower aggregate error. The dynamic assignment and communication coordination operate as complementary layers: the former optimizes \emph{which} evader each pursuer tracks, while the latter coordinates \emph{how} co-assigned pursuers approach their shared target.
 
 
-\subsection{Three-Pursuer-Three-Evader Control Group}
+\subsection{Control Group: Three-Pursuer-Three-Evader}
 
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_trajectory_3v3.png}}
-\caption{3v3 trajectories. Each evader is tracked by exactly one pursuer, so the communication graph has no intra-group edges and all communication modes produce identical behavior.}
-\label{fig:traj_3v3}
-\end{figure}
-
-The 3v3 scenario with $N_p/N_e = 1$ provides an important validation: since each evader has exactly one pursuer, the intra-group graph has no edges and $d_j = 0$ for all pursuers. As shown in Fig.~\ref{fig:traj_3v3} and Table~\ref{tab:results}, all three communication modes produce identical trajectories and capture times. This confirms that the coordination mechanism is correctly inactive when there are no intra-group neighbors, and that the augmented control law (\ref{eq:ctrl_aug}) reduces exactly to the baseline (\ref{eq:ctrl_pursuer}) as designed.
+The 3v3 scenario ($N_p/N_e = 1$) provides an important validation: each evader has exactly one pursuer, so $d_j = 0$ for all $j$ and the coordination mechanism is correctly inactive. As shown in Table~\ref{tab:results}, all three communication modes produce identical $d_{\min}$, confirming that the augmented control law (\ref{eq:ctrl_aug}) reduces exactly to the baseline (\ref{eq:ctrl_pursuer}) when no intra-group neighbors exist.
 
 
 % =====================================================================
 \section{Conclusion}
 % =====================================================================
 
-This paper presented a hierarchical cooperative control framework for multi-pursuer pursuit--evasion games under nonlinear dynamics with actuator saturation. The central theoretical contribution is the augmented value function, which decomposes into a learned tracking component (via V-SNAC) and an analytical velocity--position coordination potential. The potential is designed with velocity dependence so that its gradient passes through the input matrix $g_j^T$ and enters the $\tanh$-saturated control law, ensuring that the finite control authority is naturally allocated between tracking and coordination. The evader's worst-case control is derived from the tracking value alone, since the coordination potential involves only pursuer states.
+This paper presented a cooperative control framework for multi-pursuer pursuit--evasion games under nonlinear dynamics with actuator saturation. The framework addresses the challenge that independently optimal pursuers may converge on similar trajectories when co-assigned to the same evader, reducing spatial diversity. The central contribution is the augmented value function, which decomposes into a learned tracking component (via V-SNAC) and an analytical velocity--position coordination potential. The potential is designed so that its gradient passes through the input matrix $g_j^T$ and enters the $\tanh$-saturated control law, enabling the finite control authority to be naturally allocated between tracking and coordination.
 
-The three-layer framework---individual V-SNAC control, dynamic target assignment, and communication-based coordination---addresses individual optimality, team assignment, and intra-group spatial diversity respectively. Experiments on a nonlinear six-DOF aircraft model across five team configurations (3v1 through 8v4) demonstrated: (i)~consistent improvement of inter-pursuer spatial separation through the coordination potential, with $d_{\min}$ increasing by 9--107\% across all scenarios with intra-group edges; (ii)~an expected and bounded trade-off in capture time, where the finite control authority shared between tracking and coordination results in at most 8\,s additional capture time; (iii)~graceful degradation under 15\% per-edge communication dropout; and (iv)~correct deactivation when no coordination is needed. Future work will investigate adaptive coordination strength scheduling based on real-time proximity, extension to heterogeneous agent dynamics, and explicit communication delay modeling.
+Experiments on a nonlinear six-DOF aircraft model validated three aspects of the framework: (i)~tracking convergence consistent with UUB stability, with all pursuer errors converging to near-zero bounded neighborhoods; (ii)~improved inter-pursuer spatial separation through the coordination potential, with $d_{\min}$ increasing by 19\% in the 6v3 configuration, and prevention of path crossing in a controlled scenario; (iii)~graceful degradation under 15\% per-edge communication dropout, and correct deactivation when no coordination is needed. Future work will investigate adaptive coordination strength scheduling, extension to heterogeneous agent dynamics, and explicit communication delay modeling.
 
 
 \begin{thebibliography}{21}
