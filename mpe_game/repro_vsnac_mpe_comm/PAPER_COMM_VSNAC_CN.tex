@@ -52,9 +52,9 @@ zhangkun22@buaa.edu.cn}
 鼓励空间多样性的同时保持执行器约束。
 理论上证明了增广值函数满足增广HJI方程，
 并建立了与基于势函数的奖励塑形之间的联系。
-在六自由度非线性飞行器模型上的五种团队配置（3追1至8追4）实验表明，
+在六自由度非线性飞行器模型上的三种团队配置（3追1、3追3和6追3）实验表明，
 该框架在保持捕获性能的同时实现了有效的空间协调，
-且在30\%通信丢包率下仍保持鲁棒性。
+且在15\%通信丢包率下仍保持鲁棒性。
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -78,7 +78,7 @@ zhangkun22@buaa.edu.cn}
 求解两方追逃博弈的经典方法基于Hamilton--Jacobi--Isaacs (HJI)方程\cite{b_isaacs}，
 其解给出鞍点均衡策略。
 然而，将HJI分析推广到多智能体非线性系统面临维数灾难。
-强化学习(RL)为近似求解HJI方程提供了数据驱动的途径\cite{b_lewis1998,b_lopez2020}。
+强化学习(RL)为近似求解HJI方程提供了数据驱动的途径\cite{b_lewis1998,b_lopez2020,b_xu2024}。
 在多智能体RL领域，MADDPG\cite{b_maddpg}框架引入了集中训练分散执行的范式，
 通信感知架构\cite{b_commrl2025}则通过显式消息传递提升协作能力。
 在微分博弈方面，图博弈理论将博弈交互建模在通信拓扑上
@@ -186,7 +186,7 @@ u_e^{*} = -\bar{u}_e\,\tanh\!\bigg(\frac{1}{2\bar{u}_e}\,R_2^{-1}\,g_e^T\,\nabla
 逃逸者最大化代价，但$\tanh$形式源于相同的变分结构。
 由于逃逸者控制以负号进入$J_j$，所得策略驱使逃逸者远离追逐者。
 
-在V-SNAC框架中，值函数被近似为参数线性形式：
+在V-SNAC框架\cite{b_xu2024}中，值函数被近似为参数线性形式：
 \begin{equation}\label{eq:vsnac}
 \hat{V}_j(\tilde{x}_j) = \hat{W}_j^T\,\psi(\tilde{x}_j)
 \end{equation}
@@ -211,7 +211,7 @@ V-SNAC仅需$N_p$个critic网络。
 
 \subsection{动态目标分配}
 
-在多逃逸者场景中，追逐者-逃逸者指派通过逐对交换算法动态调整\cite{b_graphswap}。
+在多逃逸者场景中，追逐者-逃逸者指派通过逐对交换算法动态调整\cite{b_graphswap,b_xu2024}。
 对任意追逐者对$(j, j')$分别指派到逃逸者$(i, i')$，
 算法评估交换指派是否使加权距离之和降低超过阈值$\varrho > 0$：
 \begin{equation}\label{eq:swap}
@@ -367,7 +367,7 @@ $\mathcal{G}_p$中的边丢失使$d_j$和协调梯度成比例减小。
 训练50--56轮策略迭代，衰减学习率$\alpha_s = 0.05 \times 0.85^s$。
 协调强度$\gamma = 0.3$，奇异防护$\epsilon = 0.1$。
 
-五种团队配置：3追1、3追3、5追3、6追3、8追4，
+三种团队配置：3追1、3追3和6追3，
 覆盖追逐者/逃逸者比率1至3。
 同一组训练权重分别在三种通信模式下评估：
 全通信（$\gamma = 0.3$）、无通信（$\gamma = 0$）和
@@ -424,15 +424,13 @@ $\gamma$ & 0 & 0.5 & 1.0 & 2.0 & 5.0 & 10.0 \\
 \hline
 3追1 & 55.1 & 47.2 & 53.9 & 3 \\
 3追3 & 33.5 & 33.5 & 33.5 & 1 \\
-5追3 & 36.5 & 36.5 & 36.5 & 1--2 \\
 6追3 & \textbf{36.6} & 37.5 & 36.8 & 2 \\
-8追4 & 37.9 & 36.9 & 37.6 & 2 \\
 \hline
 \end{tabular}
 \end{center}
 \end{table}
 
-表~\ref{tab:results}汇总了五种配置在三种通信模式下的捕获时间，
+表~\ref{tab:results}汇总了三种配置在三种通信模式下的捕获时间，
 呈现出若干规律。
 
 在3追1场景（比率为3）中，协调势分散了接近路径，
@@ -452,14 +450,13 @@ $\gamma$ & 0 & 0.5 & 1.0 & 2.0 & 5.0 & 10.0 \\
 三种模式结果完全一致（33.5秒），
 验证了协调机制在无同组邻居时正确禁用。
 
-15\%丢包下，捕获时间偏差均在0.3秒以内，
+15\%丢包下，捕获时间偏差均在1.2秒以内，
 与式(\ref{eq:dropout})的有界扰动分析一致。
 
-下面对三个代表性场景进行详细分析：
+下面对各场景进行详细分析：
 3追1（$N_p/N_e = 3$，协调需求最高）、
 6追3（$N_p/N_e = 2$，多逃逸者与动态重分配）和
 3追3（$N_p/N_e = 1$，对照组）。
-其余配置（5追3、8追4）呈现一致趋势，如表~\ref{tab:results}所示。
 
 \subsection{三追一场景分析}
 
@@ -616,16 +613,16 @@ $N_p/N_e = 1$的3追3场景提供了重要验证：
 
 三层框架——个体V-SNAC控制、动态目标分配和基于通信的协调——
 分别处理个体最优性、团队分配和组内空间多样性。
-在非线性六自由度飞行器模型上覆盖五种团队配置的实验表明：
+在非线性六自由度飞行器模型上覆盖三种团队配置的实验表明：
 （一）协调势有效分离同组追逐者的空间轨迹；
 （二）通信下捕获性能保持甚至改善；
-（三）30\%丢包下平滑退化；
+（三）15\%丢包下平滑退化；
 （四）无需协调时正确禁用。
 后续工作将研究基于实时邻近度的自适应协调强度调度、
 异构动力学的推广以及通信延迟的显式建模。
 
 
-\begin{thebibliography}{20}
+\begin{thebibliography}{21}
 
 \bibitem{b_isaacs}
 R.~Isaacs, \emph{Differential Games}. New York: Dover, 1999.
@@ -683,6 +680,9 @@ International Civil Aviation Organization, ``Procedures for air navigation servi
 
 \bibitem{b_collision_uav}
 S.~Feng \emph{et al.}, ``Multi-UAVs collaborative path planning in the cramped environment,'' \emph{IEEE/CAA J. Autom. Sinica}, vol.~11, no.~2, pp.~348--363, 2024.
+
+\bibitem{b_xu2024}
+Z.~Xu, D.~Yu, Y.-J.~Liu, and Z.~Wang, ``Approximate optimal strategy for multiagent system pursuit-evasion game,'' \emph{IEEE Syst. J.}, vol.~18, no.~3, pp.~1669--1680, 2024.
 
 \bibitem{b_ng1999}
 A.~Y. Ng, D.~Harada, and S.~Russell, ``Policy invariance under reward transformations: Theory and application to reward shaping,'' in \emph{Proc. ICML}, 1999, pp.~278--287.
