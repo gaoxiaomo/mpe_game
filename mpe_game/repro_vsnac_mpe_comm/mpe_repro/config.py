@@ -123,6 +123,7 @@ class CommParams:
     formation_ref_dist: float = 500.0 # tracking distance below which formation activates
     dropout_prob: float = 0.0         # per-edge dropout probability during eval
     dropout_seed: int = 99
+    d_safe: float = 0.0              # safety distance for adaptive gamma (0 = disabled)
 
 
 def _build_displacements(n_p: int, n_e: int, per_pursuer: List[List[float]]) -> np.ndarray:

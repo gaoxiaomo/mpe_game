@@ -9,10 +9,11 @@ class CommunicationGraph:
     """Manages the inter-pursuer communication topology used in the
     communication-augmented V-SNAC error state."""
 
-    def __init__(self, n_p: int, comm_mode: str = "full", formation_ref_dist: float = 500.0) -> None:
+    def __init__(self, n_p: int, comm_mode: str = "full", formation_ref_dist: float = 500.0, d_safe: float = 0.0) -> None:
         self.n_p = n_p
         self.comm_mode = comm_mode
         self.formation_ref_dist = formation_ref_dist
+        self.d_safe = d_safe
 
     def build_adjacency(
         self, pursuer_states: np.ndarray, assignment: np.ndarray | None = None,

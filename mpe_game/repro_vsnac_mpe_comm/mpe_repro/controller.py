@@ -25,6 +25,7 @@ def formation_gradient(
     delta_matrix: np.ndarray,
     gamma: float,
     ref_dist: float = 500.0,
+    d_safe: float = 0.0,
 ) -> np.ndarray:
     """Compute formation potential gradient in velocity space for pursuer j.
 
@@ -61,7 +62,15 @@ def formation_gradient(
         delta_p = delta_matrix[j, k, :3] if delta_matrix is not None else np.zeros(3)
         pos_err = (p_j - p_k) - delta_p
 
-        grad[3:] += A_p[j, k] * (dv + kp * pos_err / ref_dist)
+        # Per-pair adaptive gamma amplification near d_safe
+        if d_safe > 0.0:
+            dp = p_j - p_k
+            dist_sq = float(np.dot(dp, dp))
+            amp = max(1.0, d_safe * d_safe / max(dist_sq, 1e-8))
+        else:
+            amp = 1.0
+
+        grad[3:] += amp * A_p[j, k] * (dv + kp * pos_err / ref_dist)
 
     grad[3:] *= gamma / d_j
     return grad
@@ -145,6 +154,7 @@ class CommVSNACController:
         A_p: np.ndarray | None = None,
         delta_matrix: np.ndarray | None = None,
         formation_ref_dist: float = 500.0,
+        d_safe: float = 0.0,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         n_p = pursuer_states.shape[0]
         n_e = evader_states.shape[0]
@@ -166,7 +176,7 @@ class CommVSNACController:
             total_grad = grad_p[j].copy()
             if gamma > 0.0 and A_p is not None:
                 fg = formation_gradient(j, pursuer_states, A_p, delta_matrix,
-                                        gamma, formation_ref_dist)
+                                        gamma, formation_ref_dist, d_safe=d_safe)
                 total_grad += fg
             rho_p = (self.r1_inv @ (g_p.T @ total_grad)) / (2.0 * self.u_bar_p_actor)
             u_rl = -self.u_bar_p_actor * np.tanh(rho_p)

@@ -105,6 +105,7 @@ class MPECommSimulator:
             n_p=scenario.n_pursuers,
             comm_mode=comm_params.comm_mode,
             formation_ref_dist=comm_params.formation_ref_dist,
+            d_safe=comm_params.d_safe,
         )
 
         self.displacements = scenario.displacement_matrix.copy()
@@ -337,6 +338,7 @@ class MPECommSimulator:
             A_p=A_p,
             delta_matrix=delta_matrix,
             formation_ref_dist=comm_graph.formation_ref_dist if comm_graph is not None else 500.0,
+            d_safe=comm_graph.d_safe if comm_graph is not None else 0.0,
         )
         u_e_applied = self._applied_evader_inputs(
             step_idx=step_idx,
@@ -525,6 +527,7 @@ class MPECommSimulator:
             n_p=self.scenario.n_pursuers,
             comm_mode=cp.comm_mode,
             formation_ref_dist=cp.formation_ref_dist,
+            d_safe=cp.d_safe,
         )
         eval_dropout_prob = cp.dropout_prob
         dropout_rng = np.random.default_rng(cp.dropout_seed) if eval_dropout_prob > 0.0 else None

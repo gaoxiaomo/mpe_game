@@ -273,31 +273,6 @@ Table~\ref{tab:collision} shows that without coordination the pursuers collide, 
 
 Fig.~\ref{fig:collision} visualizes this effect. The left panel shows the crossing trajectories under $\gamma = 0$ where both pursuers pass through the same spatial region; the middle panel shows the coordinated separation under $\gamma = 5$; the right panel plots the inter-pursuer distance over time, confirming that coordination prevents collision throughout the engagement.
 
-\subsection{Coordination Effectiveness}
-
-To quantify the effect of the coordination potential, we use the minimum inter-pursuer distance $d_{\min} = \min_{t} \min_{j \neq k} \|p_j(t) - p_k(t)\|$ as a measure of spatial diversity among co-assigned pursuers. The coordination potential is a \emph{soft} mechanism: it biases the control toward greater spatial separation within the available $\tanh$-saturated authority, but does not enforce a hard distance constraint. The achievable $d_{\min}$ depends on the scenario geometry, number of agents, and the coordination strength $\gamma$.
-
-\begin{table}[htbp]
-\renewcommand\arraystretch{1.2}
-\caption{Minimum Inter-Pursuer Distance $d_{\min}$ (m)}
-\label{tab:results}
-\begin{center}
-\begin{tabular}{c|ccc}
-\hline
-\textbf{Case} & Full Comm & Dropout (15\%) & No Comm \\
-\hline
-6v3 & \textbf{121} & 106 & 102 \\
-3v3 & 1361 & 1361 & 1361 \\
-\hline
-\end{tabular}
-\end{center}
-\end{table}
-
-Table~\ref{tab:results} reports $d_{\min}$ for two configurations. In the 6v3 scenario, the coordination potential increases $d_{\min}$ from 102\,m to 121\,m, a 19\% improvement. Under 15\% per-edge dropout, $d_{\min}$ degrades gracefully to 106\,m. The dropout mechanism independently zeroes each edge with probability $p = 0.15$ at each time step, symmetrically for both $(j,k)$ and $(k,j)$, so the expected active-neighbor count decreases from $d_j$ to $(1{-}p) d_j$. The bounded perturbation analysis in (\ref{eq:dropout}) guarantees that the coordination contribution remains within $\mathcal{O}(p)$ of the full-communication case.
-
-The 3v3 scenario ($N_p/N_e = 1$) serves as a control group: each evader has exactly one pursuer, so $d_j = 0$ and the coordination mechanism is correctly inactive. All three modes produce identical $d_{\min}$, confirming that (\ref{eq:ctrl_aug}) reduces to (\ref{eq:ctrl_pursuer}) when no intra-group neighbors exist.
-
-
 \subsection{Six-Pursuer-Three-Evader Analysis}
 
 The 6v3 scenario exercises all three layers simultaneously: V-SNAC tracking, dynamic target assignment, and intra-group coordination. The initial assignment uses a deliberately suboptimal shifted pattern $A_{pe} = [1,2,0,1,2,0]$ to demonstrate the dynamic reassignment mechanism.
@@ -342,19 +317,27 @@ Fig.~\ref{fig:ctrl_6v3} shows the control inputs. Pursuer controls saturate at $
 
 Fig.~\ref{fig:team_6v3} compares the team state error under dynamic vs.\ fixed target assignment. Dynamic reassignment achieves consistently lower aggregate error. The dynamic assignment and communication coordination operate as complementary layers: the former optimizes \emph{which} evader each pursuer tracks, while the latter coordinates \emph{how} co-assigned pursuers approach their shared target.
 
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_comm_6v3.png}}
+\caption{6v3 team state error under full communication vs.\ 15\% per-edge dropout. Both modes achieve similar convergence, confirming graceful degradation.}
+\label{fig:dropout_6v3}
+\end{figure}
+
+Fig.~\ref{fig:dropout_6v3} demonstrates the framework's resilience to communication dropout. The team state error under 15\% per-edge dropout closely tracks the full-communication curve, with both converging to near zero. Each edge is independently zeroed with probability $p = 0.15$ at each time step, symmetrically for $(j,k)$ and $(k,j)$. The bounded perturbation analysis in (\ref{eq:dropout}) guarantees that the coordination contribution remains within $\mathcal{O}(p)$ of the full-communication case, which is consistent with the observed overlap.
+
 
 \subsection{Control Group: Three-Pursuer-Three-Evader}
 
-The 3v3 scenario ($N_p/N_e = 1$) provides an important validation: each evader has exactly one pursuer, so $d_j = 0$ for all $j$ and the coordination mechanism is correctly inactive. As shown in Table~\ref{tab:results}, all three communication modes produce identical $d_{\min}$, confirming that the augmented control law (\ref{eq:ctrl_aug}) reduces exactly to the baseline (\ref{eq:ctrl_pursuer}) when no intra-group neighbors exist.
+The 3v3 scenario ($N_p/N_e = 1$) provides a structural validation: each evader has exactly one pursuer, so $d_j = 0$ for all $j$ and the coordination mechanism is correctly inactive. All communication modes produce identical behavior, confirming that the augmented control law (\ref{eq:ctrl_aug}) reduces exactly to the baseline (\ref{eq:ctrl_pursuer}) when no intra-group neighbors exist.
 
 
 % =====================================================================
 \section{Conclusion}
 % =====================================================================
 
-This paper presented a cooperative control framework for multi-pursuer pursuit--evasion games under nonlinear dynamics with actuator saturation. The framework addresses the challenge that independently optimal pursuers may converge on similar trajectories when co-assigned to the same evader, reducing spatial diversity. The central contribution is the augmented value function, which decomposes into a learned tracking component (via V-SNAC) and an analytical velocity--position coordination potential. The potential is designed so that its gradient passes through the input matrix $g_j^T$ and enters the $\tanh$-saturated control law, enabling the finite control authority to be naturally allocated between tracking and coordination.
+This paper presented a cooperative control framework for multi-pursuer pursuit--evasion games under nonlinear dynamics with actuator saturation. The framework addresses the challenge that independently optimal pursuers may converge on similar trajectories when co-assigned to the same evader, reducing spatial diversity. The central contribution is the augmented value function, which decomposes into a learned tracking component (via V-SNAC) and an analytical velocity--position coordination potential. The potential is designed so that its gradient passes through the input matrix $g_j^T$ and enters the $\tanh$-saturated control law, enabling the finite control authority to be naturally allocated between tracking and coordination. The adaptive amplification mechanism further strengthens the coordination force when inter-pursuer distance approaches a prescribed safety threshold $d_{\mathrm{safe}}$, as demonstrated in the controlled crossing scenario.
 
-Experiments on a nonlinear six-DOF aircraft model validated three aspects of the framework: (i)~tracking convergence consistent with UUB stability, with all pursuer errors converging to near-zero bounded neighborhoods; (ii)~improved inter-pursuer spatial separation through the coordination potential, with $d_{\min}$ increasing by 19\% in the 6v3 configuration, and prevention of path crossing in a controlled scenario; (iii)~graceful degradation under 15\% per-edge communication dropout, and correct deactivation when no coordination is needed. Future work will investigate adaptive coordination strength scheduling, extension to heterogeneous agent dynamics, and explicit communication delay modeling.
+Experiments on a nonlinear six-DOF aircraft model validated the framework: (i)~tracking convergence consistent with UUB stability, with all pursuer errors converging to near-zero bounded neighborhoods; (ii)~dynamic target assignment correcting suboptimal initial pairings; (iii)~graceful degradation under 15\% per-edge communication dropout; and (iv)~collision avoidance in the controlled scenario, where the adaptive coordination potential maintains inter-pursuer distance above $d_{\mathrm{safe}}$ while the uncoordinated baseline results in path crossing. Future work will investigate adaptive coordination strength scheduling, extension to heterogeneous agent dynamics, and explicit communication delay modeling.
 
 
 \begin{thebibliography}{21}

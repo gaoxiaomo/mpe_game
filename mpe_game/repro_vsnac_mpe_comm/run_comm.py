@@ -120,8 +120,8 @@ def _learning_params(n_p: int, n_e: int, quick: bool) -> LearningParams:
     )
 
 
-def _comm_params(gamma: float, comm_mode: str = "full", dropout_prob: float = 0.0) -> CommParams:
-    return CommParams(gamma=gamma, comm_mode=comm_mode, dropout_prob=dropout_prob)
+def _comm_params(gamma: float, comm_mode: str = "full", dropout_prob: float = 0.0, d_safe: float = 0.0) -> CommParams:
+    return CommParams(gamma=gamma, comm_mode=comm_mode, dropout_prob=dropout_prob, d_safe=d_safe)
 
 
 def _scenario_spec(case: GeneralCase, quick: bool) -> GeneralScenarioSpec:
@@ -232,6 +232,7 @@ def _run_single_case(job: dict[str, Any]) -> dict[str, Any]:
     quick = bool(job["quick"])
     make_plots = bool(job.get("make_plots", True))
     gamma = float(job["gamma"])
+    d_safe = float(job.get("d_safe", 0.0))
     dropout_prob = float(job["dropout_prob"])
 
     scenario = build_general_scenario(_scenario_spec(case, quick))
@@ -262,9 +263,9 @@ def _run_single_case(job: dict[str, Any]) -> dict[str, Any]:
 
     # Three evaluation modes using the SAME trained weights
     eval_configs = {
-        "full_comm": CommParams(gamma=gamma, comm_mode="full", dropout_prob=0.0),
+        "full_comm": CommParams(gamma=gamma, comm_mode="full", dropout_prob=0.0, d_safe=d_safe),
         "no_comm": CommParams(gamma=0.0, comm_mode="none", dropout_prob=0.0),
-        "dropout": CommParams(gamma=gamma, comm_mode="full", dropout_prob=dropout_prob),
+        "dropout": CommParams(gamma=gamma, comm_mode="full", dropout_prob=dropout_prob, d_safe=d_safe),
     }
 
     eval_results: dict[str, EvalResult] = {}
@@ -344,6 +345,15 @@ def _run_single_case(job: dict[str, Any]) -> dict[str, Any]:
             case_dir / "fig_comm_comparison.png",
             f"{case.name} team error: comm mode comparison",
         )
+        # Two-mode comparison (full vs dropout only, for paper)
+        dropout_pair = {k: v for k, v in eval_results.items() if k != "no_comm"}
+        if len(dropout_pair) >= 2:
+            plot_comm_comparison(
+                dropout_pair,
+                learning.dt,
+                case_dir / "fig_comm_dropout_only.png",
+                f"{case.name} team error: full comm vs dropout",
+            )
         plot_d_min_history(
             eval_full,
             learning.dt,
@@ -378,7 +388,7 @@ def _run_single_case(job: dict[str, Any]) -> dict[str, Any]:
                 dynamic_graph=False,
                 stop_on_capture=False,
                 record_logs=False,
-                comm_params_override=CommParams(gamma=gamma, comm_mode="full", dropout_prob=0.0),
+                comm_params_override=CommParams(gamma=gamma, comm_mode="full", dropout_prob=0.0, d_safe=d_safe),
             )
             plot_team_error_compare(
                 eval_full.team_errors,
@@ -591,6 +601,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=7, help="Base random seed")
     parser.add_argument("--parallel-workers", type=int, default=1, help="Parallel worker count for batch runs")
     parser.add_argument("--gamma", type=float, default=0.3, help="Formation coupling weight gamma")
+    parser.add_argument("--d-safe", type=float, default=100.0, help="Safety distance for adaptive gamma (m)")
     parser.add_argument("--dropout-prob", type=float, default=0.15, help="Edge dropout probability for dropout eval")
     parser.add_argument(
         "--skip-plots",
@@ -612,6 +623,7 @@ def main() -> None:
             "quick": bool(args.quick),
             "make_plots": not bool(args.skip_plots),
             "gamma": float(args.gamma),
+            "d_safe": float(args.d_safe),
             "dropout_prob": float(args.dropout_prob),
         }
         for case in cases

@@ -52,6 +52,7 @@ def simulate(
     displacements: np.ndarray, # (n_p, 2)
     *,
     gamma: float = 0.0,
+    d_safe: float = 0.0,
     dt: float = 0.05,
     t_final: float = 90.0,
     u_bar_p: float = 25.0,
@@ -123,7 +124,14 @@ def simulate(
                         continue
                     dv = p_st[j, 2:] - p_st[k, 2:]
                     dp = p_st[j, :2] - p_st[k, :2] - delta_p[j, k]
-                    coord += A[j, k] * (dv + kappa / d_ref * dp)
+                    # Per-pair adaptive gamma amplification
+                    if d_safe > 0:
+                        sep = p_st[j, :2] - p_st[k, :2]
+                        dist_sq = float(sep @ sep)
+                        amp = max(1.0, d_safe * d_safe / max(dist_sq, 1e-8))
+                    else:
+                        amp = 1.0
+                    coord += amp * A[j, k] * (dv + kappa / d_ref * dp)
                 total += gamma / d_vec[j] * coord
             rho = R1_inv * total / (2.0 * u_bar_p)
             u_p[j] = -u_bar_p * np.tanh(rho)
@@ -152,7 +160,7 @@ def simulate(
 # Plotting
 # ---------------------------------------------------------------------------
 
-def plot_demo(res_none, res_comm, gamma_val, dt, out_path):
+def plot_demo(res_none, res_comm, gamma_val, dt, out_path, d_safe=0.0):
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
     cp = ["#d62728", "#1f77b4"]
 
@@ -200,7 +208,10 @@ def plot_demo(res_none, res_comm, gamma_val, dt, out_path):
     ax.plot(t, res_none["d_min"] / 1000, lw=2, ls="--", c="#ff7f0e",
             label=r"$\gamma$=0")
     ax.plot(t, res_comm["d_min"] / 1000, lw=2, c="#2ca02c",
-            label=rf"$\gamma$={gamma_val}")
+            label=rf"$\gamma$={gamma_val} (adaptive)")
+    if d_safe > 0:
+        ax.axhline(d_safe / 1000, color="red", linestyle=":", lw=1.5,
+                   label=rf"$d_{{safe}}$ = {d_safe/1000:.1f} km")
     ax.set_xlabel("Time (s)", fontsize=11)
     ax.set_ylabel(r"$d_{\min}$ (km)", fontsize=11)
     ax.set_title("Inter-pursuer distance", fontsize=12)
@@ -261,33 +272,40 @@ def main():
     print("  P1: starts high, targets below E.  P2: starts low, targets above E.")
     print(f"  delta_12 = r2-r1 = (0, {displacements[1,1]-displacements[0,1]:.0f}) m\n")
 
-    # ── Gamma sweep (Table I data) ──
+    # ── Adaptive gamma with d_safe ──
+    d_safe = 500.0  # safety distance (m)
+    best_gamma = 5.0
+
+    print(f"  d_safe = {d_safe:.0f} m\n")
+
+    # Sweep with adaptive gamma
     sweep = []
     for g in [0.0, 0.5, 1.0, 2.0, 5.0, 10.0]:
         res = simulate(p_init, e_init, displacements,
-                       gamma=g, dt=dt, t_final=t_final)
+                       gamma=g, d_safe=d_safe, dt=dt, t_final=t_final)
         sep_km = res["min_d_min"] / 1000.0
         sweep.append((g, sep_km))
+        tag = " *" if res["min_d_min"] >= d_safe else ""
         print(f"  gamma={g:5.1f}:  min d_min = {res['min_d_min']:8.1f} m  "
-              f"({sep_km:.2f} km)")
+              f"({sep_km:.2f} km){tag}")
 
     # ── Detailed comparison ──
-    best_gamma = 5.0
     res_none = simulate(p_init, e_init, displacements,
                         gamma=0.0, dt=dt, t_final=t_final)
     res_comm = simulate(p_init, e_init, displacements,
-                        gamma=best_gamma, dt=dt, t_final=t_final)
+                        gamma=best_gamma, d_safe=d_safe, dt=dt, t_final=t_final)
 
-    print(f"\n  No comm:         min d_min = {res_none['min_d_min']:.1f} m")
-    print(f"  Comm gamma={best_gamma}:  min d_min = {res_comm['min_d_min']:.1f} m")
+    print(f"\n  No comm:              min d_min = {res_none['min_d_min']:.1f} m")
+    print(f"  Adaptive gamma={best_gamma}:  min d_min = {res_comm['min_d_min']:.1f} m")
+    print(f"  d_safe guarantee:     {res_comm['min_d_min'] >= d_safe}")
 
     # ── Generate figures ──
     out_dir.mkdir(parents=True, exist_ok=True)
     plot_demo(res_none, res_comm, best_gamma, dt,
-              out_dir / "fig_collision_comparison.png")
+              out_dir / "fig_collision_comparison.png", d_safe=d_safe)
     fig_dir.mkdir(parents=True, exist_ok=True)
     plot_demo(res_none, res_comm, best_gamma, dt,
-              fig_dir / "fig_collision_comparison.png")
+              fig_dir / "fig_collision_comparison.png", d_safe=d_safe)
 
     # ── Print Table I data ──
     print("\n  Table I (for paper):")
