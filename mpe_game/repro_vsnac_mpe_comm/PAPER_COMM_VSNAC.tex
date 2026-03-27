@@ -55,7 +55,7 @@ This work is supported by National Natural Science Foundation of China under Gra
 \section{Introduction}
 % =====================================================================
 
-Multi-agent pursuit--evasion (PE) games constitute a fundamental problem at the intersection of adversarial decision-making and cooperative control. Applications range from UAV swarm interception \cite{b_zhang2023} and satellite engagement \cite{b_gong2020} to perimeter defense \cite{b_shishika2020} and urban airspace security \cite{b_collision_uav}. When the pursuer team outnumbers the evaders, the central challenge is to exploit this numerical advantage through principled cooperation \cite{b_isaacs,b_chen2016,b_yan2022}.
+Multi-agent pursuit--evasion (PE) games constitute a fundamental problem at the intersection of adversarial decision-making and cooperative control. Applications range from UAV swarm interception \cite{b_zhang2023} and satellite engagement \cite{b_gong2020} to perimeter defense \cite{b_shishika2020} and urban airspace security \cite{b_collision_uav}. When the pursuer team outnumbers the evaders, the central challenge is to exploit this numerical advantage through principled cooperation \cite{b_isaacs,b_chen2016}.
 
 The theoretical foundation for two-player PE games rests on the Hamilton--Jacobi--Isaacs (HJI) equation \cite{b_isaacs}, whose solution yields saddle-point equilibrium strategies. However, extending HJI-based analysis to multi-agent nonlinear systems faces the curse of dimensionality. Reinforcement learning (RL) offers a data-driven route to approximate HJI solutions without requiring full model knowledge \cite{b_lewis1998,b_lopez2020,b_xu2024}. In the multi-agent RL domain, the MADDPG framework \cite{b_maddpg} introduced centralized-training decentralized-execution for mixed cooperative-competitive settings, while communication-aware architectures \cite{b_commrl2025} improve cooperation through explicit message passing. On the differential game side, graphical game formulations model strategic interactions over communication topologies \cite{b_lopez2020,b_graphgame2023}, consensus-based methods leverage the graph Laplacian for formation coordination \cite{b_ren2005,b_olfati2004}, control barrier functions provide safety guarantees \cite{b_ames2017}, cooperative tracking with weighted topology has been applied to pursuit games \cite{b_zhou2024}, and RL-based formation-surrounding control has been explored for quadrotor PE scenarios \cite{b_formrl2024}. Nash strategies under limited observations have also been studied for PE differential games \cite{b_graphswap}.
 
@@ -348,9 +348,6 @@ R.~Isaacs, \emph{Differential Games}. New York: Dover, 1999.
 \bibitem{b_chen2016}
 J.~Chen, W.~Zha, Z.~Peng, and D.~Gu, ``Multi-player pursuit--evasion games with one superior evader,'' \emph{Automatica}, vol.~71, pp.~24--32, 2016.
 
-\bibitem{b_yan2022}
-R.~Yan, Z.~Shi, and Y.~Zhong, ``Cooperative pursuit-evasion games with a superior evader,'' \emph{Annu. Rev. Control}, vol.~53, pp.~32--51, 2022.
-
 \bibitem{b_zhang2023}
 R.~Zhang \emph{et al.}, ``Game of drones: Multi-UAV pursuit-evasion game with online motion planning by deep reinforcement learning,'' \emph{IEEE Trans. Neural Netw. Learn. Syst.}, vol.~34, no.~10, pp.~7900--7909, 2023.
 
@@ -358,7 +355,7 @@ R.~Zhang \emph{et al.}, ``Game of drones: Multi-UAV pursuit-evasion game with on
 H.~Gong, S.~Gong, and J.~Li, ``Pursuit--evasion game for satellites based on continuous thrust reachable domain,'' \emph{IEEE Trans. Aerosp. Electron. Syst.}, vol.~56, no.~6, pp.~4626--4637, 2020.
 
 \bibitem{b_shishika2020}
-D.~Shishika and V.~Kumar, ``Local-game decomposition for multiplayer perimeter-defense problem,'' in \emph{Proc. IEEE CDC}, 2020, pp.~2093--2098.
+D.~Shishika and V.~Kumar, ``Local-game decomposition for multiplayer perimeter-defense problem,'' in \emph{Proc. IEEE CDC}, 2018, pp.~2093--2100.
 
 \bibitem{b_lewis1998}
 F.~Lewis, S.~Jagannathan, and A.~Yesildirak, \emph{Neural Network Control of Robot Manipulators and Non-Linear Systems}. New York: Taylor \& Francis, 1998.
@@ -370,7 +367,7 @@ V.~G. Lopez \emph{et al.}, ``Solutions for multiagent pursuit-evasion games on c
 R.~Lowe \emph{et al.}, ``Multi-agent actor-critic for mixed cooperative-competitive environments,'' in \emph{Proc. NeurIPS}, 2017, pp.~6379--6390.
 
 \bibitem{b_commrl2025}
-Z.~Peng \emph{et al.}, ``Multi-UAV cooperative pursuit strategy with limited visual field in urban airspace: A MARL approach,'' \emph{IEEE/CAA J. Autom. Sinica}, 2025.
+Z.~Peng \emph{et al.}, ``Multi-UAV cooperative pursuit strategy with limited visual field in urban airspace: A MARL approach,'' \emph{IEEE/CAA J. Autom. Sinica}, vol.~12, no.~7, pp.~1350--1367, 2025.
 
 \bibitem{b_graphgame2023}
 K.~Zhang, Z.~Yang, and T.~Ba\c{s}ar, ``Multi-agent reinforcement learning: A selective overview of theories and algorithms,'' in \emph{Handbook of RL and Control}. Springer, 2021, pp.~321--384.
@@ -388,7 +385,7 @@ A.~D. Ames \emph{et al.}, ``Control barrier function based quadratic programs fo
 H.~Zhou \emph{et al.}, ``Optimal pursuit strategies for multi-pursuer single-evader games based on cooperative tracking,'' \emph{Optim. Control Appl. Methods}, 2024.
 
 \bibitem{b_formrl2024}
-Y.~Li \emph{et al.}, ``Reinforcement learning-based formation-surrounding control for multiple quadrotor UAVs pursuit-evasion games,'' \emph{ISA Trans.}, vol.~146, pp.~180--195, 2024.
+H.~Xiong and Y.~Zhang, ``Reinforcement learning-based formation-surrounding control for multiple quadrotor UAVs pursuit-evasion games,'' \emph{ISA Trans.}, vol.~145, pp.~205--224, 2024.
 
 \bibitem{b_graphswap}
 W.~Lin, Z.~Qu, and M.~A. Simaan, ``Nash strategies for pursuit-evasion differential games involving limited observations,'' \emph{IEEE Trans. Aerosp. Electron. Syst.}, vol.~51, no.~2, pp.~1347--1356, 2015.
@@ -397,7 +394,7 @@ W.~Lin, Z.~Qu, and M.~A. Simaan, ``Nash strategies for pursuit-evasion different
 International Civil Aviation Organization, ``Procedures for air navigation services---air traffic management,'' ICAO Doc 4444, 16th ed., 2016.
 
 \bibitem{b_collision_uav}
-S.~Feng \emph{et al.}, ``Multi-UAVs collaborative path planning in the cramped environment,'' \emph{IEEE/CAA J. Autom. Sinica}, vol.~11, no.~2, pp.~348--363, 2024.
+S.~Feng \emph{et al.}, ``Multi-UAVs collaborative path planning in the cramped environment,'' \emph{IEEE/CAA J. Autom. Sinica}, vol.~11, no.~2, pp.~529--538, 2024.
 
 \bibitem{b_xu2024}
 Z.~Xu, D.~Yu, Y.-J.~Liu, and Z.~Wang, ``Approximate optimal strategy for multiagent system pursuit-evasion game,'' \emph{IEEE Syst. J.}, vol.~18, no.~3, pp.~1669--1680, 2024.
