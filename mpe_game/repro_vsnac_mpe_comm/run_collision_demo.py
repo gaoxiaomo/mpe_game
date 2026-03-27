@@ -231,38 +231,35 @@ def main():
     fig_dir = base / "paper_figures"
 
     # ── Scenario ──
-    # Two pursuers start close together, each with a DIFFERENT formation
-    # offset: P1 should end up above E, P2 below E.  Pursuers start
-    # behind E and must fly past each other's eventual positions.
+    # True crossing-path: each pursuer starts on the OPPOSITE side of its
+    # target and must fly THROUGH y=0 to reach it.
     #
-    # Without coordination: both fly toward E along similar tracks,
-    #   then diverge late near E → small transient d_min.
-    # With coordination: the delta_jk term drives early separation.
-    # Crossing paths: P1 starts ABOVE its target, P2 BELOW its target.
-    # Tracking drives P1 DOWN and P2 UP → paths must cross near y=0.
-    # Without coordination: near-collision at the crossing point.
+    # P1 starts at y=+1200, target is y=-800 (below E) → must drop 2000m
+    # P2 starts at y=-1200, target is y=+800 (above E) → must rise 2000m
+    # Their paths physically cross near y=0.
+    #
+    # Without coordination: actual collision (d_min ≈ 0 m) at crossing.
     # With coordination: delta_jk drives early lateral separation.
     p_init = np.array([
-        [0.0,  1200.0, 0.0, 0.0],  # P1: starts high (target is 800m above E)
-        [0.0, -1200.0, 0.0, 0.0],  # P2: starts low  (target is 800m below E)
+        [0.0,  1200.0, 0.0, 0.0],  # P1: starts high, target is below E
+        [0.0, -1200.0, 0.0, 0.0],  # P2: starts low,  target is above E
     ])
     e_init = np.array([4000.0, 0.0, 5.0, 0.0])
 
-    # P1 target: e + (0, 800)  → r1 = (0, -800)
-    # P2 target: e + (0, -800) → r2 = (0, +800)
-    # P1 must drop 400m (1200→800), P2 must rise 400m (-1200→-800)
-    # Their paths cross around y=0.
+    # r1 = (0, +800) → target = E - r1 = (4000, -800)
+    # r2 = (0, -800) → target = E - r2 = (4000, +800)
+    # P1 must cross from y=1200 to y=-800, P2 from y=-1200 to y=+800
     displacements = np.array([
-        [0.0, -800.0],
         [0.0, +800.0],
+        [0.0, -800.0],
     ])
 
     dt = 0.05
     t_final = 120.0
 
     print("=== Controlled Scenario (paper-consistent V-SNAC) ===\n")
-    print("  P1 offset: above evader,  P2 offset: below evader")
-    print(f"  delta_12 = r1-r2 = (0, {displacements[0,1]-displacements[1,1]:.0f}) m\n")
+    print("  P1: starts high, targets below E.  P2: starts low, targets above E.")
+    print(f"  delta_12 = r2-r1 = (0, {displacements[1,1]-displacements[0,1]:.0f}) m\n")
 
     # ── Gamma sweep (Table I data) ──
     sweep = []

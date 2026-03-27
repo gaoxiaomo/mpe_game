@@ -246,7 +246,7 @@ The primary metric for coordination effectiveness is the minimum inter-pursuer d
 
 \subsection{Coordination Effectiveness: Controlled Scenario}
 
-To isolate the effect of the coordination potential, we construct a controlled 2D double-integrator scenario that preserves the paper's control structures ($\tanh$ saturation, V-SNAC basis, coordination gradient). Two pursuers start from opposing sides with \emph{different} formation offsets: P1 targets a position above the evader while P2 targets below. Their tracking-optimal paths must cross during the approach phase, creating a near-collision risk. Without coordination, the minimum inter-pursuer distance $d_{\min}$ drops to 1.0\,km at the crossing point. With coordination, the $\delta_{jk}$ term drives early lateral separation, maintaining $d_{\min}$ above 2.1\,km.
+To isolate the effect of the coordination potential, we construct a controlled 2D double-integrator scenario that preserves the paper's control structures ($\tanh$ saturation, V-SNAC basis, coordination gradient). Two pursuers start from opposing sides with \emph{different} formation offsets and must fly \emph{through} each other's eventual positions: P1 starts above and targets below the evader, while P2 starts below and targets above. Their tracking-optimal paths physically cross near $y{=}0$. Without coordination, this crossing produces an actual collision ($d_{\min} \approx 0$\,m). With coordination, the $\delta_{jk}$ term drives early lateral separation, maintaining $d_{\min}$ above 1\,km.
 
 \begin{table}[htbp]
 \renewcommand\arraystretch{1.2}
@@ -257,21 +257,21 @@ To isolate the effect of the coordination potential, we construct a controlled 2
 \hline
 $\gamma$ & 0 & 0.5 & 1.0 & 2.0 & 5.0 & 10.0 \\
 \hline
-$d_{\min}$ (km) & 1.00 & 2.14 & 2.18 & 2.20 & 2.22 & 2.22 \\
+$d_{\min}$ (km) & 0.00 & 1.09 & 1.31 & 1.42 & 1.50 & 1.52 \\
 \hline
 \end{tabular}
 \end{center}
 \end{table}
 
-Table~\ref{tab:collision} shows that any positive $\gamma$ more than doubles the minimum inter-pursuer distance. The rapid saturation beyond $\gamma = 0.5$ indicates that even modest coordination strength suffices to maintain safe separation, while the $\tanh$ bound limits the maximum deflection from the tracking-optimal path.
+Table~\ref{tab:collision} shows that without coordination the pursuers collide, while any positive $\gamma$ immediately establishes safe separation. The monotonic increase saturates around $\gamma = 5$, as the $\tanh$ bound limits the maximum deflection from the tracking-optimal path.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_comparison.png}}
-\caption{Controlled scenario demonstrating coordination effectiveness. Left: without communication ($\gamma{=}0$), pursuer paths cross dangerously close ($d_{\min}=1.0$\,km). Middle: with communication ($\gamma{=}5$), the coordination potential drives early lateral separation. Right: inter-pursuer distance over time showing sustained separation improvement.}
+\caption{Controlled scenario demonstrating coordination effectiveness. Left: without communication ($\gamma{=}0$), pursuer paths physically cross, producing a collision ($d_{\min} \approx 0$). Middle: with communication ($\gamma{=}5$), the coordination potential drives early lateral separation. Right: inter-pursuer distance over time confirming collision avoidance.}
 \label{fig:collision}
 \end{figure}
 
-Fig.~\ref{fig:collision} visualizes this effect. The left panel shows the crossing trajectories under $\gamma = 0$ where both pursuers converge toward the crossing point; the middle panel shows the coordinated separation under $\gamma = 5$; the right panel plots the inter-pursuer distance over time, confirming that coordination maintains safe separation throughout the engagement.
+Fig.~\ref{fig:collision} visualizes this effect. The left panel shows the crossing trajectories under $\gamma = 0$ where both pursuers pass through the same spatial region; the middle panel shows the coordinated separation under $\gamma = 5$; the right panel plots the inter-pursuer distance over time, confirming that coordination prevents collision throughout the engagement.
 
 \subsection{Multi-Scenario Performance}
 
