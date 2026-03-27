@@ -112,8 +112,9 @@ RL编队围捕控制在四旋翼追逃场景中也有探索\cite{b_formrl2024}�
   引入解析协调势函数$\Phi_j$与学习值函数组合为增广值函数$V_j^{\mathrm{aug}}$。
   追逐者控制由$V_j^{\mathrm{aug}}$的梯度在$\tanh$饱和内推导，
   鼓励空间多样性的同时保持执行器约束。
-  协调信号在通信丢失时自然退化，
-  并建立了与基于势函数的奖励塑形\cite{b_ng1999}之间的理论联系。
+  协调信号在通信丢失时自然退化。
+  该设计借鉴基于势函数的奖励塑形\cite{b_ng1999}的思想，
+  通过状态相关势函数重定向策略而不影响学习收敛性。
 \end{itemize}
 
 本文后续安排如下：
@@ -248,110 +249,110 @@ a_{jk} = \begin{cases} 1, & \sigma(j) = \sigma(k),\; j \neq k \\ 0, & \text{其�
 
 \subsection{协调势函数}
 
-对每个$d_j > 0$的追逐者$j$，定义逐对排斥核$\varphi: \mathbb{R}_+ \to \mathbb{R}_+$
-和协调势函数：
+输入矩阵结构(\ref{eq:g_struct})$g_j = [0;\, G_v]$施加了关键设计约束：
+由于$g_j^T$仅提取状态梯度的速度空间分量，
+协调势函数必须依赖速度才能通过HJI驻点条件影响控制律。
+纯位置势函数的$\nabla_{v_j}\Phi_j = 0$，
+导致$g_j^T\nabla\Phi_j = 0$——对控制无效果。
+
+设$\delta_{jk} = r_{j,\sigma(j)}^p - r_{k,\sigma(k)}^p \in \mathbb{R}^3$
+为由个体追踪偏移向量导出的期望追逐者间位置偏移。
+对每个$d_j > 0$的追逐者$j$，协调势定义为：
 \begin{equation}\label{eq:phi}
-\Phi_j(p_j, \{p_k\}) = \frac{\gamma}{d_j}\sum_{k:\,a_{jk}>0} \varphi(\|p_j - p_k\|)
+\Phi_j = \frac{\gamma}{d_j}\!\sum_{k:\,a_{jk}>0}\!\bigg[\frac{1}{2}\|v_j{-}v_k\|^2 + \frac{\kappa}{d_{\mathrm{ref}}}(p_j{-}p_k{-}\delta_{jk})^T v_j\bigg]
 \end{equation}
-其中$\gamma > 0$控制协调强度。排斥核选取为：
-\begin{equation}\label{eq:kernel}
-\varphi(r) = \frac{1}{r + \epsilon}
-\end{equation}
-$\epsilon > 0$防止零间距处的奇异性。
-该核函数单调递减，使$\Phi_j$在追逐者靠近时取大值、
-分离后趋于零——恰好是阻止轨迹重叠所需的行为。
+其中$\gamma > 0$为协调强度，$\kappa > 0$为位置修正增益，
+$d_{\mathrm{ref}} > 0$为将位置误差归一化到速度量级的参考距离。
+第一项为速度共识代价，阻尼同组追逐者间的相对速度振荡；
+第二项为位置-速度交叉耦合，
+惩罚恶化编队误差方向上的速度分量：
+当追逐者$j$的飞行方向使$\|p_j - p_k - \delta_{jk}\|$增大时势函数增长。
+两项共同构成PD型协调能量，
+与经典共识编队控制\cite{b_ren2005,b_olfati2004}结构一致。
 度归一化$1/d_j$确保协调强度不随组大小变化。
+当$\gamma = 0$或$d_j = 0$时$\Phi_j = 0$。
 
 \subsection{增广值函数}
 
-核心理论构造是\emph{增广值函数}，它分解为学习的追踪分量和解析的协调分量：
+\emph{增广值函数}分解为学习的追踪分量和解析的协调分量：
 \begin{equation}\label{eq:vaug}
-V_j^{\mathrm{aug}}(\tilde{x}_j, p_j, \{p_k\}) = \hat{W}_j^T\,\psi(\tilde{x}_j) + \Phi_j(p_j, \{p_k\})
+V_j^{\mathrm{aug}} = \hat{W}_j^T\,\psi(\tilde{x}_j) + \Phi_j
 \end{equation}
-第一项$\hat{W}_j^T\psi(\tilde{x}_j)$由V-SNAC学习，编码个体追逃最优性；
-第二项$\Phi_j$是解析的，编码团队协调目标。
-这种分解具有若干重要性质。
-
-增广值函数关于状态的梯度相应分解：
+第一项由V-SNAC学习，编码个体追逃最优性；
+第二项是解析的，编码团队协调目标。
+状态梯度相应分解：
 \begin{equation}\label{eq:grad_aug}
 \nabla V_j^{\mathrm{aug}} = (\nabla \psi)^T \hat{W}_j + \nabla \Phi_j
 \end{equation}
-其中$\nabla \Phi_j$由核函数梯度计算：
+进入控制律的$\Phi_j$速度空间梯度为：
 \begin{equation}\label{eq:grad_phi}
-\nabla_{p_j} \Phi_j = -\frac{\gamma}{d_j}\sum_{k:\,a_{jk}>0} \frac{p_j - p_k}{\|p_j - p_k\|(\|p_j - p_k\| + \epsilon)^2}
+\nabla_{v_j}\!\Phi_j = \frac{\gamma}{d_j}\!\sum_{k:\,a_{jk}>0}\!\bigg[(v_j{-}v_k) + \frac{\kappa}{d_{\mathrm{ref}}}(p_j{-}p_k{-}\delta_{jk})\bigg]
 \end{equation}
-该梯度通过输入矩阵结构(\ref{eq:g_struct})嵌入速度子空间。
+由于$g_j^T = [0_{3\times 3},\; G_v^T]$，
+协调信号通过$g_j^T\nabla\Phi_j = G_v^T\nabla_{v_j}\Phi_j \neq 0$进入控制。
+这是关键结构性质：速度依赖势函数确保经$g_j^T$乘法后协调贡献非零。
 
 \subsection{增广控制律}
 
 \textit{追逐者最优控制}。
-对增广Hamiltonian施加驻点条件$\partial H^{\mathrm{aug}}/\partial u_j^p = 0$得：
+对增广Hamiltonian施加$\partial H^{\mathrm{aug}}/\partial u_j^p = 0$得：
 \begin{equation}\label{eq:ctrl_aug}
 u_j^{p*} = -\bar{u}_p\,\tanh\!\bigg(\frac{1}{2\bar{u}_p}\,R_1^{-1}\,g_j^T\,\nabla V_j^{\mathrm{aug}}\bigg)
 \end{equation}
-由于$\Phi_j$不依赖于$u_j^p$，
-变分结构与标准HJI情形完全一致：
-$\partial H^{\mathrm{aug}}/\partial u_j^p = 0$产生相同的$\tanh$形式，
-只是在增广梯度$\nabla V_j^{\mathrm{aug}}$而非$\nabla V_j^*$处求值。
-学习的追踪梯度和解析的协调梯度在$\tanh$\emph{内部}叠加，
-因此执行器饱和约束$\|u_j^{p*}\| \leq \bar{u}_p$自动满足。
+由式(\ref{eq:grad_aug})展开，
+$g_j^T \nabla V_j^{\mathrm{aug}} = G_v^T[(\nabla_v \psi)^T \hat{W}_j + \nabla_{v_j}\Phi_j]$：
+追踪梯度和协调梯度在$\tanh$\emph{内部}叠加。
+$\tanh$对组合信号施加饱和，
+有限控制力根据两个梯度的相对大小自然分配于追踪和协调之间，
+执行器约束$\|u_j^{p*}\| \leq \bar{u}_p$自动满足。
 
-当$\gamma = 0$或$d_j = 0$（单独追逐者）时，
+当$\gamma = 0$或$d_j = 0$时，
 $\Phi_j = 0$，式(\ref{eq:ctrl_aug})退化为基线(\ref{eq:ctrl_pursuer})。
 
 \textit{逃逸者最坏情况控制}。
-协调势$\Phi_j$仅依赖追逐者位置，不涉及任何逃逸者状态。
-因此，逃逸者的控制问题不受协调层影响，最坏情况策略仍为：
+协调势$\Phi_j$仅依赖追逐者状态，不涉及逃逸者。
+逃逸者策略由纯追踪值梯度推导：
 \begin{equation}\label{eq:ctrl_evader_aug}
 u_e^{*} = -\bar{u}_e\,\tanh\!\bigg(\frac{1}{2\bar{u}_e}\,R_2^{-1}\,g_e^T\,\nabla V_j^*\bigg)
 \end{equation}
-其中$\nabla V_j^*$仅为追踪值梯度。
-这在物理上是直观的：逃逸者不知道也不关心追逐者之间如何协调，
-它只是对每个个体追逃执行最坏情况策略。
+逃逸者对每个个体追逃执行最坏情况策略，不受追逐者间协调方式影响。
 
 \subsection{理论性质}
 
 \textit{增广HJI方程}。
-增广值函数$V_j^{\mathrm{aug}}$满足增广HJI方程，
-其阶段代价在标准追踪代价之外还包含协调运行代价$\ell_\Phi$：
+将$V_j^{\mathrm{aug}}$代入HJI框架得：
 \begin{equation}\label{eq:aug_hji}
 \begin{split}
 0 ={} & \tilde{x}_j^T Q\,\tilde{x}_j + \ell_\Phi + U(u_j^{p*}) - W(u_e^*) \\
 & + (\nabla V_j^{\mathrm{aug}})^T [f_j + g_j u_j^{p*} - g_e u_e^*]
 \end{split}
 \end{equation}
-其中$\ell_\Phi = \dot{\Phi}_j - (\nabla \Phi_j)^T g_j u_j^{p*}$
+其中$\ell_\Phi = \dot{\Phi}_j - (\nabla \Phi_j)^T(f_j + g_j u_j^{p*})$
 吸收了势函数沿增广轨迹的时间导数。
-这建立了增广控制关于修正代价（同时惩罚追踪误差和追逐者间近距）的最优性。
-
-\textit{与基于势函数的奖励塑形的联系}。
-分解(\ref{eq:vaug})是Ng等人\cite{b_ng1999}意义下的基于势函数的奖励塑形：
-协调势$\Phi_j$仅依赖状态（追逐者位置），不依赖动作。
-奖励塑形理论的经典结论表明，
-向值函数添加状态相关势函数可以保持最优策略结构，
-同时重新引导探索\cite{b_ng1999}。
-在本文设定中，$\Phi_j$将追踪轨迹重新引导向空间多样性，
-而不改变渐近追踪保证。
+由于$\Phi_j$依赖其他追逐者状态，
+$\dot{\Phi}_j$涉及其动力学；
+在单步控制决策中，队友状态视为缓变参数。
+这建立了增广控制关于修正代价（同时惩罚追踪误差和追逐者间编队偏差）的局部最优性。
 
 \textit{学习与协调的独立性}。
 V-SNAC权重更新仅依赖追踪Bellman残差，与$\Phi$无关。
-由于$\Phi$是解析的（无需学习），可在任何阶段——在线学习或部署中——
-根据队友位置实时计算，不影响权重收敛。
+由于$\Phi$是解析的，可根据队友状态实时计算而不影响权重收敛。
 这保持了UUB收敛保证\cite{b_lewis1998}，
 并允许运行时调整$\gamma$而无需重新训练。
 
 \textit{通信丢失鲁棒性}。
-$\mathcal{G}_p$中的边丢失使$d_j$和协调梯度成比例减小。
-完全失联时$\nabla \Phi_j = 0$，恢复V-SNAC基线。
-对于丢包率$p_d$的部分丢失，利用$\tanh$的Lipschitz性质（常数为1）：
+$\mathcal{G}_p$中的边丢失使式(\ref{eq:grad_phi})的求和中相应项消失，
+协调梯度按比例减小。
+完全失联时$\nabla_{v_j}\Phi_j = 0$，恢复基线。
+对于丢包率$p_d$的部分丢失，利用$\tanh$的Lipschitz性质：
 \begin{equation}\label{eq:dropout}
 \begin{split}
-\|u_j^{\text{full}} - u_j^{\text{drop}}\| \leq {} & \frac{1}{2\bar{u}_p}\|R_1^{-1}\|\,\|G_v\|_\infty \\
-& \cdot \|\nabla\Phi_j^{\text{full}} - \nabla\Phi_j^{\text{drop}}\|
+\|u_j^{\text{full}} - u_j^{\text{drop}}\| \leq {} & \frac{1}{2\bar{u}_p}\|R_1^{-1}\|\,\|G_v\| \\
+& \cdot \|\nabla_{v_j}\Phi_j^{\text{full}} - \nabla_{v_j}\Phi_j^{\text{drop}}\|
 \end{split}
 \end{equation}
-由于$\nabla \Phi_j$受$\gamma/\epsilon^2$界定，
-控制扰动有界且正比于$\gamma$，确保平滑退化。
+式(\ref{eq:grad_phi})中各项受状态界限约束，
+故控制扰动有界且正比于$\gamma$，确保平滑退化。
 
 
 % =====================================================================
@@ -366,7 +367,7 @@ $\mathcal{G}_p$中的边丢失使$d_j$和协调梯度成比例减小。
 反映追逐者的速度优势。
 每个V-SNAC critic使用式(\ref{eq:basis})中的6维多项式基函数，
 训练50--56轮策略迭代，衰减学习率$\alpha_s = 0.05 \times 0.85^s$。
-协调强度$\gamma = 0.3$，奇异防护$\epsilon = 0.1$。
+协调强度$\gamma = 0.3$，位置修正增益$\kappa = 1$，参考距离$d_{\mathrm{ref}} = 500$\,m。
 
 五种团队配置：3追1、3追3、5追3、6追3和8追4，
 覆盖追逐者/逃逸者比率1至3。
@@ -621,10 +622,12 @@ $N_p/N_e = 1$的3追3场景提供了重要验证：
 
 本文提出了面向非线性追逃博弈的分层协同控制框架。
 核心理论贡献是增广值函数，它分解为学习的追踪分量（通过V-SNAC）
-和解析的协调势函数，两者梯度在$\tanh$饱和内组合得到追逐者控制。
+和解析的速度-位置耦合协调势函数，
+两者梯度在$\tanh$饱和内组合得到追逐者控制。
+协调势的速度空间梯度通过输入矩阵$g_j^T$正确进入控制律，
+保证有限控制力在追踪和协调间自然分配。
 逃逸者最坏情况控制仅由追踪值梯度推导，
 因为协调势仅涉及追逐者状态。
-增广公式满足增广HJI方程，并与基于势函数的奖励塑形理论建立了联系。
 
 三层框架——个体V-SNAC控制、动态目标分配和基于通信的协调——
 分别处理个体最优性、团队分配和组内空间多样性。

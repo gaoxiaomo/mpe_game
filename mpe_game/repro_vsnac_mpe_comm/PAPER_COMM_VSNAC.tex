@@ -65,7 +65,7 @@ This paper proposes a hierarchical cooperative control framework built around th
 \begin{itemize}
 \item \textbf{Individual control layer}: The V-SNAC (Value function-based Single Network Adaptive Critic) architecture derives $\tanh$-saturated control policies directly from the value-function gradient, requiring only one critic network per pursuer and reducing the total network count from $2(N_p + N_e)$ to $N_p$. The evader's worst-case control is derived in closed form from the same value function. Weights are updated via off-policy gradient descent with a decaying learning rate for stable convergence.
 \item \textbf{Target assignment layer}: A graph-theoretic pairwise swap algorithm dynamically reassigns pursuer--evader pairings based on real-time states, ensuring monotonic improvement in team cohesion.
-\item \textbf{Communication coordination layer}: An intra-group communication graph connects pursuers targeting the same evader. An analytical coordination potential $\Phi_j$ is combined with the learned value function to form an augmented value function $V_j^{\mathrm{aug}}$. The pursuer control is derived from the gradient of $V_j^{\mathrm{aug}}$ inside the $\tanh$ saturation, encouraging spatial diversity while respecting actuator bounds. The coordination signal degrades gracefully under communication loss, and we establish the connection to potential-based reward shaping \cite{b_ng1999}.
+\item \textbf{Communication coordination layer}: An intra-group communication graph connects pursuers targeting the same evader. An analytical coordination potential $\Phi_j$ is combined with the learned value function to form an augmented value function $V_j^{\mathrm{aug}}$. The pursuer control is derived from the gradient of $V_j^{\mathrm{aug}}$ inside the $\tanh$ saturation, encouraging spatial diversity while respecting actuator bounds. The coordination signal degrades gracefully under communication loss. The design draws on the idea of potential-based reward shaping \cite{b_ng1999}, redirecting the policy through a state-dependent potential without affecting learning convergence.
 \end{itemize}
 
 The remainder of this paper is organized as follows. Section~II introduces the system model, cost functional, V-SNAC control framework including the evader's worst-case strategy, and the dynamic target assignment mechanism. Section~III presents the communication-augmented control theory, including the augmented value function, the resulting control laws for both pursuers and evader, and theoretical properties. Section~IV provides experimental results across multiple scenarios. Section~V draws conclusions.
@@ -169,73 +169,67 @@ with degree $d_j = \sum_k a_{jk}$. The graph topology evolves with the target as
 
 \subsection{Coordination Potential}
 
-For each pursuer $j$ with $d_j > 0$, we define a pairwise repulsion kernel $\varphi: \mathbb{R}_+ \to \mathbb{R}_+$ and a coordination potential:
+The input matrix structure (\ref{eq:g_struct}), $g_j = [0;\, G_v]$, imposes a key design constraint: since $g_j^T$ extracts only the velocity-space components of the state gradient, the coordination potential must depend on velocities for it to influence the control law through the HJI stationarity condition. A position-only potential would have $\nabla_{v_j}\Phi_j = 0$, yielding $g_j^T\nabla\Phi_j = 0$---no effect on control.
+
+Let $\delta_{jk} = r_{j,\sigma(j)}^p - r_{k,\sigma(k)}^p \in \mathbb{R}^3$ denote the desired inter-pursuer position displacement derived from the individual tracking displacement vectors. For each pursuer $j$ with $d_j > 0$, the coordination potential is:
 \begin{equation}\label{eq:phi}
-\Phi_j(p_j, \{p_k\}) = \frac{\gamma}{d_j}\sum_{k:\,a_{jk}>0} \varphi(\|p_j - p_k\|)
+\Phi_j = \frac{\gamma}{d_j}\!\sum_{k:\,a_{jk}>0}\!\bigg[\frac{1}{2}\|v_j{-}v_k\|^2 + \frac{\kappa}{d_{\mathrm{ref}}}(p_j{-}p_k{-}\delta_{jk})^T v_j\bigg]
 \end{equation}
-where $\gamma > 0$ controls the coordination strength. The repulsion kernel is chosen as:
-\begin{equation}\label{eq:kernel}
-\varphi(r) = \frac{1}{r + \epsilon}
-\end{equation}
-with $\epsilon > 0$ preventing singularity at zero separation. This kernel is monotonically decreasing, so $\Phi_j$ is large when pursuers are close and vanishes as they separate---precisely the behavior needed to discourage trajectory overlap. The degree-normalized averaging $1/d_j$ ensures that the coordination strength remains consistent regardless of group size.
+where $\gamma > 0$ is the coordination strength, $\kappa > 0$ the position correction gain, and $d_{\mathrm{ref}} > 0$ a reference distance that normalizes the position error into a velocity-scale quantity. The first term is a velocity consensus cost that damps relative velocity oscillations between co-assigned pursuers. The second is a position--velocity cross-coupling that penalizes velocity components that worsen the formation error: when pursuer $j$ flies in a direction that increases $\|p_j - p_k - \delta_{jk}\|$, the potential grows. Together, the two terms form a PD-type coordination energy consistent with classical consensus-based formation control \cite{b_ren2005,b_olfati2004}. The degree averaging $1/d_j$ keeps coordination strength independent of group size. When $\gamma = 0$ or $d_j = 0$, $\Phi_j = 0$.
 
 \subsection{Augmented Value Function}
 
-The key theoretical construct is the \emph{augmented value function}, which decomposes into a learned tracking component and an analytical coordination component:
+The \emph{augmented value function} decomposes into a learned tracking component and an analytical coordination component:
 \begin{equation}\label{eq:vaug}
-V_j^{\mathrm{aug}}(\tilde{x}_j, p_j, \{p_k\}) = \hat{W}_j^T\,\psi(\tilde{x}_j) + \Phi_j(p_j, \{p_k\})
+V_j^{\mathrm{aug}} = \hat{W}_j^T\,\psi(\tilde{x}_j) + \Phi_j
 \end{equation}
-The first term $\hat{W}_j^T\psi(\tilde{x}_j)$ is learned by V-SNAC and encodes the individual pursuit-evasion optimality. The second term $\Phi_j$ is analytical and encodes the team coordination objective. This decomposition has several important properties.
-
-The gradient of $V_j^{\mathrm{aug}}$ with respect to the state decomposes correspondingly:
+The first term is learned by V-SNAC and encodes individual pursuit optimality; the second is analytical and encodes team coordination. The state gradient decomposes correspondingly:
 \begin{equation}\label{eq:grad_aug}
 \nabla V_j^{\mathrm{aug}} = (\nabla \psi)^T \hat{W}_j + \nabla \Phi_j
 \end{equation}
-where $\nabla \Phi_j$ is computed from the kernel gradient:
+The velocity-space gradient of $\Phi_j$ that enters the control is:
 \begin{equation}\label{eq:grad_phi}
-\nabla_{p_j} \Phi_j = -\frac{\gamma}{d_j}\sum_{k:\,a_{jk}>0} \frac{p_j - p_k}{\|p_j - p_k\|(\|p_j - p_k\| + \epsilon)^2}
+\nabla_{v_j}\!\Phi_j = \frac{\gamma}{d_j}\!\sum_{k:\,a_{jk}>0}\!\bigg[(v_j{-}v_k) + \frac{\kappa}{d_{\mathrm{ref}}}(p_j{-}p_k{-}\delta_{jk})\bigg]
 \end{equation}
-This gradient is embedded in the velocity subspace through the input matrix structure (\ref{eq:g_struct}).
+Since $g_j^T = [0_{3\times 3},\; G_v^T]$, the coordination signal enters the control through $g_j^T\nabla\Phi_j = G_v^T\nabla_{v_j}\Phi_j \neq 0$. This is the key structural property: the velocity-dependent potential ensures a nonzero coordination contribution after multiplication by $g_j^T$.
 
 \subsection{Augmented Control Laws}
 
-\textit{Pursuer optimal control.} Applying the stationarity condition $\partial H^{\mathrm{aug}}/\partial u_j^p = 0$ to the augmented Hamiltonian yields:
+\textit{Pursuer optimal control.} Applying $\partial H^{\mathrm{aug}}/\partial u_j^p = 0$ to the augmented Hamiltonian yields:
 \begin{equation}\label{eq:ctrl_aug}
 u_j^{p*} = -\bar{u}_p\,\tanh\!\bigg(\frac{1}{2\bar{u}_p}\,R_1^{-1}\,g_j^T\,\nabla V_j^{\mathrm{aug}}\bigg)
 \end{equation}
-Since $\Phi_j$ does not depend on $u_j^p$, the variational structure is identical to the standard HJI case: $\partial H^{\mathrm{aug}}/\partial u_j^p = 0$ produces the same $\tanh$ form, but evaluated at the augmented gradient $\nabla V_j^{\mathrm{aug}}$ instead of $\nabla V_j^*$. Both the learned tracking gradient and the analytical coordination gradient are summed \emph{inside} the $\tanh$, so the actuator saturation bound $\|u_j^{p*}\| \leq \bar{u}_p$ is automatically maintained.
+Expanding via (\ref{eq:grad_aug}), $g_j^T \nabla V_j^{\mathrm{aug}} = G_v^T[(\nabla_v \psi)^T \hat{W}_j + \nabla_{v_j}\Phi_j]$: the tracking gradient and coordination gradient are summed \emph{inside} the $\tanh$. Since the $\tanh$ saturation is applied to the combined signal, the actuator bound $\|u_j^{p*}\| \leq \bar{u}_p$ is automatically maintained, and the finite control authority is naturally allocated between tracking and coordination according to their relative gradient magnitudes.
 
-When $\gamma = 0$ or $d_j = 0$ (solo pursuer), $\Phi_j = 0$ and (\ref{eq:ctrl_aug}) reduces to the baseline (\ref{eq:ctrl_pursuer}).
+When $\gamma = 0$ or $d_j = 0$, $\Phi_j = 0$ and (\ref{eq:ctrl_aug}) reduces to the baseline (\ref{eq:ctrl_pursuer}).
 
-\textit{Evader worst-case control.} The coordination potential $\Phi_j$ depends only on pursuer positions and does not involve any evader state. Consequently, the evader's control problem is unaffected by the coordination layer, and the worst-case evader strategy remains:
+\textit{Evader worst-case control.} The coordination potential $\Phi_j$ depends only on pursuer states and does not involve any evader state. The evader's strategy is derived from the tracking value gradient alone:
 \begin{equation}\label{eq:ctrl_evader_aug}
 u_e^{*} = -\bar{u}_e\,\tanh\!\bigg(\frac{1}{2\bar{u}_e}\,R_2^{-1}\,g_e^T\,\nabla V_j^*\bigg)
 \end{equation}
-where $\nabla V_j^*$ is the tracking value gradient only. This is physically intuitive: the evader has no knowledge of or interest in how the pursuers coordinate among themselves; it simply plays the worst-case strategy against each individual pursuit.
+The evader plays the worst-case strategy against each individual pursuit, unaffected by how pursuers coordinate.
 
 \subsection{Theoretical Properties}
 
-\textit{Augmented HJI equation.} The augmented value function $V_j^{\mathrm{aug}}$ satisfies an augmented HJI equation in which the stage cost includes a coordination running cost $\ell_\Phi$ in addition to the standard tracking cost:
+\textit{Augmented HJI equation.} Substituting $V_j^{\mathrm{aug}}$ into the HJI framework yields:
 \begin{equation}\label{eq:aug_hji}
 \begin{split}
 0 ={} & \tilde{x}_j^T Q\,\tilde{x}_j + \ell_\Phi + U(u_j^{p*}) - W(u_e^*) \\
 & + (\nabla V_j^{\mathrm{aug}})^T [f_j + g_j u_j^{p*} - g_e u_e^*]
 \end{split}
 \end{equation}
-where $\ell_\Phi = \dot{\Phi}_j - (\nabla \Phi_j)^T g_j u_j^{p*}$ absorbs the time derivative of the potential along the augmented trajectory. This establishes that the augmented control is optimal with respect to a modified cost that penalizes both tracking error and inter-pursuer proximity.
+where $\ell_\Phi = \dot{\Phi}_j - (\nabla \Phi_j)^T(f_j + g_j u_j^{p*})$ absorbs the time derivative of the potential along the augmented trajectory. Since $\Phi_j$ depends on other pursuers' states, $\dot{\Phi}_j$ involves their dynamics; within a single-step control decision, teammates' states are treated as slowly varying parameters. This establishes that the augmented control is locally optimal with respect to a modified cost that penalizes both tracking error and inter-pursuer formation deviation.
 
-\textit{Connection to potential-based reward shaping.} The decomposition (\ref{eq:vaug}) is an instance of potential-based reward shaping in the sense of Ng et al.\ \cite{b_ng1999}: the coordination potential $\Phi_j$ depends only on the state (pursuer positions), not on actions. A classical result in reward shaping theory states that adding a state-dependent potential to the value function preserves the optimal policy structure while redirecting exploration \cite{b_ng1999}. In our setting, $\Phi_j$ redirects the pursuit trajectories toward spatial diversity without altering the asymptotic tracking guarantee.
+\textit{Independence of learning and coordination.} The V-SNAC weight update depends only on the tracking Bellman residual and is independent of $\Phi$. Since $\Phi$ is analytical (not learned), it can be computed in real time from teammate states without affecting weight convergence. This preserves the UUB guarantee \cite{b_lewis1998} and allows runtime tuning of $\gamma$ without retraining.
 
-\textit{Independence of learning and coordination.} The V-SNAC weight update depends only on the tracking Bellman residual and is independent of $\Phi$. Since $\Phi$ is analytical (not learned), it can be computed in real time from teammate positions at any stage---during online learning or deployment---without affecting the weight convergence. This preserves the UUB guarantee \cite{b_lewis1998} and allows runtime tuning of $\gamma$ without retraining.
-
-\textit{Communication loss robustness.} Edge removal in $\mathcal{G}_p$ reduces $d_j$ and the coordination gradient proportionally. Complete communication loss sets $\nabla \Phi_j = 0$, recovering the V-SNAC baseline. For partial dropout with probability $p_d$, the Lipschitz property of $\tanh$ (Lipschitz constant 1) yields:
+\textit{Communication loss robustness.} Edge removal in $\mathcal{G}_p$ eliminates terms from the sum in (\ref{eq:grad_phi}), reducing the coordination gradient. Complete loss sets $\nabla_{v_j}\Phi_j = 0$, recovering the baseline. For partial dropout with probability $p_d$, the Lipschitz property of $\tanh$ gives:
 \begin{equation}\label{eq:dropout}
 \begin{split}
-\|u_j^{\text{full}} - u_j^{\text{drop}}\| \leq {} & \frac{1}{2\bar{u}_p}\|R_1^{-1}\|\,\|G_v\|_\infty \\
-& \cdot \|\nabla\Phi_j^{\text{full}} - \nabla\Phi_j^{\text{drop}}\|
+\|u_j^{\text{full}} - u_j^{\text{drop}}\| \leq {} & \frac{1}{2\bar{u}_p}\|R_1^{-1}\|\,\|G_v\| \\
+& \cdot \|\nabla_{v_j}\Phi_j^{\text{full}} - \nabla_{v_j}\Phi_j^{\text{drop}}\|
 \end{split}
 \end{equation}
-Since $\nabla \Phi_j$ is bounded by $\gamma/\epsilon^2$, the control perturbation is bounded and proportional to $\gamma$, ensuring graceful degradation.
+Each term in (\ref{eq:grad_phi}) is bounded by the state limits, so the control perturbation is bounded and proportional to $\gamma$, ensuring graceful degradation.
 
 
 % =====================================================================
@@ -244,7 +238,7 @@ Since $\nabla \Phi_j$ is bounded by $\gamma/\epsilon^2$, the control perturbatio
 
 \subsection{Experimental Setup}
 
-Experiments use a six-DOF nonlinear aircraft model with state $x = [p_x, p_y, h, v_x, v_y, v_h]^T$. Pursuer saturation is $\bar{u}_p = 25$ and evader saturation is $\bar{u}_e = 15$, reflecting the pursuers' speed advantage. Each V-SNAC critic uses the six polynomial basis functions in (\ref{eq:basis}), trained for 50--56 policy iterations with decaying learning rate $\alpha_s = 0.05 \times 0.85^s$. The coordination strength is $\gamma = 0.3$ and the singularity guard is $\epsilon = 0.1$.
+Experiments use a six-DOF nonlinear aircraft model with state $x = [p_x, p_y, h, v_x, v_y, v_h]^T$. Pursuer saturation is $\bar{u}_p = 25$ and evader saturation is $\bar{u}_e = 15$, reflecting the pursuers' speed advantage. Each V-SNAC critic uses the six polynomial basis functions in (\ref{eq:basis}), trained for 50--56 policy iterations with decaying learning rate $\alpha_s = 0.05 \times 0.85^s$. The coordination strength is $\gamma = 0.3$, the position correction gain is $\kappa = 1$, and the reference distance is $d_{\mathrm{ref}} = 500$\,m.
 
 Five team configurations are tested: 3v1, 3v3, 5v3, 6v3, and 8v4, spanning pursuer-to-evader ratios from 1 to 3. The same trained weights are evaluated under three communication modes: full communication ($\gamma = 0.3$), no communication ($\gamma = 0$), and dropout communication ($\gamma = 0.3$, per-edge dropout probability $p_d = 0.15$). Under the dropout mode, each communication link in $\mathcal{G}_p$ is independently removed with probability $p_d$ at each time step; both directions of an edge are dropped together to maintain adjacency symmetry. The penalty matrices are $Q = I_6$, $R_1 = 0.1 I_3$, and $R_2 = 0.1 I_3$.
 
@@ -414,7 +408,7 @@ The 3v3 scenario with $N_p/N_e = 1$ provides an important validation: since each
 \section{Conclusion}
 % =====================================================================
 
-This paper presented a hierarchical cooperative control framework for multi-pursuer pursuit--evasion games under nonlinear dynamics with actuator saturation. The central theoretical contribution is the augmented value function, which decomposes into a learned tracking component (via V-SNAC) and an analytical coordination potential, with both gradients combined inside the $\tanh$ saturation to yield the pursuer control. The evader's worst-case control is derived from the tracking value alone, since the coordination potential involves only pursuer states. The augmented formulation satisfies an augmented HJI equation and connects to potential-based reward shaping theory.
+This paper presented a hierarchical cooperative control framework for multi-pursuer pursuit--evasion games under nonlinear dynamics with actuator saturation. The central theoretical contribution is the augmented value function, which decomposes into a learned tracking component (via V-SNAC) and an analytical velocity--position coordination potential. The potential is designed with velocity dependence so that its gradient passes through the input matrix $g_j^T$ and enters the $\tanh$-saturated control law, ensuring that the finite control authority is naturally allocated between tracking and coordination. The evader's worst-case control is derived from the tracking value alone, since the coordination potential involves only pursuer states.
 
 The three-layer framework---individual V-SNAC control, dynamic target assignment, and communication-based coordination---addresses individual optimality, team assignment, and intra-group spatial diversity respectively. Experiments on a nonlinear six-DOF aircraft model across five team configurations (3v1 through 8v4) demonstrated: (i)~consistent improvement of inter-pursuer spatial separation through the coordination potential, with $d_{\min}$ increasing by 7--108\% across all scenarios with intra-group edges; (ii)~an expected and bounded trade-off in capture time, where the finite control authority shared between tracking and coordination results in at most 8\,s additional capture time; (iii)~graceful degradation under 15\% per-edge communication dropout; and (iv)~correct deactivation when no coordination is needed. Future work will investigate adaptive coordination strength scheduling based on real-time proximity, extension to heterogeneous agent dynamics, and explicit communication delay modeling.
 
