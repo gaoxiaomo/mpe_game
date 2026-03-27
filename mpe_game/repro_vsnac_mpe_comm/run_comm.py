@@ -140,7 +140,7 @@ def _scenario_spec(case: GeneralCase, quick: bool) -> GeneralScenarioSpec:
         evader_motion_mode="scripted",
         evader_script_amp=(8.0, 8.0, 3.0) if n_e > 1 else (10.0, 8.0, 4.0),
         evader_script_omega=0.16 if n_e > 1 else 0.42,
-        evader_script_decay=0.010 if n_e > 1 else 0.030,
+        evader_script_decay=0.030,
         evader_script_mix=0.35 if n_e > 1 else 0.60,
         swap_lookahead_time=0.5 if n_e > 1 else 0.0,
     )
