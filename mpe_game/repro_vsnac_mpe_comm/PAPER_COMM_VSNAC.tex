@@ -273,7 +273,9 @@ Table~\ref{tab:collision} shows that without coordination the pursuers collide, 
 
 Fig.~\ref{fig:collision} visualizes this effect. The left panel shows the crossing trajectories under $\gamma = 0$ where both pursuers pass through the same spatial region; the middle panel shows the coordinated separation under $\gamma = 5$; the right panel plots the inter-pursuer distance over time, confirming that coordination prevents collision throughout the engagement.
 
-\subsection{Safety Evaluation: Inter-Pursuer Separation}
+\subsection{Coordination Effectiveness}
+
+To quantify the effect of the coordination potential, we use the minimum inter-pursuer distance $d_{\min} = \min_{t} \min_{j \neq k} \|p_j(t) - p_k(t)\|$ as a measure of spatial diversity among co-assigned pursuers. The coordination potential is a \emph{soft} mechanism: it biases the control toward greater spatial separation within the available $\tanh$-saturated authority, but does not enforce a hard distance constraint. The achievable $d_{\min}$ depends on the scenario geometry, number of agents, and the coordination strength $\gamma$.
 
 \begin{table}[htbp]
 \renewcommand\arraystretch{1.2}
@@ -291,9 +293,9 @@ Fig.~\ref{fig:collision} visualizes this effect. The left panel shows the crossi
 \end{center}
 \end{table}
 
-Table~\ref{tab:results} reports the minimum inter-pursuer distance $d_{\min}$ for two representative configurations. In the 6v3 scenario, the coordination potential increases $d_{\min}$ from 102\,m (no communication) to 121\,m (full communication), a 19\% improvement in spatial separation. Under 15\% per-edge dropout, $d_{\min}$ degrades gracefully to 106\,m, remaining above the uncoordinated baseline. The dropout mechanism independently zeroes each edge with probability $p = 0.15$ at each time step, symmetrically for both $(j,k)$ and $(k,j)$, so the expected number of active neighbors decreases from $d_j$ to $(1{-}p) d_j$. The bounded perturbation analysis in (\ref{eq:dropout}) guarantees that the coordination contribution remains within $\mathcal{O}(p)$ of the full-communication case.
+Table~\ref{tab:results} reports $d_{\min}$ for two configurations. In the 6v3 scenario, the coordination potential increases $d_{\min}$ from 102\,m to 121\,m, a 19\% improvement. Under 15\% per-edge dropout, $d_{\min}$ degrades gracefully to 106\,m. The dropout mechanism independently zeroes each edge with probability $p = 0.15$ at each time step, symmetrically for both $(j,k)$ and $(k,j)$, so the expected active-neighbor count decreases from $d_j$ to $(1{-}p) d_j$. The bounded perturbation analysis in (\ref{eq:dropout}) guarantees that the coordination contribution remains within $\mathcal{O}(p)$ of the full-communication case.
 
-The 3v3 scenario ($N_p/N_e = 1$) serves as a control group: each evader is tracked by exactly one pursuer, so $d_j = 0$ for all $j$ and the coordination mechanism is correctly inactive. All three modes produce identical $d_{\min}$, confirming that the augmented control law (\ref{eq:ctrl_aug}) reduces exactly to the baseline (\ref{eq:ctrl_pursuer}) when no intra-group neighbors exist.
+The 3v3 scenario ($N_p/N_e = 1$) serves as a control group: each evader has exactly one pursuer, so $d_j = 0$ and the coordination mechanism is correctly inactive. All three modes produce identical $d_{\min}$, confirming that (\ref{eq:ctrl_aug}) reduces to (\ref{eq:ctrl_pursuer}) when no intra-group neighbors exist.
 
 
 \subsection{Six-Pursuer-Three-Evader Analysis}
@@ -322,7 +324,15 @@ The benefit of reassignment is shown in Fig.~\ref{fig:oldnew_6v3}. Under the ori
 \label{fig:err_6v3}
 \end{figure}
 
-Fig.~\ref{fig:err_6v3} confirms that all six tracking errors converge after reassignment, with errors decreasing from initial values of 3500--4000 to near zero. The convergence profile is consistent with the UUB guarantee of the V-SNAC framework: the tracking component of the augmented value function drives each pursuer toward its assigned evader, while the coordination potential preserves this convergence by operating within the remaining control authority.
+Fig.~\ref{fig:err_6v3} confirms that all six tracking errors converge after reassignment, with errors decreasing from initial values of 3500--4000 to near zero. The convergence profile is consistent with the UUB guarantee: the tracking component of the augmented value function drives each pursuer toward its assigned evader, while the coordination potential preserves this convergence by operating within the remaining control authority.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_control_6v3.png}}
+\caption{6v3 control inputs. Pursuer controls saturate at $\pm\bar{u}_p{=}\pm 25$ during initial engagement, then transition to the linear regime as errors decrease. Evader controls operate near $\pm\bar{u}_e{=}\pm 15$, reflecting the worst-case strategy from (\ref{eq:ctrl_evader}).}
+\label{fig:ctrl_6v3}
+\end{figure}
+
+Fig.~\ref{fig:ctrl_6v3} shows the control inputs. Pursuer controls saturate at $\pm 25$ during the initial aggressive phase and smoothly transition to the linear regime of the $\tanh$ function as tracking errors decrease. Evader controls consistently operate near $\pm 15$, confirming the worst-case evasion strategy derived from the HJI equation.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_team_error_6v3.png}}
