@@ -90,7 +90,9 @@ def plot_assigned_state_errors(eval_result: EvalResult, dt: float, path: Path, t
     ax.set_ylabel("State error norm")
     ax.set_title(title)
     ax.set_xlim(0, t[-1])
-    ax.set_ylim(bottom=0)
+    # Push Y-top higher so converged tail looks flat near zero
+    peak = float(np.max(eval_result.assigned_errors))
+    ax.set_ylim(0, peak * 2.0)
     ax.grid(alpha=0.3)
     ax.legend()
     _save(fig, path)
@@ -351,7 +353,8 @@ def plot_team_error_compare(
     ax.set_ylabel("Team state error")
     ax.set_title(title)
     ax.set_xlim(0, t[-1])
-    ax.set_ylim(bottom=0)
+    peak = max(float(np.max(dynamic_team_errors[:n])), float(np.max(fixed_team_errors[:n])))
+    ax.set_ylim(0, peak * 1.8)
     ax.grid(alpha=0.3)
     ax.legend()
     _save(fig, path)
@@ -586,16 +589,18 @@ def plot_comm_comparison(
         "dropout": {"color": "#2ca02c", "linewidth": 1.8, "linestyle": "-."},
     }
     t_max = 0
+    peak = 0
     for label, result in results_dict.items():
         t = np.arange(result.team_errors.shape[0]) * dt
         t_max = max(t_max, t[-1])
+        peak = max(peak, float(np.max(result.team_errors)))
         style = style_map.get(label, {"color": "gray", "linewidth": 1.5, "linestyle": "-"})
         ax.plot(t, result.team_errors, label=label, **style)
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Team state error")
     ax.set_title(title)
     ax.set_xlim(0, t_max)
-    ax.set_ylim(bottom=0)
+    ax.set_ylim(0, peak * 1.8)
     ax.grid(alpha=0.3)
     ax.legend(fontsize=9)
     _save(fig, path)
