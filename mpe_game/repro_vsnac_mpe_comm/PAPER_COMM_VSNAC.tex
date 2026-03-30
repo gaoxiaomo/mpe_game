@@ -23,17 +23,10 @@
 \title{Cooperative Control for Multi-Agent Nonlinear\\Pursuit--Evasion Games with Communication-Based Coordination}
 
 \author{
-\IEEEauthorblockN{Youran Gao}
-\IEEEauthorblockA{\textit{School of Computer Science,} \\
-\textit{Beihang University,}\\
-Beijing 100191, China \\
-gaoyouran@buaa.edu.cn}
-\and
-\IEEEauthorblockN{Kun Zhang}
-\IEEEauthorblockA{\textit{School of Astronautics,} \\
-\textit{Beihang University,}\\
-Beijing 100191, China \\
-zhangkun22@buaa.edu.cn}
+\IEEEauthorblockN{Youran Gao\textsuperscript{1} and Kun Zhang\textsuperscript{2}}
+\IEEEauthorblockA{\textsuperscript{1}School of Computer Science, Beihang University, Beijing 100191, China \\
+\textsuperscript{2}School of Astronautics, Beihang University, Beijing 100191, China \\
+gaoyouran@buaa.edu.cn, zhangkun22@buaa.edu.cn}
 }
 
 \maketitle
@@ -278,44 +271,20 @@ Fig.~\ref{fig:collision} visualizes this effect. The left panel shows the crossi
 The 6v3 scenario exercises all three layers simultaneously: V-SNAC tracking, dynamic target assignment, and intra-group coordination. The initial assignment uses a deliberately suboptimal shifted pattern $A_{pe} = [1,2,0,1,2,0]$ to demonstrate the dynamic reassignment mechanism.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_trajectory_6v3.png}}
-\caption{6v3 pursuit trajectories. Six pursuers track three evaders with dynamic target reassignment and communication-based coordination.}
-\label{fig:traj_6v3}
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_6v3_traj_assign.png}}
+\caption{6v3 trajectory and dynamic assignment. (a)~Pursuit trajectories with six pursuers tracking three evaders. (b)~Tracking errors before (dashed) and after (solid) target reassignment; old-assignment errors diverge while new-assignment errors converge.}
+\label{fig:traj_assign_6v3}
 \end{figure}
 
-Fig.~\ref{fig:traj_6v3} shows the pursuit geometry. The pairwise swap algorithm immediately detects that the initial shifted assignment is suboptimal and reassigns all six pursuers to their nearest evaders.
+Fig.~\ref{fig:traj_assign_6v3}(a) shows the pursuit geometry. The pairwise swap algorithm immediately detects that the initial shifted assignment is suboptimal and reassigns all six pursuers to their nearest evaders. Fig.~\ref{fig:traj_assign_6v3}(b) confirms the benefit: under the original assignment, several pursuers' errors grow unboundedly; after reassignment, all errors converge to bounded neighborhoods.
 
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_oldnew_6v3.png}}
-\caption{6v3 tracking errors before (dashed) and after (solid) target reassignment. Old-assignment errors diverge while new-assignment errors converge, confirming the effectiveness of dynamic target switching.}
-\label{fig:oldnew_6v3}
-\end{figure}
+\begin{figure*}[htbp]
+\centerline{\includegraphics[width=\textwidth]{paper_figures/fig_6v3_convergence.png}}
+\caption{6v3 convergence and control analysis. (a)~Tracking error norms: all six pursuers converge to near-zero bounded neighborhoods consistent with UUB stability. (b)~Control inputs: pursuer controls saturate at $\pm 25$ during initial engagement, then transition to the linear regime; evader controls operate near $\pm 15$. (c)~Team state error: dynamic target assignment (blue) achieves consistently lower error than fixed assignment (orange).}
+\label{fig:conv_6v3}
+\end{figure*}
 
-The benefit of reassignment is shown in Fig.~\ref{fig:oldnew_6v3}. Under the original assignment, several pursuers' errors grow unboundedly because they track distant evaders. After reassignment, all errors converge to bounded neighborhoods, demonstrating that dynamic target switching is essential for multi-evader scenarios.
-
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_errors_6v3.png}}
-\caption{6v3 tracking error norms (post-reassignment). All six pursuers converge to near-zero bounded neighborhoods, consistent with UUB stability.}
-\label{fig:err_6v3}
-\end{figure}
-
-Fig.~\ref{fig:err_6v3} confirms that all six tracking errors converge after reassignment, with errors decreasing from initial values of 3500--4000 to near zero. The convergence profile is consistent with the UUB guarantee: the tracking component of the augmented value function drives each pursuer toward its assigned evader, while the coordination potential preserves this convergence by operating within the remaining control authority.
-
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_control_6v3.png}}
-\caption{6v3 control inputs. Pursuer controls saturate at $\pm\bar{u}_p{=}\pm 25$ during initial engagement, then transition to the linear regime as errors decrease. Evader controls operate near $\pm\bar{u}_e{=}\pm 15$, reflecting the worst-case strategy from (\ref{eq:ctrl_evader}).}
-\label{fig:ctrl_6v3}
-\end{figure}
-
-Fig.~\ref{fig:ctrl_6v3} shows the control inputs. Pursuer controls saturate at $\pm 25$ during the initial aggressive phase and smoothly transition to the linear regime of the $\tanh$ function as tracking errors decrease. Evader controls consistently operate near $\pm 15$, confirming the worst-case evasion strategy derived from the HJI equation.
-
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_team_error_6v3.png}}
-\caption{6v3 team state error: dynamic target assignment (blue) vs.\ fixed assignment (orange). Dynamic reassignment reduces the aggregate tracking error.}
-\label{fig:team_6v3}
-\end{figure}
-
-Fig.~\ref{fig:team_6v3} compares the team state error under dynamic vs.\ fixed target assignment. Dynamic reassignment achieves consistently lower aggregate error. The dynamic assignment and communication coordination operate as complementary layers: the former optimizes \emph{which} evader each pursuer tracks, while the latter coordinates \emph{how} co-assigned pursuers approach their shared target.
+Fig.~\ref{fig:conv_6v3}(a) confirms that all six tracking errors converge after reassignment, with errors decreasing from 3500--4000 to near zero, consistent with the UUB guarantee. Fig.~\ref{fig:conv_6v3}(b) shows the control inputs: pursuers saturate at $\pm 25$ during the initial aggressive phase and smoothly transition to the $\tanh$ linear regime; evader controls consistently operate near $\pm 15$, confirming the worst-case strategy from (\ref{eq:ctrl_evader}). Fig.~\ref{fig:conv_6v3}(c) compares team state error under dynamic vs.\ fixed assignment. Dynamic reassignment achieves lower aggregate error, demonstrating that assignment optimization and communication coordination are complementary.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_comm_6v3.png}}
