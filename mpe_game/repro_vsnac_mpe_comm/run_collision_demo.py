@@ -160,33 +160,12 @@ def simulate(
 # Plotting
 # ---------------------------------------------------------------------------
 
-def _plot_trajectory_panel(ax, res, label, cp, xlim, ylim, show_ylabel=True):
-    n_p = res["p_traj"].shape[1]
-    for j in range(n_p):
-        tr = res["p_traj"][:, j, :2]
-        ax.plot(tr[:, 0], tr[:, 1], c=cp[j], lw=2, label=f"P{j+1}")
-        ax.scatter(tr[0, 0], tr[0, 1], c=cp[j], s=80, marker="o",
-                   edgecolors="k", lw=0.8, zorder=5)
-        ax.scatter(tr[-1, 0], tr[-1, 1], c=cp[j], s=60, marker="s", zorder=5)
-    et = res["e_traj"][:, :2]
-    ax.plot(et[:, 0], et[:, 1], c="#333", lw=2, ls="--", label="Evader")
-    ax.scatter(et[0, 0], et[0, 1], c="#333", s=80, marker="x", lw=2, zorder=5)
-    ax.set_xlim(xlim)
-    ax.set_ylim(ylim)
-    ax.set_xlabel("X (m)", fontsize=11)
-    if show_ylabel:
-        ax.set_ylabel("Y (m)", fontsize=11)
-    ax.set_title(label, fontsize=12)
-    ax.legend(fontsize=9, loc="upper left")
-    ax.grid(alpha=0.25)
-
-
 def plot_demo(res_none, res_comm, gamma_val, dt, out_path, d_safe=0.0):
     cp = ["#d62728", "#1f77b4"]
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Shared axis limits
+    # Shared axis limits for trajectory panels
     all_x, all_y = [], []
     for res in [res_none, res_comm]:
         n_p = res["p_traj"].shape[1]
@@ -200,41 +179,67 @@ def plot_demo(res_none, res_comm, gamma_val, dt, out_path, d_safe=0.0):
     xlim = (min(all_x) - pad_x, max(all_x) + pad_x)
     ylim = (min(all_y) - pad_y, max(all_y) + pad_y)
 
-    # Figure 1: (a) and (b) trajectory panels side by side
-    fig1, axes1 = plt.subplots(1, 2, figsize=(12, 4.5))
-    _plot_trajectory_panel(axes1[0], res_none,
-                           r"No communication ($\gamma$=0)", cp, xlim, ylim, True)
-    _plot_trajectory_panel(axes1[1], res_comm,
-                           rf"With communication ($\gamma$={gamma_val})", cp, xlim, ylim, False)
-    fig1.tight_layout()
-    traj_path = out_path.parent / out_path.name.replace(".png", "_traj.png")
-    fig1.savefig(traj_path, dpi=200, bbox_inches="tight")
-    plt.close(fig1)
-    print(f"  Saved {traj_path}")
+    # Single figure: 3 rows vertical stack
+    fig, axes = plt.subplots(3, 1, figsize=(7, 9.5),
+                             gridspec_kw={"height_ratios": [1, 1, 0.7]})
 
-    # Figure 2: (c) d_min time history standalone
-    fig2, ax = plt.subplots(figsize=(7, 3.5))
+    # (a) trajectory without comm
+    ax = axes[0]
+    for j in range(res_none["p_traj"].shape[1]):
+        tr = res_none["p_traj"][:, j, :2]
+        ax.plot(tr[:, 0], tr[:, 1], c=cp[j], lw=2, label=f"P{j+1}")
+        ax.scatter(tr[0, 0], tr[0, 1], c=cp[j], s=60, marker="o", edgecolors="k", lw=0.7, zorder=5)
+        ax.scatter(tr[-1, 0], tr[-1, 1], c=cp[j], s=50, marker="s", zorder=5)
+    et = res_none["e_traj"][:, :2]
+    ax.plot(et[:, 0], et[:, 1], c="#333", lw=2, ls="--", label="Evader")
+    ax.scatter(et[0, 0], et[0, 1], c="#333", s=60, marker="x", lw=2, zorder=5)
+    ax.set_xlim(xlim); ax.set_ylim(ylim)
+    ax.set_ylabel("Y (m)", fontsize=10)
+    ax.set_title(r"No communication ($\gamma$=0)", fontsize=11)
+    ax.legend(fontsize=8, loc="upper left")
+    ax.grid(alpha=0.25)
+    ax.text(-0.08, 0.5, "(a)", transform=ax.transAxes, fontsize=8, color="#333", va="center")
+
+    # (b) trajectory with comm
+    ax = axes[1]
+    for j in range(res_comm["p_traj"].shape[1]):
+        tr = res_comm["p_traj"][:, j, :2]
+        ax.plot(tr[:, 0], tr[:, 1], c=cp[j], lw=2, label=f"P{j+1}")
+        ax.scatter(tr[0, 0], tr[0, 1], c=cp[j], s=60, marker="o", edgecolors="k", lw=0.7, zorder=5)
+        ax.scatter(tr[-1, 0], tr[-1, 1], c=cp[j], s=50, marker="s", zorder=5)
+    et = res_comm["e_traj"][:, :2]
+    ax.plot(et[:, 0], et[:, 1], c="#333", lw=2, ls="--", label="Evader")
+    ax.scatter(et[0, 0], et[0, 1], c="#333", s=60, marker="x", lw=2, zorder=5)
+    ax.set_xlim(xlim); ax.set_ylim(ylim)
+    ax.set_xlabel("X (m)", fontsize=10)
+    ax.set_ylabel("Y (m)", fontsize=10)
+    ax.set_title(rf"With communication ($\gamma$={gamma_val})", fontsize=11)
+    ax.legend(fontsize=8, loc="upper left")
+    ax.grid(alpha=0.25)
+    ax.text(-0.08, 0.5, "(b)", transform=ax.transAxes, fontsize=8, color="#333", va="center")
+
+    # (c) d_min
+    ax = axes[2]
     n_steps = len(res_none["d_min"])
     t = np.arange(n_steps) * dt
-    ax.plot(t, res_none["d_min"] / 1000, lw=2, ls="--", c="#ff7f0e",
-            label=r"$\gamma$=0")
+    ax.plot(t, res_none["d_min"] / 1000, lw=2, ls="--", c="#ff7f0e", label=r"$\gamma$=0")
     ax.plot(t, res_comm["d_min"] / 1000, lw=2, c="#2ca02c",
             label=rf"$\gamma$={gamma_val} (adaptive)")
     if d_safe > 0:
         ax.axhline(d_safe / 1000, color="red", linestyle=":", lw=1.5,
                    label=rf"$d_{{safe}}$ = {d_safe/1000:.1f} km")
-    ax.set_xlabel("Time (s)", fontsize=11)
-    ax.set_ylabel(r"$d_{\min}$ (km)", fontsize=11)
-    ax.set_title("Inter-pursuer distance", fontsize=12)
-    ax.set_xlim(0, t[-1])
-    ax.set_ylim(bottom=0)
-    ax.legend(fontsize=10)
+    ax.set_xlabel("Time (s)", fontsize=10)
+    ax.set_ylabel(r"$d_{\min}$ (km)", fontsize=10)
+    ax.set_title("Inter-pursuer distance", fontsize=11)
+    ax.set_xlim(0, t[-1]); ax.set_ylim(bottom=0)
+    ax.legend(fontsize=8)
     ax.grid(alpha=0.25)
-    fig2.tight_layout()
-    dmin_path = out_path.parent / out_path.name.replace(".png", "_dmin.png")
-    fig2.savefig(dmin_path, dpi=200, bbox_inches="tight")
-    plt.close(fig2)
-    print(f"  Saved {dmin_path}")
+    ax.text(-0.08, 0.5, "(c)", transform=ax.transAxes, fontsize=8, color="#333", va="center")
+
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  Saved {out_path}")
 
 
 # ---------------------------------------------------------------------------
