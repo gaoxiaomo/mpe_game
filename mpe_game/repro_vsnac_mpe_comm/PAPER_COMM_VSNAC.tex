@@ -255,13 +255,13 @@ $d_{\min}$ (km) & 0.00 & 1.09 & 1.31 & 1.42 & 1.50 & 1.52 \\
 
 Table~\ref{tab:collision} shows that without coordination the pursuers collide, while any positive $\gamma$ immediately establishes safe separation. The monotonic increase saturates around $\gamma = 5$, as the $\tanh$ bound limits the maximum deflection from the tracking-optimal path.
 
-\begin{figure}[htbp]
+\begin{figure}[!htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_traj.png}}
 \caption{Controlled crossing scenario. Left: without communication ($\gamma{=}0$), pursuer paths physically cross, producing a collision ($d_{\min} \approx 0$). Right: with adaptive communication ($\gamma{=}5$), the coordination potential drives early lateral separation.}
 \label{fig:collision_traj}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[!htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_dmin.png}}
 \caption{Inter-pursuer distance over time for the controlled crossing scenario. The adaptive coordination maintains $d_{\min}$ above $d_{\mathrm{safe}} = 0.5$\,km (red dotted line), while the uncoordinated baseline drops to near zero.}
 \label{fig:collision_dmin}
@@ -273,7 +273,7 @@ Fig.~\ref{fig:collision_traj} shows the crossing trajectories: under $\gamma = 0
 
 The 6v3 scenario exercises all three layers simultaneously: V-SNAC tracking, dynamic target assignment, and intra-group coordination. The initial assignment uses a deliberately suboptimal shifted pattern $A_{pe} = [1,2,0,1,2,0]$ to demonstrate the dynamic reassignment mechanism.
 
-\begin{figure}[htbp]
+\begin{figure}[!htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_trajectory_6v3.png}}
 \caption{6v3 pursuit trajectories. Six pursuers track three evaders with dynamic target reassignment and communication-based coordination.}
 \label{fig:traj_6v3}
@@ -281,7 +281,7 @@ The 6v3 scenario exercises all three layers simultaneously: V-SNAC tracking, dyn
 
 Fig.~\ref{fig:traj_6v3} shows the pursuit geometry. The pairwise swap algorithm immediately detects that the initial shifted assignment is suboptimal and reassigns all six pursuers to their nearest evaders.
 
-\begin{figure}[htbp]
+\begin{figure}[!htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_6v3_errors_stack.png}}
 \caption{6v3 tracking error analysis. (a)~Errors before (dashed) and after (solid) target reassignment: old-assignment errors diverge while new-assignment errors converge. (b)~Post-reassignment error norms: all six pursuers converge to near-zero bounded neighborhoods consistent with UUB stability.}
 \label{fig:errors_6v3}
@@ -289,7 +289,7 @@ Fig.~\ref{fig:traj_6v3} shows the pursuit geometry. The pairwise swap algorithm 
 
 Fig.~\ref{fig:errors_6v3}(a) confirms the benefit of dynamic reassignment: under the original assignment, several pursuers' errors grow unboundedly; after reassignment, all errors converge. Fig.~\ref{fig:errors_6v3}(b) shows that post-reassignment errors decrease from 3500--4000 to near zero, consistent with the UUB guarantee. The coordination potential preserves this convergence by operating within the remaining control authority.
 
-\begin{figure}[htbp]
+\begin{figure}[!htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_6v3_ctrl_team.png}}
 \caption{6v3 control and team performance. (a)~Control inputs: pursuer controls saturate at $\pm 25$ during initial engagement, then transition to the linear regime; evader controls operate near $\pm 15$, reflecting the worst-case strategy from (\ref{eq:ctrl_evader}). (b)~Team state error: dynamic assignment (blue) achieves lower error than fixed (orange). (c)~Full communication vs.\ 15\% dropout: both modes converge similarly, confirming graceful degradation.}
 \label{fig:ctrl_team_6v3}
