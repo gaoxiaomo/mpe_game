@@ -239,7 +239,7 @@ The primary metric for coordination effectiveness is the minimum inter-pursuer d
 To isolate the effect of the coordination potential, we construct a controlled 2D double-integrator scenario that preserves the paper's control structures ($\tanh$ saturation, V-SNAC basis, coordination gradient). Two pursuers start from opposing sides with \emph{different} formation offsets and must fly \emph{through} each other's eventual positions: P1 starts above and targets below the evader, while P2 starts below and targets above. Their tracking-optimal paths physically cross near $y{=}0$. Without coordination, this crossing produces an actual collision ($d_{\min} \approx 0$\,m). With coordination, the $\delta_{jk}$ term drives early lateral separation, maintaining $d_{\min}$ above 1\,km.
 
 \begin{figure}[!htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_comparison_traj.png}}
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_traj_side.png}}
 \caption{Controlled crossing scenario. (a)~Without communication ($\gamma{=}0$), pursuer paths physically cross ($d_{\min} \approx 0$). (b)~With adaptive communication ($\gamma{=}5$), the coordination potential drives early lateral separation.}
 \label{fig:collision_traj}
 \end{figure}
