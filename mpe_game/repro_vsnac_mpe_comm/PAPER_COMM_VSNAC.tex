@@ -277,15 +277,13 @@ The 6v3 scenario exercises all three layers simultaneously: V-SNAC tracking, dyn
 \label{fig:traj_6v3}
 \end{figure}
 
-Fig.~\ref{fig:traj_6v3} shows the pursuit geometry. The pairwise swap algorithm immediately detects that the initial shifted assignment is suboptimal and reassigns all six pursuers to their nearest evaders.
-
-\begin{figure}[!htbp]
+\begin{figure}[!t]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_6v3_errors_stack.png}}
 \caption{6v3 tracking error analysis. (a)~Errors before (dashed) and after (solid) target reassignment: old-assignment errors diverge while new-assignment errors converge. (b)~Post-reassignment error norms: all six pursuers converge to near-zero bounded neighborhoods consistent with UUB stability.}
 \label{fig:errors_6v3}
 \end{figure}
 
-Fig.~\ref{fig:errors_6v3}(a) confirms the benefit of dynamic reassignment: under the original assignment, several pursuers' errors grow unboundedly; after reassignment, all errors converge. Fig.~\ref{fig:errors_6v3}(b) shows that post-reassignment errors decrease from 3500--4000 to near zero, consistent with the UUB guarantee. The coordination potential preserves this convergence by operating within the remaining control authority.
+Fig.~\ref{fig:traj_6v3} shows the pursuit geometry. The pairwise swap algorithm immediately detects that the initial shifted assignment is suboptimal and reassigns all six pursuers to their nearest evaders. Fig.~\ref{fig:errors_6v3}(a) confirms the benefit of dynamic reassignment: under the original assignment, several pursuers' errors grow unboundedly; after reassignment, all errors converge. Fig.~\ref{fig:errors_6v3}(b) shows that post-reassignment errors decrease from 3500--4000 to near zero, consistent with the UUB guarantee. The coordination potential preserves this convergence by operating within the remaining control authority.
 
 \begin{figure}[!htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_6v3_ctrl_team.png}}
