@@ -35,10 +35,6 @@ gaoyouran@buaa.edu.cn, zhangkun22@buaa.edu.cn}
 This paper presents a cooperative control framework for multi-pursuer multi-evader pursuit--evasion (PE) games under nonlinear dynamics with actuator saturation. The framework integrates three layers: (i)~efficient value-function approximation via the V-SNAC architecture, which derives saturated Nash equilibrium control policies directly from the value-function gradient; (ii)~dynamic target assignment through a graph-theoretic pairwise swap algorithm; and (iii)~communication-based coordination among co-assigned pursuers, realized through an augmented value function that combines the learned tracking value with an analytical coordination potential. The coordination potential injects a velocity--position coupled term into the value-function gradient, enabling the $\tanh$-saturated control to naturally allocate finite control authority between tracking and inter-pursuer spatial coordination. Experiments on a six-degree-of-freedom nonlinear aircraft model validate that the framework achieves tracking convergence consistent with UUB stability, while the coordination layer increases inter-pursuer separation by 19\% in a 6-vs-3 configuration and prevents path crossing in a controlled scenario, with graceful degradation under 15\% per-edge communication dropout.
 \end{abstract}
 
-\begin{IEEEkeywords}
-Pursuit--Evasion Game, Multi-Agent Cooperation, Communication Graph, Reinforcement Learning, Nonlinear Optimal Control
-\end{IEEEkeywords}
-
 \blfootnote{
 This work is supported by National Natural Science Foundation of China under Grant 62103408.
 *Corresponding Author: Kun Zhang.
@@ -278,11 +274,11 @@ The 6v3 scenario exercises all three layers simultaneously: V-SNAC tracking, dyn
 
 Fig.~\ref{fig:traj_assign_6v3}(a) shows the pursuit geometry. The pairwise swap algorithm immediately detects that the initial shifted assignment is suboptimal and reassigns all six pursuers to their nearest evaders. Fig.~\ref{fig:traj_assign_6v3}(b) confirms the benefit: under the original assignment, several pursuers' errors grow unboundedly; after reassignment, all errors converge to bounded neighborhoods.
 
-\begin{figure*}[htbp]
-\centerline{\includegraphics[width=\textwidth]{paper_figures/fig_6v3_convergence.png}}
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_6v3_convergence.png}}
 \caption{6v3 convergence and control analysis. (a)~Tracking error norms: all six pursuers converge to near-zero bounded neighborhoods consistent with UUB stability. (b)~Control inputs: pursuer controls saturate at $\pm 25$ during initial engagement, then transition to the linear regime; evader controls operate near $\pm 15$. (c)~Team state error: dynamic target assignment (blue) achieves consistently lower error than fixed assignment (orange).}
 \label{fig:conv_6v3}
-\end{figure*}
+\end{figure}
 
 Fig.~\ref{fig:conv_6v3}(a) confirms that all six tracking errors converge after reassignment, with errors decreasing from 3500--4000 to near zero, consistent with the UUB guarantee. Fig.~\ref{fig:conv_6v3}(b) shows the control inputs: pursuers saturate at $\pm 25$ during the initial aggressive phase and smoothly transition to the $\tanh$ linear regime; evader controls consistently operate near $\pm 15$, confirming the worst-case strategy from (\ref{eq:ctrl_evader}). Fig.~\ref{fig:conv_6v3}(c) compares team state error under dynamic vs.\ fixed assignment. Dynamic reassignment achieves lower aggregate error, demonstrating that assignment optimization and communication coordination are complementary.
 

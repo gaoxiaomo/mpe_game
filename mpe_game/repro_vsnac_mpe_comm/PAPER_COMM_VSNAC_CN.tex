@@ -48,10 +48,6 @@ gaoyouran@buaa.edu.cn, zhangkun22@buaa.edu.cn}
 且在15\%逐边通信丢包率下平滑退化。
 \end{abstract}
 
-\begin{IEEEkeywords}
-追逃博弈、多智能体协同、通信图、强化学习、非线性最优控制
-\end{IEEEkeywords}
-
 \blfootnote{
 本工作受国家自然科学基金项目(62103408)资助。*通讯作者：张坤。
 }
@@ -418,11 +414,11 @@ $d_{\min}$ (km) & 0.00 & 1.09 & 1.31 & 1.42 & 1.50 & 1.52 \\
 
 图~\ref{fig:traj_assign_6v3}(a)展示了追逃几何。逐对交换算法立即检测到初始分配的次优性，将所有追逐者重分配到最近的逃逸者。图~\ref{fig:traj_assign_6v3}(b)确认了重分配的效果：原始分配下多个追逐者误差持续发散；重分配后所有误差均收敛到有界邻域。
 
-\begin{figure*}[htbp]
-\centerline{\includegraphics[width=\textwidth]{paper_figures/fig_6v3_convergence.png}}
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_6v3_convergence.png}}
 \caption{6追3收敛与控制分析。(a)~追踪误差范数：全部六个追逐者收敛到近零有界邻域，符合UUB稳定性。(b)~控制输入：追逐者控制在初始阶段饱和于$\pm 25$，随后过渡到线性区间；逃逸者控制在$\pm 15$附近运行。(c)~团队状态误差：动态分配（蓝）较固定分配（橙）持续更低。}
 \label{fig:conv_6v3}
-\end{figure*}
+\end{figure}
 
 图~\ref{fig:conv_6v3}(a)确认重分配后全部追踪误差从3500--4000降至近零，符合UUB保证。图~\ref{fig:conv_6v3}(b)显示追逐者控制在初始激进阶段饱和于$\pm 25$，平滑过渡到$\tanh$线性区间；逃逸者控制始终在$\pm 15$附近运行，确认了式(\ref{eq:ctrl_evader})的最坏情况策略。图~\ref{fig:conv_6v3}(c)表明动态分配持续降低总体误差，与通信协调构成互补。
 
