@@ -256,12 +256,18 @@ $d_{\min}$ (km) & 0.00 & 1.09 & 1.31 & 1.42 & 1.50 & 1.52 \\
 Table~\ref{tab:collision} shows that without coordination the pursuers collide, while any positive $\gamma$ immediately establishes safe separation. The monotonic increase saturates around $\gamma = 5$, as the $\tanh$ bound limits the maximum deflection from the tracking-optimal path.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_split.png}}
-\caption{Controlled scenario demonstrating coordination effectiveness. (a)~Without communication ($\gamma{=}0$), pursuer paths physically cross, producing a collision ($d_{\min} \approx 0$). (b)~With communication ($\gamma{=}5$), the coordination potential drives early lateral separation. (c)~Inter-pursuer distance over time confirming collision avoidance; the red line marks $d_{\mathrm{safe}}$.}
-\label{fig:collision}
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_traj.png}}
+\caption{Controlled crossing scenario. Left: without communication ($\gamma{=}0$), pursuer paths physically cross, producing a collision ($d_{\min} \approx 0$). Right: with adaptive communication ($\gamma{=}5$), the coordination potential drives early lateral separation.}
+\label{fig:collision_traj}
 \end{figure}
 
-Fig.~\ref{fig:collision} visualizes this effect. Panel~(a) shows the crossing trajectories under $\gamma = 0$ where both pursuers pass through the same spatial region; panel~(b) shows the coordinated separation under $\gamma = 5$; panel~(c) plots the inter-pursuer distance over time, confirming that coordination maintains $d_{\min}$ above $d_{\mathrm{safe}}$ throughout the engagement.
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_dmin.png}}
+\caption{Inter-pursuer distance over time for the controlled crossing scenario. The adaptive coordination maintains $d_{\min}$ above $d_{\mathrm{safe}} = 0.5$\,km (red dotted line), while the uncoordinated baseline drops to near zero.}
+\label{fig:collision_dmin}
+\end{figure}
+
+Fig.~\ref{fig:collision_traj} shows the crossing trajectories: under $\gamma = 0$ both pursuers pass through the same spatial region; under $\gamma = 5$ the coordination potential separates their paths. Fig.~\ref{fig:collision_dmin} plots the inter-pursuer distance over time, confirming that coordination maintains $d_{\min}$ above $d_{\mathrm{safe}}$ throughout the engagement.
 
 \subsection{Six-Pursuer-Three-Evader Analysis}
 

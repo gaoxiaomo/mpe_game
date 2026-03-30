@@ -391,15 +391,18 @@ $d_{\min}$ (km) & 0.00 & 1.09 & 1.31 & 1.42 & 1.50 & 1.52 \\
 单调递增在$\gamma = 5$附近饱和，因为$\tanh$约束限制了偏离追踪最优路径的最大幅度。
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_split.png}}
-\caption{受控场景验证协调有效性。(a)~无通信（$\gamma{=}0$）时追逐者路径物理交叉，产生碰撞（$d_{\min} \approx 0$）。(b)~有通信（$\gamma{=}5$）时协调势驱动早期横向分离。(c)~追逐者间距时间曲线，红线标注$d_{\mathrm{safe}}$，确认碰撞避免。}
-\label{fig:collision}
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_traj.png}}
+\caption{受控交叉场景。左：无通信（$\gamma{=}0$）时追逐者路径物理交叉，产生碰撞（$d_{\min} \approx 0$）。右：自适应通信（$\gamma{=}5$）时协调势驱动早期横向分离。}
+\label{fig:collision_traj}
 \end{figure}
 
-图~\ref{fig:collision}可视化了这一效果。
-(a)显示$\gamma = 0$下追逐者路径穿过同一空间区域；
-(b)显示$\gamma = 5$下的协调分离效果；
-(c)绘制了追逐者间距随时间的变化，确认协调将$d_{\min}$维持在$d_{\mathrm{safe}}$以上。
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_dmin.png}}
+\caption{受控交叉场景的追逐者间距时间曲线。自适应协调将$d_{\min}$维持在$d_{\mathrm{safe}} = 0.5$\,km（红色虚线）以上，无协调基线降至近零。}
+\label{fig:collision_dmin}
+\end{figure}
+
+图~\ref{fig:collision_traj}显示$\gamma = 0$下追逐者路径穿过同一空间区域，$\gamma = 5$下协调势分离其路径。图~\ref{fig:collision_dmin}绘制了追逐者间距随时间的变化，确认协调将$d_{\min}$维持在$d_{\mathrm{safe}}$以上。
 
 \subsection{六追三场景分析}
 
