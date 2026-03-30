@@ -372,7 +372,13 @@ $d_{\min} = \min_{j < k}\|p_j - p_k\|$，
 
 为隔离协调势的作用，构造受控2D双积分器场景，保留论文的控制结构（$\tanh$饱和、V-SNAC基函数、协调梯度）。两个追逐者从对称位置出发，具有\emph{不同}的编队偏移，且必须\emph{穿过}对方的目标位置：P1从上方出发、目标在逃逸者下方，P2从下方出发、目标在上方。其追踪最优路径在$y{=}0$附近物理交叉。无协调时，该交叉导致实际碰撞（$d_{\min} \approx 0$\,m）；有协调时，$\delta_{jk}$项驱动早期横向分离，$d_{\min}$保持在1\,km以上。
 
-\begin{table}[htbp]
+\begin{figure}[!htbp]
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_comparison_traj.png}}
+\caption{受控交叉场景。(a)~无通信（$\gamma{=}0$）时追逐者路径物理交叉（$d_{\min} \approx 0$）。(b)~自适应通信（$\gamma{=}5$）时协调势驱动早期横向分离。}
+\label{fig:collision_traj}
+\end{figure}
+
+\begin{table}[!htbp]
 \renewcommand\arraystretch{1.2}
 \caption{受控场景：最小追逐者间距随协调强度$\gamma$的变化}
 \label{tab:collision}
@@ -387,16 +393,13 @@ $d_{\min}$ (km) & 0.00 & 1.09 & 1.31 & 1.42 & 1.50 & 1.52 \\
 \end{center}
 \end{table}
 
-表~\ref{tab:collision}显示，无协调时追逐者发生碰撞，而任何正$\gamma$均可立即建立安全间距。
-单调递增在$\gamma = 5$附近饱和，因为$\tanh$约束限制了偏离追踪最优路径的最大幅度。
-
 \begin{figure}[!htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_comparison.png}}
-\caption{受控交叉场景。(a)~无通信（$\gamma{=}0$）时追逐者路径物理交叉（$d_{\min} \approx 0$）。(b)~自适应通信（$\gamma{=}5$）时协调势驱动早期横向分离。(c)~追逐者间距时间曲线，自适应协调将$d_{\min}$维持在$d_{\mathrm{safe}} = 0.5$\,km（红色虚线）以上。}
-\label{fig:collision}
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_comparison_dmin.png}}
+\caption{追逐者间距时间曲线。自适应协调将$d_{\min}$维持在$d_{\mathrm{safe}} = 0.5$\,km（红色虚线）以上，无协调基线降至近零。}
+\label{fig:collision_dmin}
 \end{figure}
 
-图~\ref{fig:collision}可视化了这一效果。(a)显示$\gamma = 0$下追逐者路径交叉；(b)显示$\gamma = 5$下的协调分离；(c)确认协调将$d_{\min}$维持在$d_{\mathrm{safe}}$以上。
+图~\ref{fig:collision_traj}显示追逃轨迹：$\gamma = 0$下追逐者路径交叉，$\gamma = 5$下协调势分离其路径。表~\ref{tab:collision}表明任何正$\gamma$均可立即建立安全间距，在$\gamma = 5$附近饱和。图~\ref{fig:collision_dmin}确认协调将$d_{\min}$维持在$d_{\mathrm{safe}}$以上。
 
 \subsection{六追三场景分析}
 

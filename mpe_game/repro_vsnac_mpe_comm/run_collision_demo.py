@@ -160,16 +160,70 @@ def simulate(
 # Plotting
 # ---------------------------------------------------------------------------
 
+def _plot_single_traj(res, title, cp, xlim, ylim, path):
+    """Save one trajectory panel as a standalone PNG."""
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    for j in range(res["p_traj"].shape[1]):
+        tr = res["p_traj"][:, j, :2]
+        ax.plot(tr[:, 0], tr[:, 1], c=cp[j], lw=2, label=f"P{j+1}")
+        ax.scatter(tr[0, 0], tr[0, 1], c=cp[j], s=60, marker="o", edgecolors="k", lw=0.7, zorder=5)
+        ax.scatter(tr[-1, 0], tr[-1, 1], c=cp[j], s=50, marker="s", zorder=5)
+    et = res["e_traj"][:, :2]
+    ax.plot(et[:, 0], et[:, 1], c="#333", lw=2, ls="--", label="Evader")
+    ax.scatter(et[0, 0], et[0, 1], c="#333", s=60, marker="x", lw=2, zorder=5)
+    ax.set_xlim(xlim); ax.set_ylim(ylim)
+    ax.set_xlabel("X (m)"); ax.set_ylabel("Y (m)")
+    ax.set_title(title); ax.legend(fontsize=9, loc="upper left"); ax.grid(alpha=0.25)
+    fig.tight_layout()
+    fig.savefig(path, dpi=200, bbox_inches="tight"); plt.close(fig)
+
+
+def _plot_dmin(res_none, res_comm, gamma_val, dt, d_safe, path):
+    """Save d_min panel as a standalone PNG."""
+    fig, ax = plt.subplots(figsize=(8, 4))
+    t = np.arange(len(res_none["d_min"])) * dt
+    ax.plot(t, res_none["d_min"] / 1000, lw=2, ls="--", c="#ff7f0e", label=r"$\gamma$=0")
+    ax.plot(t, res_comm["d_min"] / 1000, lw=2, c="#2ca02c",
+            label=rf"$\gamma$={gamma_val} (adaptive)")
+    if d_safe > 0:
+        ax.axhline(d_safe / 1000, color="red", linestyle=":", lw=1.5,
+                   label=rf"$d_{{safe}}$ = {d_safe/1000:.1f} km")
+    ax.set_xlabel("Time (s)"); ax.set_ylabel(r"$d_{\min}$ (km)")
+    ax.set_title("Inter-pursuer distance")
+    ax.set_xlim(0, t[-1]); ax.set_ylim(bottom=0)
+    ax.legend(fontsize=9); ax.grid(alpha=0.25)
+    fig.tight_layout()
+    fig.savefig(path, dpi=200, bbox_inches="tight"); plt.close(fig)
+
+
+def _stack_vertical(img_paths, labels, out_path, figheight_per=2.5):
+    """Stack PNGs vertically with small (a)(b)... labels on the left."""
+    import matplotlib.image as mpimg
+    n = len(img_paths)
+    fig, axes = plt.subplots(n, 1, figsize=(8, figheight_per * n))
+    if n == 1:
+        axes = [axes]
+    for idx, (p, lab) in enumerate(zip(img_paths, labels)):
+        img = mpimg.imread(str(p))
+        axes[idx].imshow(img); axes[idx].axis("off")
+        axes[idx].text(-0.005, 0.5, lab, transform=axes[idx].transAxes,
+                       fontsize=7, fontweight="light", color="#333",
+                       ha="right", va="center")
+    fig.tight_layout(pad=0.1)
+    fig.savefig(str(out_path), dpi=220, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+
+
 def plot_demo(res_none, res_comm, gamma_val, dt, out_path, d_safe=0.0):
     cp = ["#d62728", "#1f77b4"]
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = out_path.parent
 
-    # Shared axis limits for trajectory panels
+    # Shared axis limits
     all_x, all_y = [], []
     for res in [res_none, res_comm]:
-        n_p = res["p_traj"].shape[1]
-        for j in range(n_p):
+        for j in range(res["p_traj"].shape[1]):
             all_x.extend(res["p_traj"][:, j, 0].tolist())
             all_y.extend(res["p_traj"][:, j, 1].tolist())
         all_x.extend(res["e_traj"][:, 0].tolist())
@@ -179,67 +233,27 @@ def plot_demo(res_none, res_comm, gamma_val, dt, out_path, d_safe=0.0):
     xlim = (min(all_x) - pad_x, max(all_x) + pad_x)
     ylim = (min(all_y) - pad_y, max(all_y) + pad_y)
 
-    # Single figure: 3 rows vertical stack
-    fig, axes = plt.subplots(3, 1, figsize=(7, 9.5),
-                             gridspec_kw={"height_ratios": [1, 1, 0.7]})
+    # Save 3 individual panels
+    p_a = tmp / "_panel_a.png"
+    p_b = tmp / "_panel_b.png"
+    p_c = tmp / "_panel_c.png"
+    _plot_single_traj(res_none, r"No communication ($\gamma$=0)", cp, xlim, ylim, p_a)
+    _plot_single_traj(res_comm, rf"With communication ($\gamma$={gamma_val})", cp, xlim, ylim, p_b)
+    _plot_dmin(res_none, res_comm, gamma_val, dt, d_safe, p_c)
 
-    # (a) trajectory without comm
-    ax = axes[0]
-    for j in range(res_none["p_traj"].shape[1]):
-        tr = res_none["p_traj"][:, j, :2]
-        ax.plot(tr[:, 0], tr[:, 1], c=cp[j], lw=2, label=f"P{j+1}")
-        ax.scatter(tr[0, 0], tr[0, 1], c=cp[j], s=60, marker="o", edgecolors="k", lw=0.7, zorder=5)
-        ax.scatter(tr[-1, 0], tr[-1, 1], c=cp[j], s=50, marker="s", zorder=5)
-    et = res_none["e_traj"][:, :2]
-    ax.plot(et[:, 0], et[:, 1], c="#333", lw=2, ls="--", label="Evader")
-    ax.scatter(et[0, 0], et[0, 1], c="#333", s=60, marker="x", lw=2, zorder=5)
-    ax.set_xlim(xlim); ax.set_ylim(ylim)
-    ax.set_ylabel("Y (m)", fontsize=10)
-    ax.set_title(r"No communication ($\gamma$=0)", fontsize=11)
-    ax.legend(fontsize=8, loc="upper left")
-    ax.grid(alpha=0.25)
-    ax.text(-0.08, 0.5, "(a)", transform=ax.transAxes, fontsize=8, color="#333", va="center")
+    # Output 1: (a)(b) trajectory stack
+    traj_out = out_path.parent / out_path.name.replace(".png", "_traj.png")
+    _stack_vertical([p_a, p_b], ["(a)", "(b)"], traj_out)
+    print(f"  Saved {traj_out}")
 
-    # (b) trajectory with comm
-    ax = axes[1]
-    for j in range(res_comm["p_traj"].shape[1]):
-        tr = res_comm["p_traj"][:, j, :2]
-        ax.plot(tr[:, 0], tr[:, 1], c=cp[j], lw=2, label=f"P{j+1}")
-        ax.scatter(tr[0, 0], tr[0, 1], c=cp[j], s=60, marker="o", edgecolors="k", lw=0.7, zorder=5)
-        ax.scatter(tr[-1, 0], tr[-1, 1], c=cp[j], s=50, marker="s", zorder=5)
-    et = res_comm["e_traj"][:, :2]
-    ax.plot(et[:, 0], et[:, 1], c="#333", lw=2, ls="--", label="Evader")
-    ax.scatter(et[0, 0], et[0, 1], c="#333", s=60, marker="x", lw=2, zorder=5)
-    ax.set_xlim(xlim); ax.set_ylim(ylim)
-    ax.set_xlabel("X (m)", fontsize=10)
-    ax.set_ylabel("Y (m)", fontsize=10)
-    ax.set_title(rf"With communication ($\gamma$={gamma_val})", fontsize=11)
-    ax.legend(fontsize=8, loc="upper left")
-    ax.grid(alpha=0.25)
-    ax.text(-0.08, 0.5, "(b)", transform=ax.transAxes, fontsize=8, color="#333", va="center")
+    # Output 2: (c) d_min standalone (same style label)
+    dmin_out = out_path.parent / out_path.name.replace(".png", "_dmin.png")
+    _stack_vertical([p_c], [""], dmin_out, figheight_per=2.8)
+    print(f"  Saved {dmin_out}")
 
-    # (c) d_min
-    ax = axes[2]
-    n_steps = len(res_none["d_min"])
-    t = np.arange(n_steps) * dt
-    ax.plot(t, res_none["d_min"] / 1000, lw=2, ls="--", c="#ff7f0e", label=r"$\gamma$=0")
-    ax.plot(t, res_comm["d_min"] / 1000, lw=2, c="#2ca02c",
-            label=rf"$\gamma$={gamma_val} (adaptive)")
-    if d_safe > 0:
-        ax.axhline(d_safe / 1000, color="red", linestyle=":", lw=1.5,
-                   label=rf"$d_{{safe}}$ = {d_safe/1000:.1f} km")
-    ax.set_xlabel("Time (s)", fontsize=10)
-    ax.set_ylabel(r"$d_{\min}$ (km)", fontsize=10)
-    ax.set_title("Inter-pursuer distance", fontsize=11)
-    ax.set_xlim(0, t[-1]); ax.set_ylim(bottom=0)
-    ax.legend(fontsize=8)
-    ax.grid(alpha=0.25)
-    ax.text(-0.08, 0.5, "(c)", transform=ax.transAxes, fontsize=8, color="#333", va="center")
-
-    fig.tight_layout()
-    fig.savefig(out_path, dpi=200, bbox_inches="tight")
-    plt.close(fig)
-    print(f"  Saved {out_path}")
+    # Cleanup temp
+    for p in [p_a, p_b, p_c]:
+        p.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------

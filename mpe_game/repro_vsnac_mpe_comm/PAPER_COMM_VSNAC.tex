@@ -238,7 +238,13 @@ The primary metric for coordination effectiveness is the minimum inter-pursuer d
 
 To isolate the effect of the coordination potential, we construct a controlled 2D double-integrator scenario that preserves the paper's control structures ($\tanh$ saturation, V-SNAC basis, coordination gradient). Two pursuers start from opposing sides with \emph{different} formation offsets and must fly \emph{through} each other's eventual positions: P1 starts above and targets below the evader, while P2 starts below and targets above. Their tracking-optimal paths physically cross near $y{=}0$. Without coordination, this crossing produces an actual collision ($d_{\min} \approx 0$\,m). With coordination, the $\delta_{jk}$ term drives early lateral separation, maintaining $d_{\min}$ above 1\,km.
 
-\begin{table}[htbp]
+\begin{figure}[!htbp]
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_comparison_traj.png}}
+\caption{Controlled crossing scenario. (a)~Without communication ($\gamma{=}0$), pursuer paths physically cross ($d_{\min} \approx 0$). (b)~With adaptive communication ($\gamma{=}5$), the coordination potential drives early lateral separation.}
+\label{fig:collision_traj}
+\end{figure}
+
+\begin{table}[!htbp]
 \renewcommand\arraystretch{1.2}
 \caption{Controlled Scenario: Min Inter-Pursuer Distance vs.\ $\gamma$}
 \label{tab:collision}
@@ -253,15 +259,13 @@ $d_{\min}$ (km) & 0.00 & 1.09 & 1.31 & 1.42 & 1.50 & 1.52 \\
 \end{center}
 \end{table}
 
-Table~\ref{tab:collision} shows that without coordination the pursuers collide, while any positive $\gamma$ immediately establishes safe separation. The monotonic increase saturates around $\gamma = 5$, as the $\tanh$ bound limits the maximum deflection from the tracking-optimal path.
-
 \begin{figure}[!htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_comparison.png}}
-\caption{Controlled crossing scenario. (a)~Without communication ($\gamma{=}0$), pursuer paths physically cross ($d_{\min} \approx 0$). (b)~With adaptive communication ($\gamma{=}5$), the coordination potential drives early lateral separation. (c)~Inter-pursuer distance over time; the adaptive coordination maintains $d_{\min}$ above $d_{\mathrm{safe}} = 0.5$\,km (red dotted line).}
-\label{fig:collision}
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_comparison_dmin.png}}
+\caption{Inter-pursuer distance over time. The adaptive coordination maintains $d_{\min}$ above $d_{\mathrm{safe}} = 0.5$\,km (red dotted line), while the uncoordinated baseline drops to near zero.}
+\label{fig:collision_dmin}
 \end{figure}
 
-Fig.~\ref{fig:collision} visualizes this effect. Panel~(a) shows crossing trajectories under $\gamma = 0$; panel~(b) shows the coordinated separation under $\gamma = 5$; panel~(c) confirms that coordination maintains $d_{\min}$ above $d_{\mathrm{safe}}$ throughout the engagement.
+Fig.~\ref{fig:collision_traj} shows the pursuit trajectories: under $\gamma = 0$ both pursuers pass through the same spatial region; under $\gamma = 5$ the coordination potential separates their paths. Table~\ref{tab:collision} shows that any positive $\gamma$ immediately establishes safe separation, with monotonic increase saturating around $\gamma = 5$ due to the $\tanh$ control bound. Fig.~\ref{fig:collision_dmin} confirms that coordination maintains $d_{\min}$ above $d_{\mathrm{safe}}$ throughout the engagement.
 
 \subsection{Six-Pursuer-Three-Evader Analysis}
 
