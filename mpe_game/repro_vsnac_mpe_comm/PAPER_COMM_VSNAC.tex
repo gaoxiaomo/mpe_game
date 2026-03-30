@@ -8,6 +8,7 @@
 \usepackage{xcolor}
 \usepackage{subfigure}
 \usepackage{multirow}
+\usepackage{stfloats}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 
@@ -267,28 +268,28 @@ Fig.~\ref{fig:collision} visualizes this effect. The left panel shows the crossi
 The 6v3 scenario exercises all three layers simultaneously: V-SNAC tracking, dynamic target assignment, and intra-group coordination. The initial assignment uses a deliberately suboptimal shifted pattern $A_{pe} = [1,2,0,1,2,0]$ to demonstrate the dynamic reassignment mechanism.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_6v3_traj_assign.png}}
-\caption{6v3 trajectory and dynamic assignment. (a)~Pursuit trajectories with six pursuers tracking three evaders. (b)~Tracking errors before (dashed) and after (solid) target reassignment; old-assignment errors diverge while new-assignment errors converge.}
-\label{fig:traj_assign_6v3}
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_trajectory_6v3.png}}
+\caption{6v3 pursuit trajectories. Six pursuers track three evaders with dynamic target reassignment and communication-based coordination.}
+\label{fig:traj_6v3}
 \end{figure}
 
-Fig.~\ref{fig:traj_assign_6v3}(a) shows the pursuit geometry. The pairwise swap algorithm immediately detects that the initial shifted assignment is suboptimal and reassigns all six pursuers to their nearest evaders. Fig.~\ref{fig:traj_assign_6v3}(b) confirms the benefit: under the original assignment, several pursuers' errors grow unboundedly; after reassignment, all errors converge to bounded neighborhoods.
+Fig.~\ref{fig:traj_6v3} shows the pursuit geometry. The pairwise swap algorithm immediately detects that the initial shifted assignment is suboptimal and reassigns all six pursuers to their nearest evaders.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_6v3_convergence.png}}
-\caption{6v3 convergence and control analysis. (a)~Tracking error norms: all six pursuers converge to near-zero bounded neighborhoods consistent with UUB stability. (b)~Control inputs: pursuer controls saturate at $\pm 25$ during initial engagement, then transition to the linear regime; evader controls operate near $\pm 15$. (c)~Team state error: dynamic target assignment (blue) achieves consistently lower error than fixed assignment (orange).}
-\label{fig:conv_6v3}
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_6v3_errors_stack.png}}
+\caption{6v3 tracking error analysis. (a)~Errors before (dashed) and after (solid) target reassignment: old-assignment errors diverge while new-assignment errors converge. (b)~Post-reassignment error norms: all six pursuers converge to near-zero bounded neighborhoods consistent with UUB stability.}
+\label{fig:errors_6v3}
 \end{figure}
 
-Fig.~\ref{fig:conv_6v3}(a) confirms that all six tracking errors converge after reassignment, with errors decreasing from 3500--4000 to near zero, consistent with the UUB guarantee. Fig.~\ref{fig:conv_6v3}(b) shows the control inputs: pursuers saturate at $\pm 25$ during the initial aggressive phase and smoothly transition to the $\tanh$ linear regime; evader controls consistently operate near $\pm 15$, confirming the worst-case strategy from (\ref{eq:ctrl_evader}). Fig.~\ref{fig:conv_6v3}(c) compares team state error under dynamic vs.\ fixed assignment. Dynamic reassignment achieves lower aggregate error, demonstrating that assignment optimization and communication coordination are complementary.
+Fig.~\ref{fig:errors_6v3}(a) confirms the benefit of dynamic reassignment: under the original assignment, several pursuers' errors grow unboundedly; after reassignment, all errors converge. Fig.~\ref{fig:errors_6v3}(b) shows that post-reassignment errors decrease from 3500--4000 to near zero, consistent with the UUB guarantee. The coordination potential preserves this convergence by operating within the remaining control authority.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_comm_6v3.png}}
-\caption{6v3 team state error under full communication vs.\ 15\% per-edge dropout. Both modes achieve similar convergence, confirming graceful degradation.}
-\label{fig:dropout_6v3}
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_6v3_ctrl_team.png}}
+\caption{6v3 control and team performance. (a)~Control inputs: pursuer controls saturate at $\pm 25$ during initial engagement, then transition to the linear regime; evader controls operate near $\pm 15$, reflecting the worst-case strategy from (\ref{eq:ctrl_evader}). (b)~Team state error: dynamic assignment (blue) achieves lower error than fixed (orange). (c)~Full communication vs.\ 15\% dropout: both modes converge similarly, confirming graceful degradation.}
+\label{fig:ctrl_team_6v3}
 \end{figure}
 
-Fig.~\ref{fig:dropout_6v3} demonstrates the framework's resilience to communication dropout. The team state error under 15\% per-edge dropout closely tracks the full-communication curve, with both converging to near zero. Each edge is independently zeroed with probability $p = 0.15$ at each time step, symmetrically for $(j,k)$ and $(k,j)$. The bounded perturbation analysis in (\ref{eq:dropout}) guarantees that the coordination contribution remains within $\mathcal{O}(p)$ of the full-communication case, which is consistent with the observed overlap.
+Fig.~\ref{fig:ctrl_team_6v3}(a) shows pursuer controls saturating at $\pm 25$ during the aggressive initial phase, then transitioning smoothly to the $\tanh$ linear regime. Evader controls consistently operate near $\pm 15$, confirming the HJI-derived worst-case strategy. Fig.~\ref{fig:ctrl_team_6v3}(b) demonstrates that dynamic assignment reduces aggregate tracking error compared to fixed assignment. Fig.~\ref{fig:ctrl_team_6v3}(c) shows that under 15\% per-edge dropout, the team state error closely tracks the full-communication curve. The bounded perturbation analysis in (\ref{eq:dropout}) guarantees the coordination contribution remains within $\mathcal{O}(p)$ of the full-communication case.
 
 
 \subsection{Control Group: Three-Pursuer-Three-Evader}
