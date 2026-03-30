@@ -6,9 +6,7 @@
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
-\usepackage{subfigure}
 \usepackage{multirow}
-\usepackage{stfloats}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 
@@ -33,7 +31,7 @@ gaoyouran@buaa.edu.cn, zhangkun22@buaa.edu.cn}
 \maketitle
 
 \begin{abstract}
-This paper presents a cooperative control framework for multi-pursuer multi-evader pursuit--evasion (PE) games under nonlinear dynamics with actuator saturation. The framework integrates three layers: (i)~efficient value-function approximation via the V-SNAC architecture, which derives saturated Nash equilibrium control policies directly from the value-function gradient; (ii)~dynamic target assignment through a graph-theoretic pairwise swap algorithm; and (iii)~communication-based coordination among co-assigned pursuers, realized through an augmented value function that combines the learned tracking value with an analytical coordination potential. The coordination potential injects a velocity--position coupled term into the value-function gradient, enabling the $\tanh$-saturated control to naturally allocate finite control authority between tracking and inter-pursuer spatial coordination. Experiments on a six-degree-of-freedom nonlinear aircraft model validate that the framework achieves tracking convergence consistent with UUB stability, while the coordination layer increases inter-pursuer separation by 19\% in a 6-vs-3 configuration and prevents path crossing in a controlled scenario, with graceful degradation under 15\% per-edge communication dropout.
+This paper presents a cooperative control framework for multi-pursuer multi-evader pursuit--evasion (PE) games under nonlinear dynamics with actuator saturation. The framework integrates three layers: (i)~efficient value-function approximation via the V-SNAC architecture, which derives saturated Nash equilibrium control policies directly from the value-function gradient; (ii)~dynamic target assignment through a graph-theoretic pairwise swap algorithm; and (iii)~communication-based coordination among co-assigned pursuers, realized through an augmented value function that combines the learned tracking value with an analytical coordination potential. The coordination potential injects a velocity--position coupled term into the value-function gradient, enabling the $\tanh$-saturated control to naturally allocate finite control authority between tracking and inter-pursuer spatial coordination. Experiments on a six-degree-of-freedom nonlinear aircraft model validate that the framework achieves tracking convergence consistent with UUB stability, while the coordination layer prevents path crossing in a controlled scenario and maintains inter-pursuer spatial separation, with graceful degradation under 15\% per-edge communication dropout.
 \end{abstract}
 
 \blfootnote{
@@ -232,7 +230,7 @@ Experiments use a six-DOF nonlinear aircraft model with state $x = [p_x, p_y, h,
 
 The same trained weights are evaluated under two communication modes: full communication ($\gamma = 0.3$) and dropout communication ($\gamma = 0.3$, per-edge dropout probability $p_d = 0.15$). Under dropout, each communication link in $\mathcal{G}_p$ is independently removed with probability $p_d$ at each time step; both directions of an edge are dropped together to maintain adjacency symmetry. The penalty matrices are $Q = \mathrm{diag}(8,8,2.5,3,3,1.2)$, $R_1 = I_3$, and $R_2 = I_3$.
 
-The primary metric for coordination effectiveness is the minimum inter-pursuer distance $d_{\min} = \min_{j < k}\|p_j - p_k\|$, which quantifies spatial separation during the pursuit process. Capture time is reported as a secondary metric to verify that the coordination layer does not critically degrade tracking performance.
+The coordination effectiveness is evaluated through a controlled crossing scenario that isolates the inter-pursuer separation mechanism. The six-DOF experiments demonstrate tracking convergence and dropout resilience.
 
 \subsection{Coordination Effectiveness: Controlled Scenario}
 
@@ -261,11 +259,11 @@ $d_{\min}$ (km) & 0.00 & 1.09 & 1.31 & 1.42 & 1.50 & 1.52 \\
 
 \begin{figure}[!htbp]
 \centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_comparison_dmin.png}}
-\caption{Inter-pursuer distance over time. The adaptive coordination maintains $d_{\min}$ above $d_{\mathrm{safe}} = 0.5$\,km (red dotted line), while the uncoordinated baseline drops to near zero.}
+\caption{Inter-pursuer distance over time. The coordination potential maintains $d_{\min}$ well above zero (green), while the uncoordinated baseline (orange dashed) drops to near zero at the crossing point.}
 \label{fig:collision_dmin}
 \end{figure}
 
-Fig.~\ref{fig:collision_traj} shows the pursuit trajectories: under $\gamma = 0$ both pursuers pass through the same spatial region; under $\gamma = 5$ the coordination potential separates their paths. Table~\ref{tab:collision} shows that any positive $\gamma$ immediately establishes safe separation, with monotonic increase saturating around $\gamma = 5$ due to the $\tanh$ control bound. Fig.~\ref{fig:collision_dmin} confirms that coordination maintains $d_{\min}$ above $d_{\mathrm{safe}}$ throughout the engagement.
+Fig.~\ref{fig:collision_traj} shows the pursuit trajectories: under $\gamma = 0$ both pursuers pass through the same spatial region; under $\gamma = 5$ the coordination potential separates their paths. Table~\ref{tab:collision} shows that any positive $\gamma$ immediately establishes safe separation, with monotonic increase saturating around $\gamma = 5$ due to the $\tanh$ control bound. Fig.~\ref{fig:collision_dmin} confirms that coordination maintains substantial inter-pursuer separation throughout the engagement.
 
 \subsection{Six-Pursuer-Three-Evader Analysis}
 
@@ -296,16 +294,16 @@ Fig.~\ref{fig:ctrl_team_6v3}(a) shows pursuer controls saturating at $\pm 25$ du
 
 \subsection{Control Group: Three-Pursuer-Three-Evader}
 
-The 3v3 scenario ($N_p/N_e = 1$) provides a structural validation: each evader has exactly one pursuer, so $d_j = 0$ for all $j$ and the coordination mechanism is correctly inactive. All communication modes produce identical behavior, confirming that the augmented control law (\ref{eq:ctrl_aug}) reduces exactly to the baseline (\ref{eq:ctrl_pursuer}) when no intra-group neighbors exist.
+The 3v3 scenario ($N_p/N_e = 1$) provides a structural validation: each evader has exactly one pursuer, so $d_j = 0$ for all $j$ and the coordination mechanism is correctly inactive. Both communication modes (full and dropout) produce identical behavior, confirming that the augmented control law (\ref{eq:ctrl_aug}) reduces exactly to the baseline (\ref{eq:ctrl_pursuer}) when no intra-group neighbors exist.
 
 
 % =====================================================================
 \section{Conclusion}
 % =====================================================================
 
-This paper presented a cooperative control framework for multi-pursuer pursuit--evasion games under nonlinear dynamics with actuator saturation. The framework addresses the challenge that independently optimal pursuers may converge on similar trajectories when co-assigned to the same evader, reducing spatial diversity. The central contribution is the augmented value function, which decomposes into a learned tracking component (via V-SNAC) and an analytical velocity--position coordination potential. The potential is designed so that its gradient passes through the input matrix $g_j^T$ and enters the $\tanh$-saturated control law, enabling the finite control authority to be naturally allocated between tracking and coordination. The adaptive amplification mechanism further strengthens the coordination force when inter-pursuer distance approaches a prescribed safety threshold $d_{\mathrm{safe}}$, as demonstrated in the controlled crossing scenario.
+This paper presented a cooperative control framework for multi-pursuer pursuit--evasion games under nonlinear dynamics with actuator saturation. The framework addresses the challenge that independently optimal pursuers may converge on similar trajectories when co-assigned to the same evader, reducing spatial diversity. The central contribution is the augmented value function, which decomposes into a learned tracking component (via V-SNAC) and an analytical velocity--position coordination potential. The potential is designed so that its gradient passes through the input matrix $g_j^T$ and enters the $\tanh$-saturated control law, enabling the finite control authority to be naturally allocated between tracking and coordination.
 
-Experiments on a nonlinear six-DOF aircraft model validated the framework: (i)~tracking convergence consistent with UUB stability, with all pursuer errors converging to near-zero bounded neighborhoods; (ii)~dynamic target assignment correcting suboptimal initial pairings; (iii)~graceful degradation under 15\% per-edge communication dropout; and (iv)~collision avoidance in the controlled scenario, where the adaptive coordination potential maintains inter-pursuer distance above $d_{\mathrm{safe}}$ while the uncoordinated baseline results in path crossing. Future work will investigate adaptive coordination strength scheduling, extension to heterogeneous agent dynamics, and explicit communication delay modeling.
+Experiments on a nonlinear six-DOF aircraft model validated the framework: (i)~tracking convergence consistent with UUB stability, with all pursuer errors converging to near-zero bounded neighborhoods; (ii)~dynamic target assignment correcting suboptimal initial pairings; (iii)~graceful degradation under 15\% per-edge communication dropout; and (iv)~collision avoidance in the controlled crossing scenario, where the coordination potential maintains inter-pursuer separation while the uncoordinated baseline results in path crossing. Future work will investigate adaptive coordination strength scheduling, extension to heterogeneous agent dynamics, and explicit communication delay modeling.
 
 
 \begin{thebibliography}{21}
