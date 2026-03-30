@@ -391,15 +391,15 @@ $d_{\min}$ (km) & 0.00 & 1.09 & 1.31 & 1.42 & 1.50 & 1.52 \\
 单调递增在$\gamma = 5$附近饱和，因为$\tanh$约束限制了偏离追踪最优路径的最大幅度。
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_comparison.png}}
-\caption{受控场景验证协调有效性。左：无通信（$\gamma{=}0$）时追逐者路径物理交叉，产生碰撞（$d_{\min} \approx 0$）。中：有通信（$\gamma{=}5$）时协调势驱动早期横向分离。右：追逐者间距时间曲线，确认碰撞避免。}
+\centerline{\includegraphics[width=\linewidth]{paper_figures/fig_collision_split.png}}
+\caption{受控场景验证协调有效性。(a)~无通信（$\gamma{=}0$）时追逐者路径物理交叉，产生碰撞（$d_{\min} \approx 0$）。(b)~有通信（$\gamma{=}5$）时协调势驱动早期横向分离。(c)~追逐者间距时间曲线，红线标注$d_{\mathrm{safe}}$，确认碰撞避免。}
 \label{fig:collision}
 \end{figure}
 
 图~\ref{fig:collision}可视化了这一效果。
-左图显示$\gamma = 0$下追逐者路径穿过同一空间区域；
-中图显示$\gamma = 5$下的协调分离效果；
-右图绘制了追逐者间距随时间的变化，确认协调在整个过程中防止碰撞。
+(a)显示$\gamma = 0$下追逐者路径穿过同一空间区域；
+(b)显示$\gamma = 5$下的协调分离效果；
+(c)绘制了追逐者间距随时间的变化，确认协调将$d_{\min}$维持在$d_{\mathrm{safe}}$以上。
 
 \subsection{六追三场景分析}
 
