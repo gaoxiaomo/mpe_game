@@ -1,0 +1,55 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Demo: 3v1 Quick",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/run_debug_demo.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true,
+      "args": [
+        "--case",
+        "3v1",
+        "--quick",
+        "--output",
+        "${workspaceFolder}/outputs/debug_demo_3v1"
+      ]
+    },
+    {
+      "name": "Debug Demo: 6v3 Quick",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/run_debug_demo.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true,
+      "args": [
+        "--case",
+        "6v3",
+        "--quick",
+        "--output",
+        "${workspaceFolder}/outputs/debug_demo_6v3"
+      ]
+    },
+    {
+      "name": "Debug Main Runner: 3v1 Quick",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/run_comm.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true,
+      "args": [
+        "--case",
+        "3v1",
+        "--quick",
+        "--parallel-workers",
+        "1",
+        "--output",
+        "${workspaceFolder}/outputs/debug_main_3v1"
+      ]
+    }
+  ]
+}

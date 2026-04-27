@@ -296,3 +296,4 @@ def build_general_scenario(spec: GeneralScenarioSpec) -> ScenarioConfig:
         evader_script_mix=float(spec.evader_script_mix),
         swap_lookahead_time=float(spec.swap_lookahead_time),
     )
+

@@ -1,0 +1,89 @@
+<mxfile host="app.diagrams.net" modified="2026-04-12T21:05:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="code-structure" name="3.1代码结构图">
+    <mxGraphModel dx="1680" dy="1020" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1680" pageHeight="1020" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="title" value="3.1 基础代码结构与训练评估流程" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=24;fontStyle=1;fontColor=#16324F;" vertex="1" parent="1">
+          <mxGeometry x="470" y="18" width="740" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="subtitle" value="入口脚本组织实验，仿真器调度核心模块，最终完成训练、评估、统计与可视化输出" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=14;fontColor=#4A6277;" vertex="1" parent="1">
+          <mxGeometry x="330" y="54" width="1020" height="30" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="lab1" value="入口层" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=18;fontStyle=1;fontColor=#1D3557;" vertex="1" parent="1">
+          <mxGeometry x="90" y="126" width="100" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="lab2" value="调度层" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=18;fontStyle=1;fontColor=#1D3557;" vertex="1" parent="1">
+          <mxGeometry x="90" y="286" width="100" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="lab3" value="核心模块层" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=18;fontStyle=1;fontColor=#1D3557;" vertex="1" parent="1">
+          <mxGeometry x="90" y="486" width="140" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="lab4" value="输出层" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=18;fontStyle=1;fontColor=#1D3557;" vertex="1" parent="1">
+          <mxGeometry x="90" y="836" width="100" height="24" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e1" value="实验入口脚本&#xa;run_comm.py / 调试脚本 / 对比脚本&#xa;读取参数、选择场景、组织训练与评估任务" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E7F1FB;strokeColor=#5D89B0;strokeWidth=2;fontSize=17;" vertex="1" parent="1">
+          <mxGeometry x="110" y="150" width="360" height="95" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" value="配置与场景参数&#xa;config.py / general_scenarios.py&#xa;统一管理实验规模、动力学参数、布局与偏置设置" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EEF6E8;strokeColor=#7EA05B;strokeWidth=2;fontSize=17;" vertex="1" parent="1">
+          <mxGeometry x="560" y="150" width="560" height="95" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" value="调试与展示入口&#xa;run_debug_demo.py / 动画与案例脚本&#xa;用于现场演示、日志检查和构造场景复查" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDF1E7;strokeColor=#C68856;strokeWidth=2;fontSize=17;" vertex="1" parent="1">
+          <mxGeometry x="1210" y="150" width="360" height="95" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="sim" value="仿真器主调度模块&#xa;simulator.py&#xa;统一调度动力学推进、目标分配、通信图更新、样本记录、权重训练、评估统计与结果导出" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3EFFF;strokeColor=#7F6AAD;strokeWidth=3;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="420" y="320" width="840" height="120" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="a1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="e1" target="sim"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="a2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="e2" target="sim"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="a3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="e3" target="sim"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="m1" value="动力学模块&#xa;dynamics.py&#xa;负责六自由度状态更新与数值积分" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCEEFB;strokeColor=#5B8DB8;strokeWidth=2;fontSize=17;" vertex="1" parent="1">
+          <mxGeometry x="90" y="525" width="300" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="m2" value="控制与解析项模块&#xa;controller.py&#xa;生成基线控制、解析项梯度与闭环控制输入" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FF;strokeColor=#6887B8;strokeWidth=2;fontSize=17;" vertex="1" parent="1">
+          <mxGeometry x="430" y="525" width="300" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="m3" value="训练更新模块&#xa;offpolicy_ls.py / features.py&#xa;构造特征、离散价值关系与权重回归更新" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E7F7EF;strokeColor=#5E9C76;strokeWidth=2;fontSize=17;" vertex="1" parent="1">
+          <mxGeometry x="770" y="525" width="300" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="m4" value="协同与图结构模块&#xa;comm_graph.py / graph_switch.py&#xa;负责通信边、邻接关系与组内结构更新" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8D6;strokeColor=#C6AD46;strokeWidth=2;fontSize=17;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="525" width="300" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="m5" value="目标分配与场景组织&#xa;assignment / scenarios&#xa;负责“谁追谁”与不同实验布局的统一组织" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF1E6;strokeColor=#C6854B;strokeWidth=2;fontSize=17;" vertex="1" parent="1">
+          <mxGeometry x="690" y="685" width="300" height="110" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="b1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="sim" target="m1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="b2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="sim" target="m2"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="b3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="sim" target="m3"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="b4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="sim" target="m4"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="b5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="sim" target="m5"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="c1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;dashed=1;strokeColor=#8AA7BF;" edge="1" parent="1" source="m1" target="m5"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="c2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;dashed=1;strokeColor=#8AA7BF;" edge="1" parent="1" source="m2" target="m5"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="c3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;dashed=1;strokeColor=#8AA7BF;" edge="1" parent="1" source="m3" target="m5"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="c4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;dashed=1;strokeColor=#8AA7BF;" edge="1" parent="1" source="m4" target="m5"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="o1" value="评估统计与报告&#xa;report.py / summary.json / REPORT.md&#xa;汇总捕获时间、误差指标、运行时间与对比结果" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF4FF;strokeColor=#4A7CA5;strokeWidth=2;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="220" y="870" width="380" height="95" as="geometry"/>
+        </mxCell>
+        <mxCell id="o2" value="图像与动画输出&#xa;plotting.py / GIF / 曲线图 / 轨迹图&#xa;用于论文插图、中期报告与答辩展示" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EEF9E7;strokeColor=#7BA05A;strokeWidth=2;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="650" y="870" width="380" height="95" as="geometry"/>
+        </mxCell>
+        <mxCell id="o3" value="调试与复查支撑&#xa;日志、逐步输出与案例复现&#xa;便于参数回溯、过程检查与结构扩展" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F6F1FF;strokeColor=#7D68AC;strokeWidth=2;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="870" width="380" height="95" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="d1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="m5" target="o1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="d2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="m5" target="o2"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="d3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="m5" target="o3"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

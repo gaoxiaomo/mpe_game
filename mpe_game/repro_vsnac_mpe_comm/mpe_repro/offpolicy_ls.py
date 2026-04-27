@@ -17,12 +17,15 @@ class ReplayLeastSquares:
     """Off-policy Bellman least-squares critic buffer.
 
     Each policy iteration collects trajectory data and accumulates it
-    in per-critic replay buffers.  The Bellman difference equation
+    in per-critic replay buffers.  The residual Bellman difference equation
 
-        (phi(x_{t+1}) - phi(x_t))^T W = -stage_cost * dt
+        (phi(x_{t+1}) - phi(x_t))^T W
+            = -(stage_cost * dt + known_value_delta)
 
-    is stacked into an overdetermined linear system  A W = b  and solved
-    via column-scaled Tikhonov regression.
+    is stacked into an overdetermined linear system A W = b and solved
+    via column-scaled Tikhonov regression. The known_value_delta term is
+    used for analytic value components such as Phi_{t+1} - Phi_t, so the
+    critic only needs to fit the residual value function.
 
     The Tikhonov prior is centered at the previous weight iterate to
     stabilise learning with correlated trajectory samples (in contrast
@@ -43,10 +46,16 @@ class ReplayLeastSquares:
             self.b_buf[i].clear()
 
     def add_sample(
-        self, evader_idx: int, phi_t: np.ndarray, phi_tp1: np.ndarray, stage_cost: float, dt: float
+        self,
+        evader_idx: int,
+        phi_t: np.ndarray,
+        phi_tp1: np.ndarray,
+        stage_cost: float,
+        dt: float,
+        known_value_delta: float = 0.0,
     ) -> None:
         a_row = phi_tp1 - phi_t
-        b_val = -stage_cost * dt
+        b_val = -(stage_cost * dt + known_value_delta)
         self.a_buf[evader_idx].append(a_row.astype(float))
         self.b_buf[evader_idx].append(float(b_val))
 

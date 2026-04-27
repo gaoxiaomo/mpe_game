@@ -1,0 +1,49 @@
+{
+  "generated_at": "2026-04-07T16:19:16",
+  "output_dir": "E:\\mpe_game\\mpe_game\\repro_vsnac_mpe_comm\\outputs\\collision_demo_rigorous_final",
+  "reduced_2d": {
+    "d_safe_m": 500.0,
+    "gamma": 1.0,
+    "no_analytic": {
+      "min_d_min_m": 0.03879725739431095,
+      "time_below_d_safe_s": 15.600000000000001
+    },
+    "smooth_analytic": {
+      "min_d_min_m": 1743.0431401336527,
+      "time_below_d_safe_s": 0.0
+    }
+  },
+  "full_6d": {
+    "scenario": {
+      "name": "unsafe_band_4v1_fixed",
+      "n_pursuers": 4,
+      "n_evaders": 1,
+      "capture_radius_m": 180.0,
+      "t_final_s": 70.0,
+      "initial_assignment": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "d_safe_m": 30.0,
+    "gamma": 1.5,
+    "no_analytic": {
+      "min_d_min": 0.7852982112126049,
+      "time_below_threshold_s": 19.1,
+      "longest_unsafe_streak_s": 18.0,
+      "capture_time_s": 33.1,
+      "mean_assigned_error": 1145.668289715873,
+      "train_wall_time_s": 2.066963499994017
+    },
+    "smooth_analytic": {
+      "min_d_min": 33.6378075116593,
+      "time_below_threshold_s": 0.0,
+      "longest_unsafe_streak_s": 0.0,
+      "capture_time_s": 33.65,
+      "mean_assigned_error": 1160.9209918395181,
+      "train_wall_time_s": 9.92048739999882
+    }
+  }
+}

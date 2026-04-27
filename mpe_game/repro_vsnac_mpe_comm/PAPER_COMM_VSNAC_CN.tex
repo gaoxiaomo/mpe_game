@@ -237,20 +237,27 @@ a_{jk} = \begin{cases} 1, & \sigma(j) = \sigma(k),\; j \neq k \\ 0, & \text{其�
 纯位置势函数的$\nabla_{v_j}\Phi_j = 0$，
 导致$g_j^T\nabla\Phi_j = 0$——对控制无效果。
 
-设$\delta_{jk} = r_{j,\sigma(j)}^p - r_{k,\sigma(k)}^p \in \mathbb{R}^3$
+设$\delta_{jk} = r_{k,\sigma(k)}^p - r_{j,\sigma(j)}^p \in \mathbb{R}^3$
 为由个体追踪偏移向量导出的期望追逐者间位置偏移。
 对每个$d_j > 0$的追逐者$j$，协调势定义为：
-\begin{equation}\label{eq:phi}
-\Phi_j = \frac{\gamma}{d_j}\!\sum_{k:\,a_{jk}>0}\!\bigg[\frac{1}{2}\|v_j{-}v_k\|^2 + \frac{\kappa}{d_{\mathrm{ref}}}(p_j{-}p_k{-}\delta_{jk})^T v_j\bigg]
+\begin{equation}
+\rho_{jk}(x)=\frac{d_{\mathrm{safe}}^2}{\|p_j-p_k\|^2+\varepsilon_d},
+\qquad
+\alpha_{jk}(x)=1+\frac{1}{2}\left(\rho_{jk}(x)-1+\sqrt{(\rho_{jk}(x)-1)^2+\varepsilon_\alpha}\right)
 \end{equation}
-其中$\gamma > 0$为协调强度，$\kappa > 0$为位置修正增益，
-$d_{\mathrm{ref}} > 0$为将位置误差归一化到速度量级的参考距离。
-第一项为速度共识代价，阻尼同组追逐者间的相对速度振荡；
-第二项为位置-速度交叉耦合，
-惩罚恶化编队误差方向上的速度分量：
-当追逐者$j$的飞行方向使$\|p_j - p_k - \delta_{jk}\|$增大时势函数增长。
-两项共同构成PD型协调能量，
-与经典共识编队控制\cite{b_ren2005,b_olfati2004}结构一致。
+其中$\varepsilon_d>0$与$\varepsilon_\alpha>0$为平滑常数。
+该定义是$\max\!\big(1, d_{\mathrm{safe}}^2/\|p_j-p_k\|^2\big)$的光滑近似：
+当距离远大于$d_{\mathrm{safe}}$时，$\alpha_{jk}(x)\approx 1$；
+当距离接近或小于$d_{\mathrm{safe}}$时，$\alpha_{jk}(x)$平滑增大，从而增强近距分离驱动。
+\begin{equation}\label{eq:phi}
+\Phi_j = \frac{\gamma}{d_j}\!\sum_{k:\,a_{jk}>0}\! a_{jk}\,\alpha_{jk}(x)
+\bigg[\frac{1}{2}\|v_j{-}v_k\|^2 + \frac{1}{d_{\mathrm{ref}}}(p_j{-}p_k{-}\delta_{jk})^T v_j\bigg]
+\end{equation}
+其中$\gamma > 0$为协调强度，$d_{\mathrm{ref}} > 0$为将位置误差归一化到速度量级的参考距离。
+第一项为速度一致性项，抑制同组追逐者间过大的相对速度；
+第二项为位置--速度耦合项，惩罚会恶化相对间距误差的速度方向；
+而$\alpha_{jk}(x)$在近距离区域自适应放大整个pairwise协调项，
+因此当前方法应解释为带平滑安全增益的解析协调势函数。
 度归一化$1/d_j$确保协调强度不随组大小变化。
 当$\gamma = 0$或$d_j = 0$时$\Phi_j = 0$。
 
@@ -268,11 +275,12 @@ V_j^{\mathrm{aug}} = \hat{W}_j^T\,\psi(\tilde{x}_j) + \Phi_j
 \end{equation}
 进入控制律的$\Phi_j$速度空间梯度为：
 \begin{equation}\label{eq:grad_phi}
-\nabla_{v_j}\!\Phi_j = \frac{\gamma}{d_j}\!\sum_{k:\,a_{jk}>0}\!\bigg[(v_j{-}v_k) + \frac{\kappa}{d_{\mathrm{ref}}}(p_j{-}p_k{-}\delta_{jk})\bigg]
+\nabla_{v_j}\!\Phi_j = \frac{\gamma}{d_j}\!\sum_{k:\,a_{jk}>0}\! a_{jk}\,\alpha_{jk}(x)
+\bigg[(v_j{-}v_k) + \frac{1}{d_{\mathrm{ref}}}(p_j{-}p_k{-}\delta_{jk})\bigg]
 \end{equation}
-由于$g_j^T = [0_{3\times 3},\; G_v^T]$，
-协调信号通过$g_j^T\nabla\Phi_j = G_v^T\nabla_{v_j}\Phi_j \neq 0$进入控制。
-这是关键结构性质：速度依赖势函数确保经$g_j^T$乘法后协调贡献非零。
+由于$\alpha_{jk}(x)$只依赖相对位置，不依赖$v_j$，故其对速度梯度仅表现为距离感知的平滑权重。
+协调信号通过$g_j^T\nabla\Phi_j = G_v^T\nabla_{v_j}\Phi_j \neq 0$进入控制，
+并且在近距离区域被$\alpha_{jk}(x)$自适应增强。
 
 \subsection{增广控制律}
 
@@ -349,7 +357,8 @@ $\mathcal{G}_p$中的边丢失使式(\ref{eq:grad_phi})的求和中相应项消�
 反映追逐者的速度优势。
 每个V-SNAC critic使用式(\ref{eq:basis})中的6维多项式基函数，
 训练50--56轮策略迭代，衰减学习率$\alpha_s = 0.05 \times 0.85^s$。
-协调强度$\gamma = 0.3$，位置修正增益$\kappa = 1$，参考距离$d_{\mathrm{ref}} = 500$\,m。
+协调强度$\gamma = 0.3$，参考距离$d_{\mathrm{ref}} = 500$\,m，
+安全参考距离$d_{\mathrm{safe}} = 100$\,m，并采用平滑pairwise放大因子$\alpha_{jk}(x)$。
 
 五种团队配置：3追1、3追3、5追3、6追3和8追4，
 覆盖追逐者/逃逸者比率1至3。

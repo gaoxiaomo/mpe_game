@@ -1,0 +1,1288 @@
+3056 IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS, VOL. 71, NO. 6, JUNE 2024
+Adaptive Optimal Control via Q-Learning for
+Multi-Agent Pursuit-Evasion Games
+Xu Dong , Huaguang Zhang , Fellow, IEEE, and Zhongyang Ming
+Abstract—The multi-agent pursuit-evasion (PE) games are
+solved in this brief to ﬁnd the best possible strategic options
+for every participant. In these games, numerous pursuers aim
+to catch numerous evaders which are trying to escape arrest. In
+order to determine distributed control rules for each agent, a
+graph-theoretic technique is used to examine how the agents with
+restricted sensing capabilities interact with one another. Further,
+the online and real-time solution of Hamilton-Jacobi-Bellman
+(HJB) equations is necessary to achieve the optimal actions. By
+introducing the Q-learning technique’s policy iteration, we are
+able to solve this issue. Once capture, the game is over. The
+simulation results are shown to demonstrate the viability of the
+suggested techniques.
+Index Terms —Adaptive dynamic programming, Q-learning,
+Pursuit-evasion game.
+I. I NTRODUCTION
+F
+OR SEVERAL decades, PE games have been the focus of
+ongoing research because they are used in many different
+systems, including robotic systems, autonomous drive systems,
+and unmanned aerial vehicles [1], [2], [3]. In particular, the
+PE games can depict a scenario in which one or more agents,
+known as pursuers, attempt to capture one or more antagonistic
+agents, known as evaders, while the evaders ﬁght to escape
+being caught. In recent years, there has been a surge in
+research dedicated to pursuit-evasion (PE) games that may
+describe scenarios including search and rescue missions, port
+defense, movement camouﬂage and surveillance missions.
+Since multi-agent systems (MASs) introduce a novel
+capability to complete a succession of complicated mis-
+sions that cannot be achieved with a single agent/system,
+MASs have garnered increasing attention over the past few
+decades [4], [5]. Among the various multi-agent systems
+applications, one of the biggest problems that has an enormous
+effect on both the military and civilian sectors of the econ-
+omy is the multiplayer pursuit-evasion game, such as guided
+missile and defense systems, intelligent drone control and
+autonomous tracking control of vehicles. The pursuit-evasion
+game with several large-scale pursuers and evaders has been
+Manuscript received 21 December 2023; accepted 8 January 2024. Date
+of publication 15 January 2024; date of current version 18 June 2024. This
+work was supported in part by the National Key R&D Program of China
+under Grant 2018YFA0702200; in part by the National Natural Science
+Foundation of China under Grant U23B20118; in part by the Liaoning
+Revitalization Talents Program under Grant XLYC1801005; and in part by
+the Natural Science Foundation of Liaoning Province of China under Grant
+2022JH25/10100008. This brief was recommended by Associate Editor J. Yu.
+(Corresponding author: Huaguang Zhang.)
+The authors are with the School of Information Science and Engineering,
+Northeastern University, Shenyang 110004, Liaoning, China (e-mail:
+dongxu1710266@163.com; hgzhang@ieee.org; zhongyangming427@
+163.com).
+Color versions of one or more ﬁgures in this article are available at
+https://doi.org/10.1109/TCSII.2024.3354120.
+Digital Object Identiﬁer 10.1109/TCSII.2024.3354120
+solved in [6] using a novel actor-critic-mass-opponent strategy
+in a distributed manner. In [7], the study delved into the
+performance of players in multi-agent pursuit-evasion games
+on communication graphs, exploring performance indices that
+encompass both cooperative and antagonistic goals among
+the agents. A noteworthy example within this context is the
+construction of error dynamics for both pursuers and evaders.
+However, so far, few researchers have obtained the optimal
+control strategy and cost function of multi-agent pursuit-
+evasion games by numerical calculation. In this brief, an online
+policy iteration algorithm will be designed to approximate the
+optimal control strategy and cost function in real time.
+The optimal control problem is solved using adaptive
+dynamic programming (ADP), which is regarded as an effec-
+tive control method [8], [9], [10]. By resolving the coupled
+HJB equations, numerous analysis and synthesis ﬁndings about
+the best consensus designs for multi-agent systems have been
+obtained [11], [12]. The best course of action is determined
+using the model-free reinforcement learning technique called
+Q-learning, which draws on previous state and action obser-
+vations. Q-learning algorithm is one of the most commonly
+used ADP algorithms for linear systems. The fact that Q-
+learning does not require an environment model is its greatest
+strength. The tracking control issues of multi-agent systems
+with uncertain dynamics were examined in [13].T os o l v e
+this issue, a multi-threading iterative Q-learning algorithm
+was created. In order to ﬁnd the Pareto solutions using Q-
+learning algorithm, literature [14] investigated the cooperative
+differential game for continuous-time linear stochastic systems
+with markovian jumps. In this brief, we will design Q-learning
+algorithm to solve the numerical solution of HJB equation of
+pursuit-evasion game to obtain the optimal control scheme and
+cost function for coupled multi-agent systems. Each pursuer
+engages in a zero-sum game with an adversary composed of
+other pursuers and evaders.
+The innovations are embodied in the following three
+aspects:
+1) Different from the general multi-agent systems [15],
+[16], we regard neighbors and enemies as disturbances
+in order to transform the original pursuit-evasion game
+problem into a zero-sum game problem with a coupled
+multi-agent system.
+2) Each of these three communication diagrams represents
+the interaction between the pursuers and the evaders,
+as well as the interaction between the two groups. By
+changing the agents’ aims in relation to each graph,
+this approach enables us to evaluate various agent
+behaviors.
+3) This brief is the ﬁrst time to use Q-learning tech-
+nology to solve the pursuit game problem of coupled
+multi-agent system, which relaxes the requirements of
+system matrices.
+1549-7747 c⃝ 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.
+See https://www.ieee.org/publications/rights/index.html for more information.
+Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on April 06,2026 at 06:11:18 UTC from IEEE Xplore.  Restrictions apply. 
+
+DONG et al.: ADAPTIVE OPTIMAL CONTROL VIA Q-LEARNING FOR MULTI-AGENT PE GAMES 3057
+The rest of this brief is organized as follows. The problem of
+interest for Section II is ﬁrst formulated. An online model-free
+policy iteration algorithm is given in Section III. Section IV
+gives a simulation example. Finally, the conclusion is obtained
+in Section V.
+Notation: ⊗ represents the Kronecker product. For a
+symmetric matrix A = (a
+ij) is n × n-dimensional,
+vech(A) = [a11,..., an1,..., an1,..., ann]T. ∇f(x) = ∂f(x)
+∂x
+and ∇2f(x) = ∂2f(x)
+∂x2 .
+II. P RELIMINARIES
+Deﬁne the graph as G p = (/Pi1p,℘ p), with the N pursuers
+being the set of nodes /Pi1p ={ πp1,...,π pN} and a set of edges
+℘p ⊆ /Pi1p × /Pi1p.L e t aik represent the graph G p’s connectivity
+weights. If (πpk,πpi) ∈ ℘p,aik = 1 and aik = 0; otherwise,
+it is equal to 0. Deﬁne the graph’s in-degree matrix as Dp =
+diag{dp
+i } and the pursuer’s in-degree matrix as dp
+i = ∑N
+k=1 aik.
+Ap = [aik] is the weighted adjacency matrix. The graph
+Laplacian matrix Lp is deﬁned as Lp = Dp − Ap.
+Similar to this, the graph G e = (/Pi1e,℘ e) depicts the inter-
+actions between the M evaders as nodes /Pi1e ={ πe1,...,π eN}.
+The weights of the graph are bjl, where bjl = 1i f (πel,
+πej) ∈ ℘e and bjl = 0 otherwise. The degree of the evader j is
+de
+j = ∑M
+l=1 bjl. The matrices De = diag{de
+j }, Ae = [bjl], and
+Le = De − Ae are deﬁned.
+Finally, specify the bipartite graph G pe = (/Pi1pe,℘ e) that
+contains all of the game’s participants, with the sets of N
+pursuers and M evaders serving as the graph’s two divisions.
+The information ﬂow between the agents in the various
+divisions is depicted in the graph
+G pe. In particular, edge
+weights cij represent the pursuer’s knowledge of the evader’s
+position. If the pursuer is able to measure the evader, cij = 1;
+otherwise, it is equal to 0. Similar to this, eji denotes the
+knowledge of the evader j regarding the location of the
+pursuer i. In the graph G pe, the in-degree of the pursuer i is
+deﬁned as dpe
+i = ∑M
+j=1 cij, and the in-degree of the evader j is
+dep
+j = ∑N
+i=1 eji. Deﬁne the pursuer-partition matrices Dpe =
+diag{dpe
+i } and Ape = [cij], as well as the evader-partition
+matrices Dep = diag{dep
+j } and Aep = [eji].
+Consider a group of N dynamical agents with linear dynam-
+ics which are the pursuers as follows:
+˙xi = Axi + Bμi, i = 1,..., N (1)
+where xi ∈ Rn is the position of pursuer i.T h es e to f M
+dynamic agents is viewed as a team of evaders with dynamics
+˙yj = Ayj + Bνj, j = 1,..., M (2)
+where yj ∈ Rn is the position.
+The pursuers need to protect the target and intercept the
+pursuers while maintaining the aggregation state. Therefore,
+the weighted distance that the pursuer i need to optimize can
+be expressed as:
+ε
+i =
+N∑
+k=1
+aik(xi − xk) +
+M∑
+j=1
+cij
+(
+xi − yj
+)
+. (3)
+The dynamics of the local error variable εi for pursuer i is
+given by
+˙εi = Aεi +
+(
+dp
+i + dpe
+i
+)
+Bμi −
+(
+dp
+i + dpe
+i
+)
+B ¯μ−i (4)
+where
+¯μ−i = 1
+dp
+i + dpe
+i
+( N∑
+k=1
+aikμk +
+M∑
+j=1
+cijνj
+)
+.
+The local position error for evader j is similarly deﬁned as
+ϵj =
+M∑
+l=1
+bjl
+(
+yj − yl
+)
+−
+N∑
+i=1
+eji
+(
+yj − xi
+)
+. (5)
+And the local error dynamics change as
+˙ϵj = Aϵj +
+(
+de
+j − dep
+j
+)
+Bνj −
+(
+de
+j − dep
+j
+)
+B¯ν−j (6)
+where
+¯ν−j = 1
+de
+j − dep
+j
+( M∑
+l=1
+bjlνl −
+N∑
+i=1
+ejiμi
+)
+.
+The performance metrics that we can deﬁne for the pursuer
+i are
+V pi =
+∫ ∞
+t
+rpi(εi,μ i, ¯μ−i)dτ
+=
+∫ ∞
+t
+[
+εT
+i Qpiεi + μT
+i Rpμi −¯μT
+−iR−i ¯μ−i
+]
+dτ (7)
+where Qpi, Rp and R−i are positive deﬁnite matrices. Similarly,
+for the evader j, the design the performance index is
+V ej =
+∫ ∞
+t
+rej
+(
+ϵj,νj, ¯ν−j
+)
+dτ
+=
+∫ ∞
+t
+[
+ϵT
+j Qejϵj + νT
+j Reνj −¯νT
+−jR−j ¯ν−j
+]
+dτ (8)
+where Qej, Re and R−j are positive deﬁnite matrices.
+The performance indexes can both be recast by positive-
+deﬁnite quadratic functions in accordance with the optimum
+control theory [17] where P
+pi and Pej are positive-deﬁnite
+matrices, and V pi = εT
+i Ppiεi and V ej = ϵT
+j Pejϵj, respectively.
+Given neighbor strategies μk and νj, the ideal control
+strategy of pursuer i can be obtained by solving the ith
+Hamiltonian function deﬁned as
+Hpi =∇ V T
+pi
+(
+Aεi +
+(
+dp
+i + dpe
+i
+)
+Bμi −
+(
+dp
+i + dpe
+i
+)
+B ¯μ−i
+)
++ εT
+i Qpiεi + μT
+i Rpμi −¯μT
+−iR−i ¯μ−i (9)
+and it is found to be
+μ∗
+i =−
+(
+dp
+i + dpe
+i
+)
+R−1
+p BTPpiεi, (10)
+¯μ∗
+i =−
+(
+dp
+i + dpe
+i
+)
+R−1
+−i BTPpiεi. (11)
+Deﬁne the Hamiltonian function for evader j as follows
+using the same method:
+Hej =∇ V T
+ej
+(
+Aϵj +
+(
+de
+j − dep
+j
+)
+Bνj −
+(
+de
+j − dep
+j
+)
+B¯ν−j
+)
++ ϵT
+j Qejϵj + νT
+j Reνj −¯νT
+−jR−j ¯ν−j (12)
+and the optimal policy for evader j is
+ν∗
+j =−
+(
+de
+j − dep
+j
+)
+R−1
+e BTPejϵj, (13)
+¯ν∗
+−j =−
+(
+de
+j − dep
+j
+)
+R−1
+−j BTPejϵj. (14)
+Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on April 06,2026 at 06:11:18 UTC from IEEE Xplore.  Restrictions apply. 
+
+3058 IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS, VOL. 71, NO. 6, JUNE 2024
+III. Q-LEARNING PURSUER -EV ADER GAME ALGORITHM
+To express the pursuer Q -function, the optimal value
+function V∗
+pi = minμi maxμ−i V pi must be parameterized
+as a function of the state εi and the control μi.T h e
+following action-dependent value Q pi(εi,μ i, ¯μ−i) can be
+written:
+Q pi(εi,μ i, ¯μ−i) = V∗
+pi + Hpi
+= εT
+i Ppi
+[
+Aεi +
+(
+dp
+i + dpe
+i
+)
+Bμi −
+(
+dp
+i + dpe
+i
+)
+B ¯μ−i
+]
++
+[
+Aεi +
+(
+dp
+i + dpe
+i
+)
+Bμi −
+(
+dp
+i + dpe
+i
+)
+B ¯μ−i
+]TPpiεi
++ εT
+i Qpiεi + μT
+i Rpμi −¯μT
+−iR−i ¯μ−i + εT
+i Ppiεi. (15)
+Similarly, Q ej(ϵi,νj, ¯ν−j) is given by
+Q ej
+(
+ϵi,νj, ¯ν−j
+)
+= V∗
+ej + Hej
+= ϵT
+j Pej
+[
+Aϵj +
+(
+de
+j − dep
+j
+)
+Bνj −
+(
+de
+j − dep
+j
+)
+B¯ν−j
+]
++
+[
+Aϵj +
+(
+de
+j − dep
+j
+)
+Bνj −
+(
+de
+j − dep
+j
+)
+B¯ν−j
+] T
+Pejεi
++ ϵT
+j Qejϵj + νT
+j Reνj −¯νT
+−jR−j ¯ν−j + ϵT
+j Pejϵj. (16)
+The action-dependent function (15) can be rewritten in the
+state-action form using a compact quadratic as
+Q pi(εi,μ i, ¯μ−i) = ¯X T
+pi ¯Q pi ¯Xpi (17)
+=
+⎡
+⎣
+εi
+μi
+¯μ−i
+⎤
+⎦
+T⎡
+⎢⎣
+Qεiεi
+pi Qεiμi
+pi Qεi ¯μ−i
+pi
+Qμiεi
+pi Qμiμi
+pi Qμi ¯μ−i
+pi
+Q ¯μ−iεi
+pi Q ¯μ−iμi
+pi Q ¯μ−i ¯μ−i
+pi
+⎤
+⎥⎦
+⎡
+⎣
+εi
+μi
+¯μ−i
+⎤
+⎦
+where
+Qεiεi
+pi = PpiA + ATPpi + Qpi + Ppi,
+Qεiμi
+pi = Ppi
+(
+dp
+i + dpe
+i
+)
+B, Q εi ¯μ−i
+pi =− Ppi
+(
+dp
+i + dpe
+i
+)
+B,
+Qμiεi
+pi = BT(
+dp
+i + dpe
+i
+)
+Ppi, Qμiμi
+pi = Rp,
+Q ¯μ−iεi
+pi =− BT(
+dp
+i + dpe
+i
+)
+Ppi, Q ¯μ−i ¯μ−i
+pi =− R−i,
+and
+Q ej
+(
+ϵj,νj, ¯ν−j
+)
+= ¯X T
+ej ¯Q ej ¯Xej (18)
+=
+⎡
+⎣
+ϵj
+νj
+¯ν−j
+⎤
+⎦
+T
+⎡
+⎢⎢⎣
+Qϵjϵj
+ej Qϵjνj
+ej Qϵj ¯ν−j
+ej
+Qνjϵj
+ej Qνjνj
+ej Qνj ¯ν−j
+ej
+Q ¯ν−jϵj
+ej Q ¯ν−jνj
+ej Q ¯ν−j ¯ν−j
+ej
+⎤
+⎥⎥⎦
+⎡
+⎣
+ϵj
+νj
+¯ν−j
+⎤
+⎦
+where
+Qϵjϵj
+ej = PejA + ATPej + Qej + Pej,
+Qϵjνj
+ej = Pej
+(
+de
+j − dep
+j
+)
+B, Q ϵj ¯ν−j
+ej =− Pej
+(
+de
+j − dep
+j
+)
+B,
+Qνjϵj
+ej = BT
+(
+de
+j − dep
+j
+)
+Pej, Qνjνj
+ej = Re,
+Q ¯ν−jϵj
+ej =− BT
+(
+de
+j + dep
+j
+)
+Pej, Q ¯ν−j ¯ν−j
+ej =− R−j.
+Lemma 1: Given that the Q-functions are equivalent as
+in (17)–(18) and that V∗
+pi and V∗
+ej
+are the ideal value functions
+and Ppi and Pej are the answers respectively to the Riccati
+equations
+Q∗
+pi
+(
+εi,μ ∗
+i , ¯μ∗
+−i
+)
+= V∗
+pi = minμi
+max
+¯μ−i
+V pi,
+Q∗
+ej
+(
+ϵj,ν∗
+j , ¯ν∗
+−j
+)
+= V∗
+ej = minνj
+max
+¯ν−j
+V ej.
+We solve ∂Q pi(εi,μi, ¯μ−i)
+∂μi and ∂Q pi(εi,μi, ¯μ−i)
+∂¯μ−i for the control
+and disturbance policy to obtain
+μ∗
+i = arg minμi
+Q pi(εi,μ i, ¯μ−i)
+=−
+(
+Qμiμi
+pi
+) −1
+Qμiεi
+pi εi
+=
+(
+/Gamma1μi
+pi
+) T
+εi, (19)
+¯μ∗
+−i = arg max
+¯μ−i
+Q pi(εi,μ i, ¯μ−i)
+=−
+(
+Q ¯μ−i ¯μ−i
+pi
+) −1
+Q ¯μ−iεi
+pi εi (20)
+where /Gamma1μi
+pi is the ideal weight for optimal feedback for the
+pursuer i.
+For evader j, the same procedure can be used to prove that
+ν∗
+j = arg minνj
+Q ej
+(
+ϵj,νj, ¯ν−j
+)
+=−
+(
+Qνjνj
+ej
+) −1
+Qνjϵi
+ej ϵj
+=
+(
+/Gamma1νj
+ej
+) T
+ϵj, (21)
+¯ν∗
+−j = arg max
+¯ν−j
+Q ej
+(
+ϵj,νj, ¯ν−j
+)
+=−
+(
+Q ¯ν−j ¯ν−j
+ej
+) −1
+Q ¯ν−jϵj
+ej ϵj (22)
+where /Gamma1νj
+ej is the ideal weights for optimal feedback for the
+evader j.
+Using the elements in ¯Xpi ⊗ ¯Xpi and ¯Xej ⊗ ¯Xej as bases, they
+are rewrite in a compact form as
+Q∗
+pi
+(
+εi,μ ∗
+i , ¯μ∗
+−i
+)
+= vech
+( ¯Q pi
+)T( ¯Xpi ⊗ ¯Xpi
+)
+=
+(
+/Gamma1c
+pi
+) T( ¯Xpi ⊗ ¯Xpi
+)
+, (23)
+Q∗
+ej
+(
+ϵi,ν∗
+j , ¯ν∗
+−j
+)
+= vech
+( ¯Q ej
+)T( ¯Xej ⊗ ¯Xej
+)
+=
+(
+/Gamma1c
+ej
+) T( ¯Xej ⊗ ¯Xej
+)
+. (24)
+The following weight estimates for the critic approximator
+must be taken into consideration because the ideal weights for
+computing Q∗
+pi and Q∗
+ej
+are unknown
+ˆQ
+∗
+pi
+(
+εi,μ ∗
+i , ¯μ∗
+−i
+)
+=
+(
+ˆ/Gamma1c
+pi
+) T( ¯Xpi ⊗ ¯Xpi
+)
+, (25)
+ˆQ
+∗
+ej
+(
+ϵi,ν∗
+j , ¯ν∗
+−j
+)
+=
+(
+ˆ/Gamma1c
+ej
+) T( ¯Xej ⊗ ¯Xej
+)
+(26)
+where ˆ/Gamma1c
+pi and ˆ/Gamma1c
+ej are the estimated weights.
+The actual control strategies are
+ˆμ∗
+i =
+(
+ˆ/Gamma1μi
+pi
+) T
+εi, ˆ¯μ∗
+−i =−
+(
+ˆQ
+¯μ−i ¯μ−i
+pi
+) −1
+ˆQ
+¯μ−iεi
+pi εi, (27)
+ˆν∗
+j =
+(
+ˆ/Gamma1νj
+ej
+) T
+ϵj, ˆ¯ν∗
+−j =−
+(
+ˆQ
+¯ν−j ¯ν−j
+ej
+) −1
+ˆQ
+¯ν−jϵj
+ej ϵj (28)
+where ˆ/Gamma1μi
+pi and ˆ/Gamma1νj
+ej and are the weight estimates, the values of
+ˆQ
+¯μ−i ¯μ−i
+pi , ˆQ
+¯μ−iεi
+pi and ˆQ
+¯ν−j ¯ν−j
+ej , ˆQ
+¯ν−jϵj
+ej are going to be extracted
+from the vector ˆ/Gamma1c
+pi and ˆ/Gamma1c
+ej, respectively.
+Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on April 06,2026 at 06:11:18 UTC from IEEE Xplore.  Restrictions apply. 
+
+DONG et al.: ADAPTIVE OPTIMAL CONTROL VIA Q-LEARNING FOR MULTI-AGENT PE GAMES 3059
+According to the integral reinforcement learning approach,
+T > 0 is a small integral time interval, consequently, using
+Lemma 1,w eh a v e
+Q∗
+pi
+(
+εi(t), μ∗
+i (t), ¯μ∗
+−i(t)
+)
+=
+∫ t+T
+t
+rpi
+(
+εi,μ ∗
+i , ¯μ∗
+−i
+)
+dτ
++ Q∗
+pi
+(
+εi(t + T), μ∗
+i (t + T), ¯μ∗
+−i(t + T)
+)
+, (29)
+Q∗
+ej
+(
+ϵj(t), ν∗
+j (t), ¯ν∗
+−j(t)
+)
+=
+∫ t+T
+t
+rej
+(
+ϵj,ν∗
+j , ¯ν∗
+−j
+)
+dτ
++ Q∗
+ej
+(
+ϵj(t + T), ν∗
+j (t + T), ¯ν∗
+−j(t + T)
+)
+. (30)
+Based on the current estimate of the action-dependent
+function that we want to drive to zero, we will now deﬁne the
+error as
+e
+c
+pi =− ˆQ
+∗
+pi
+(
+εi(t), μ∗
+i (t), ¯μ∗
+−i(t)
+)
++
+∫ t+T
+t
+rpi
+(
+εi,μ ∗
+i , ¯μ∗
+−i
+)
+dτ
++ ˆQ
+∗
+pi
+(
+εi(t + T), μ∗
+i (t + T), ¯μ∗
+−i(t + T)
+)
+=
+(
+ˆ/Gamma1c
+pi
+) T
+σpi +
+∫ t+T
+t
+rpi
+(
+εi,μ ∗
+i , ¯μ∗
+−i
+)
+dτ, (31)
+ec
+ej =− ˆQ
+∗
+ej
+(
+ϵj(t), ν∗
+j (t), ¯ν∗
+−j(t)
+)
++
+∫ t+T
+t
+rej
+(
+ϵj,ν∗
+j , ¯ν∗
+−j
+)
+dτ
++ ˆQ
+∗
+ej
+(
+ϵj(t + T), ν∗
+j (t + T), ¯ν∗
+−j(t + T)
+)
+=
+(
+ˆ/Gamma1c
+ej
+) T
+σej +
+∫ t+T
+t
+rej
+(
+ϵj,ν∗
+j , ¯ν∗
+−j
+)
+dτ, (32)
+where σpi = ¯Xpi(t + T) ⊗ ¯Xpi(t + T) − ¯Xpi(t) ⊗ ¯Xpi(t) and
+σej = ¯Xej(t + T) ⊗ ¯Xej(t + T) − ¯Xej(t) ⊗ ¯Xej(t).
+We choose the loss function as
+Ec
+pi = 1
+2∥ec
+pi∥2, Ec
+ej = 1
+2∥ec
+ej∥2.
+We use gradient descent and normalization to get the dynamics
+for estimating the critic weights as
+˙ˆ/Gamma1c
+pi =− αc
+pi
+∂Ec
+pi
+∂ˆ/Gamma1c
+pi
+=− αc
+pi
+σpi
+1 + σT
+piσpi
+(
+ec
+pi
+) T
+, (33)
+˙ˆ/Gamma1c
+ej =− αc
+ej
+∂Ec
+ej
+∂ˆ/Gamma1c
+ej
+=− αc
+ej
+σej
+1 + σT
+ejσej
+(
+ec
+ej
+) T
+(34)
+where the learning steps are αc
+pi > 0 and αc
+ej > 0.
+In the actor model, we choose the error functions as follows:
+Eμi
+pi = 1
+2∥eμi
+pi ∥2, Eνj
+ej = 1
+2∥eνj
+ej∥2
+where eμi
+pi = ( ˆ/Gamma1μi
+pi )Tεi + ( ˆQ
+μiμi
+pi )−1 ˆQ
+μiεi
+pi εi and eνj
+ej =
+( ˆ/Gamma1νj
+ej)Tϵj + ( ˆQ
+νjνj
+ej )−1 ˆQ
+νjϵj
+ej ϵj.
+Using the gradient descent, it produces the desired result to
+guarantee eμi
+pi → 0 and eνj
+ej → 0
+˙ˆ/Gamma1μi
+pi =− αμi
+pi
+∂Eμi
+pi
+∂ˆ/Gamma1μi
+pi
+=− αμi
+pi εi
+(
+eμi
+pi
+) T
+, (35)
+˙ˆ/Gamma1νj
+ej =− ανj
+ej
+∂Eνj
+ej
+∂ˆ/Gamma1νj
+ej
+=− ανj
+ejϵj
+(
+eνj
+ej
+) T
+(36)
+where the learning steps are αμi
+pi > 0 and ανj
+ej > 0.
+Fig. 1. Trajectories of the pursuers and evaders when attackers win.
+Fig. 2. The evolution process of critic NNs weights for pursuer 1.
+Fig. 3. The evolution process of critic NNs weights for evader 1.
+IV . EXAMPLE
+The following section discusses numerical simulations for
+asymptotic capture.
+Consider an pursuer-evader game with three pursuers and
+three evaders in R2 which has single-integrator dynamics,
+i.e., A =− I2 and B = [0; 1] in (1) and (2), connected in a
+communication network such that
+Lp =
+⎡
+⎣
+1 −10
+−12 −1
+−1 −12
+⎤
+⎦, Le =
+⎡
+⎣
+2 −1 −1
+01 −1
+−1 −12
+⎤
+⎦,
+Ape =
+⎡
+⎣
+110
+101
+001
+⎤
+⎦, L
+e =
+⎡
+⎣
+001
+011
+101
+⎤
+⎦.
+The NNs basis functions for this case are established as
+¯X
+pi ⊗ ¯Xpi = [ε2
+i (1), 2εi(1)εi(2), ε2
+i (2), 2εi(1)μ∗
+i , 2εi(2)μ∗
+i ,
+2εi(1) ¯μ∗
+−i, 2εi(2) ¯μ∗
+−i,μ ∗2
+i , 2μ∗
+i ¯μ∗
+−i, ¯μ∗2
+−i]T,
+¯Xej ⊗ ¯Xej = [ϵ2
+j (1), 2ϵj(1)ϵj(2), ϵ2
+j (2), 2ϵj(1)ν∗
+j , 2ϵj(2)ν∗
+j ,
+2ϵj(1)¯ν∗
+−j, 2ϵj(2)¯ν∗
+−j,ν∗2
+j , 2ν∗
+j ¯ν∗
+−j, ¯ν∗2
+−j]T.
+The integral time interval is T = 2s and the adaptive learning
+gains are αc
+pi = αc
+ej = 1.1 and αμi
+pi = ανj
+ej = 0.1. Some
+parameters are given as Qpi = 10I, Qej = 10I, Rp = 1, Re = 1,
+R−i = 1, R−j = 1.
+Fig. 1 displays the simulation’s outcome and demonstrates
+that capture occurs, supporting the results of the theory. The
+Q-learning technique eliminates the requirement for system
+matrices. Figs. 2-9 indicate that the weights have converged.
+The optimal control strategy can be obtained by multiplying
+with the activation function.
+Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on April 06,2026 at 06:11:18 UTC from IEEE Xplore.  Restrictions apply. 
+
+3060 IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS—II: EXPRESS BRIEFS, VOL. 71, NO. 6, JUNE 2024
+Fig. 4. The evolution process of actor NNs weights for pursuer 1.
+Fig. 5. The evolution process of actor NNs weights for evader 1.
+Fig. 6. The evolution process of critic NNs weights for pursuer 2.
+Fig. 7. The evolution process of critic NNs weights for evader 2.
+Fig. 8. The evolution process of actor NNs weights for pursuer 2.
+Fig. 9. The evolution process of actor NNs weights for evader 2.
+V. C ONCLUSION
+In this brief, Q-learning method has been used to study
+the pursuit game problem of coupling multi-agent system.
+Firstly, when the pursuer and evader sides remained dispersed,
+a coupled multi-agent system has been established to trans-
+form the pursuer-evader game problem of multiple pursuers
+and evaders into multiple groups of two-player zero-sum
+differential games, and the optimal strategies of the attacking
+and defending sides are solved. Then, an online Q-learning
+algorithm has been used to obtain the numerical solutions of
+the HJB equations without using the system matrices. Finally,
+numerical simulation has been veriﬁed the effectiveness of the
+proposed method. In the future research, the heterogeneous
+nonlinear pursuer-evader game model and the switching-like
+event-triggered control should be considered. Nonlinearity
+is more realistic, but it will bring difﬁculties to our
+research.
+R
+EFERENCES
+[1] G. Chen, J. Sun, and J. Xia, “Estimation of domain of attraction for
+aperiodic sampled-data switched delayed neural networks subject to
+actuator saturation,” IEEE Trans. Neural Netw. Learn. Syst. , vol. 31,
+no. 5, pp. 1489–1503, May 2020.
+[2] J. Chen, W. Zha, Z. Peng, and D. Gu, “Multi-player pursuit–evasion
+games with one superior evader,” Automatica, vol. 71, pp. 24–32,
+Sep. 2016, doi: 10.1016/j.automatica.2016.04.012.
+[3] E. Garcia, D. W. Casbeer, and M. Pachter, “Design and analysis of
+state-feedback optimal strategies for the differential game of active
+defense,” IEEE Trans. Autom. Control , vol. 64, no. 2, pp. 553–568,
+Feb. 2019.
+[4] H. Zhang, Y . Zhou, Y . Liu, and J. Sun, “Cooperative bipartite
+containment control for multiagent systems based on adaptive dis-
+tributed observer,” IEEE Trans. Cybern., vol. 52, no. 6, pp. 5432–5440,
+Jun. 2022.
+[5] J. Zhang, H. Zhang, Z. Ming, and Y . Mu, “Adaptive event-
+triggered time-varying output bipartite formation containment of
+multiagent systems under directed graphs,” IEEE Trans. Neural
+Netw. Learn. Syst. , vol. 34, no. 11, pp. 8909–8922, Nov. 2023,
+doi: 10.1109/TNNLS.2022.3154028.
+[6] Z. Zhou and H. Xu, “Decentralized optimal large scale multi-player
+pursuit-evasion strategies: A mean ﬁeld game approach with rein-
+forcement learning,” Neurocomputing, vol. 484, pp. 46–58, May 2022,
+doi: 10.1016/j.neucom.2021.01.141.
+[7] V . G. Lopez, F. L. Lewis, Y . Wan, E. N. Sanchez, and L. Fan, “Solutions
+for multiagent pursuit-evasion games on communication graphs: Finite-
+time capture and asymptotic behaviors,” IEEE Trans. Autom. Control ,
+vol. 65, no. 5, pp. 1911–1923, May 2020.
+[8] Z. Ming, H. Zhang, W. Li, and Y . Luo, “Neurodynamic programming
+and tracking control for nonlinear stochastic systems by PI algorithm,”
+IEEE Trans. Circuits Syst. II, Exp. Briefs, vol. 69, no. 6, pp. 2892–2896,
+Jun. 2022.
+[9] H. Zhang, H. Ren, Y . Mu, and J. Han, “Optimal consensus control design
+for multiagent systems with multiple time delay using adaptive dynamic
+programming,” IEEE Trans. Cybern., vol. 52, no. 12, pp. 12832–12842,
+Dec. 2022.
+[10] Z.-X. Fan, S. Li, and R. Liu, “ADP-based optimal control for
+systems with mismatched disturbances: A PMSM application,” IEEE
+Trans. Circuits Syst. II, Exp. Briefs , vol. 70, no. 6, pp. 2057–2061,
+Jun. 2023.
+[11] K. G. Vamvoudakis, F. L. Lewis, and G. R. Hudas, “Multi-
+agent differential graphical games: Online adaptive learning solution
+for synchronization with optimality,” Automatica, vol. 48, no. 8,
+pp. 1598–1611, Aug. 2012, doi: 10.1016/j.automatica.2012.05.074.
+[12] Y . Zhang, B. Zhao, D. Liu, and S. Zhang, “Distributed fault tolerant
+consensus control of nonlinear Multiagent systems via adaptive dynamic
+programming,” IEEE Trans. Neural Netw. Learn. Syst. , early access,
+Nov. 7, 2022, doi: 10.1109/TNNLS.2022.3217774.
+[13] T. Dong, X. Gong, A. Wang, H. Li, and T. Huang, “Data-driven
+tracking control for multi-agent systems with unknown dynamics via
+multithreading iterative Q-learning,” IEEE Trans. Syst., Man, Cybern.,
+Syst., vol. 53, no. 4, pp. 2533–2542, Apr. 2023.
+[14] Z. Ming, H. Zhang, W. Li, and Y . Luo, “Base on Q-learning pareto
+optimality for linear itô stochastic systems with Markovian jumps,”
+IEEE Trans. Autom. Sci. Eng. , vol. 21, no. 1, pp. 965–975, Jan. 2024,
+doi: 10.1109/TASE.2023.3234928.
+[15] H. Zhang, J. Duan, Y . Wang, and Z. Gao, “Bipartite ﬁxed-time output
+consensus of heterogeneous linear multiagent systems,” IEEE Trans.
+Cybern., vol. 51, no. 2, pp. 548–557, Feb. 2021.
+[16] M. Mazouchi, M. B. Naghibi-Sistani, and S. K. H. Sani, “A novel
+distributed optimal adaptive control algorithm for nonlinear multi-agent
+differential graphical games,”
+IEEE/CAA J. Automatica Sinica ,v o l .5 ,
+no. 1, pp. 331–341, Jan. 2018.
+[17] M. Liu, Y . Wan, F. L. Lewis, and V . G. Lopez, “Adaptive optimal control
+for stochastic multiplayer differential games using on-policy and off-
+policy reinforcement learning,” IEEE Trans. Neural Netw. Learn. Syst. ,
+vol. 31, no. 12, pp. 5522–5533, Dec. 2020.
+Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on April 06,2026 at 06:11:18 UTC from IEEE Xplore.  Restrictions apply. 

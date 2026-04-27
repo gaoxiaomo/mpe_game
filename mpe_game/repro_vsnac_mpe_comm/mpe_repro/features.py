@@ -38,8 +38,20 @@ class SigmoidFeatureMap:
         z = self.gain * z
         return np.clip(z, -2.0e4, 2.0e4)
 
+    def _preact_batch(self, x: np.ndarray) -> np.ndarray:
+        p = x[:, :3] / self.pos_scale[None, :]
+        v = x[:, 3:]
+        z = np.empty((x.shape[0], 6), dtype=float)
+        z[:, :3] = p * v
+        z[:, 3:] = 0.5 * v * v
+        z *= self.gain
+        return np.clip(z, -2.0e4, 2.0e4)
+
     def phi(self, x: np.ndarray) -> np.ndarray:
         return self._preact(x)
+
+    def phi_batch(self, x: np.ndarray) -> np.ndarray:
+        return self._preact_batch(x)
 
     def jacobian(self, x: np.ndarray) -> np.ndarray:
         p = x[:3] / self.pos_scale
@@ -57,3 +69,15 @@ class SigmoidFeatureMap:
         j[4, 4] = v[1]
         j[5, 5] = v[2]
         return self.gain * j
+
+    def value_gradient_batch(self, x: np.ndarray, w: np.ndarray) -> np.ndarray:
+        p = x[:, :3] / self.pos_scale[None, :]
+        v = x[:, 3:]
+        grad = np.empty((x.shape[0], 6), dtype=float)
+        grad[:, 0] = w[:, 0] * v[:, 0] / self.pos_scale[0]
+        grad[:, 1] = w[:, 1] * v[:, 1] / self.pos_scale[1]
+        grad[:, 2] = w[:, 2] * v[:, 2] / self.pos_scale[2]
+        grad[:, 3] = w[:, 0] * p[:, 0] + w[:, 3] * v[:, 0]
+        grad[:, 4] = w[:, 1] * p[:, 1] + w[:, 4] * v[:, 1]
+        grad[:, 5] = w[:, 2] * p[:, 2] + w[:, 5] * v[:, 2]
+        return self.gain * grad

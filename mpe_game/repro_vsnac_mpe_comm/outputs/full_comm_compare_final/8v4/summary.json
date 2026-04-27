@@ -1,0 +1,192 @@
+{
+  "generated_at": "2026-04-07T13:45:23",
+  "case": {
+    "name": "8v4",
+    "n_pursuers": 8,
+    "n_evaders": 4,
+    "seed": 47,
+    "assignment_mode": "shifted",
+    "layout_mode": "structured"
+  },
+  "scenario": {
+    "name": "scenario_8v4_generalized",
+    "capture_radius": 220.0,
+    "t_final": 140.0,
+    "initial_assignment": [
+      1,
+      2,
+      3,
+      0,
+      1,
+      2,
+      3,
+      0
+    ]
+  },
+  "vsnac_full_comm": {
+    "train": {
+      "iterations": 35,
+      "final_weight_norms": [
+        0.7135993498125967,
+        0.7824126194694081,
+        0.7019602263013401,
+        0.7304082456363248,
+        0.6929318591082568,
+        0.7637396062587151,
+        0.7267199211206856,
+        0.7437952080870701
+      ],
+      "final_weight_norm_squares": [
+        0.5092240320529606,
+        0.6121695071049809,
+        0.4927481593090287,
+        0.5334962052935337,
+        0.48015456136722506,
+        0.5832981861682172,
+        0.5281218437536555,
+        0.553231311573288
+      ],
+      "final_weight_vectors": [
+        [
+          0.2795,
+          0.2801,
+          0.2637,
+          0.3402,
+          0.2923,
+          0.2862
+        ],
+        [
+          0.3458,
+          0.2861,
+          0.2667,
+          0.3423,
+          0.28,
+          0.3796
+        ],
+        [
+          0.2687,
+          0.284,
+          0.2884,
+          0.2619,
+          0.2548,
+          0.351
+        ],
+        [
+          0.3859,
+          0.2481,
+          0.2719,
+          0.3378,
+          0.2686,
+          0.2507
+        ],
+        [
+          0.2802,
+          0.2916,
+          0.2911,
+          0.2783,
+          0.2788,
+          0.2769
+        ],
+        [
+          0.3657,
+          0.2537,
+          0.2614,
+          0.3859,
+          0.2939,
+          0.2857
+        ],
+        [
+          0.2753,
+          0.263,
+          0.354,
+          0.2962,
+          0.2909,
+          0.2924
+        ],
+        [
+          0.3352,
+          0.2731,
+          0.3478,
+          0.3269,
+          0.24,
+          0.2844
+        ]
+      ],
+      "final_delta_per_critic": [
+        9.0749880975685e-05,
+        7.19609020795866e-05,
+        7.607913721086023e-05,
+        7.392499185006035e-05,
+        9.901204773942127e-05,
+        7.84926211054203e-05,
+        8.132870464938819e-05,
+        7.063560018116423e-05
+      ],
+      "mean_residual_per_critic": [
+        31.11942875627929,
+        33.536918207567524,
+        30.90659919820712,
+        31.135972057478043,
+        31.721179341082046,
+        31.564596171722034,
+        32.00243227001581,
+        35.570045009561035
+      ]
+    },
+    "train_wall_time_s": 46.89347579999594,
+    "eval": {
+      "capture_time_s": 37.15,
+      "final_team_error": 502.4971793405365,
+      "final_max_assigned_error": 86.17385417657461,
+      "mean_assigned_error": 558.3906892252077,
+      "min_d_min": 56.950553449971125,
+      "mean_formation_error": 297.61684607852294,
+      "comm_mode": "full_comm"
+    },
+    "eval_wall_time_s": 11.518117800005712
+  },
+  "traditional_full_comm": {
+    "eval": {
+      "capture_time_s": null,
+      "final_team_error": 650072.0079651657,
+      "final_max_assigned_error": 98971.47771824393,
+      "mean_assigned_error": 37779.47571700643,
+      "min_d_min": 215.22777975531858,
+      "mean_formation_error": 45504.28950633477,
+      "comm_mode": "full_comm"
+    },
+    "eval_wall_time_s": 22.151478100015083,
+    "warmup_wall_time_s": 42.698121200024616,
+    "warmup_episodes": 2,
+    "network_summary": {
+      "pursuer_actors": 8,
+      "evader_actors": 4,
+      "pursuer_critics": 8,
+      "evader_critics": 4,
+      "actor_parameters_per_network": 18,
+      "critic_parameters_per_network": 78,
+      "total_networks": 24,
+      "total_scalar_parameters": 1152,
+      "augmented_input_dim": 12,
+      "critic_basis_dim": 78
+    }
+  },
+  "timing_compare": {
+    "vsnac_full_comm_policy": {
+      "total_s": 23.969084400014253,
+      "ms_per_step": 0.7136204715974233,
+      "steps_per_s": 1401.3050911523358
+    },
+    "traditional_full_comm_online": {
+      "total_s": 51.73433269999805,
+      "ms_per_step": 1.54026237644391,
+      "steps_per_s": 649.2400355248279
+    },
+    "traditional_vs_vsnac_ratio": 2.1583775098212468
+  },
+  "paths": {
+    "vsnac_dir": "outputs\\full_comm_compare_final\\8v4\\vsnac_full_comm",
+    "traditional_dir": "outputs\\full_comm_compare_final\\8v4\\traditional_ac_full_comm",
+    "compare_dir": "outputs\\full_comm_compare_final\\8v4\\compare"
+  }
+}

@@ -1,0 +1,748 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[UTF8]{ctex}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\rank}{rank}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\ubar}{\bar{u}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+
+\title{结构化值函数通信协调版本推导}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{问题设置}
+
+考虑 $N_p$ 个追逐者和 $N_e$ 个逃逸者的多智能体追逃博弈。对任意智能体，
+记其状态与控制分别为
+\begin{equation}
+x = [p^\top,v^\top]^\top \in \R^6,
+\qquad
+u \in \R^3,
+\end{equation}
+其中 $p\in\R^3$ 表示位置，$v\in\R^3$ 表示速度。采用的单机动力学为
+\begin{equation}
+\dot x = f(x)+g(x)u.
+\label{eq:single_dynamics}
+\end{equation}
+
+\subsection{单机非线性动力学}
+
+对第 $i$ 个智能体，记
+\begin{equation}
+x_i^s=
+\begin{bmatrix}
+x_{a,i}^s & x_{b,i}^s & h_i^s & v_{a,i}^s & v_{b,i}^s & v_{h,i}^s
+\end{bmatrix}^{\!\top},
+\qquad s\in\{p,e\},
+\end{equation}
+则其漂移项写为
+\begin{equation}
+f(x_i^s)=
+\begin{bmatrix}
+v_{a,i}^s\\
+v_{b,i}^s\\
+v_{h,i}^s\\
+\dfrac{T_i^s\cos\alpha_i^s-D_i^s}{m}\\
+\dfrac{L_i^s+T_i^s\sin\alpha_i^s}{m}\\
+\dfrac{M_i^s+T_i^s y_d}{m}
+\end{bmatrix},
+\label{eq:f_single}
+\end{equation}
+输入矩阵写为
+\begin{equation}
+g(x_i^s)=
+\begin{bmatrix}
+0 & 0 & 0\\
+0 & 0 & 0\\
+0 & 0 & 0\\
+1 & 0 & 0\\
+0 & 1 & 0\\
+0 & 0 & g_{33}(x_i^s)
+\end{bmatrix},
+\qquad
+g_{33}(x_i^s)=1+\frac{1}{4}\sin^2\!\big(v_{a,i}^s x_{b,i}^s\big).
+\label{eq:g_single}
+\end{equation}
+因此控制只直接作用于速度通道。
+
+与上述动力学对应的气动中间量为
+\begin{equation}
+V_i^s=\sqrt{(v_{a,i}^s)^2+(v_{b,i}^s)^2+(v_{h,i}^s)^2},
+\qquad
+\rho_i^s=c_\rho \exp\!\left(-\frac{h_i^s}{24000}\right),
+\qquad
+q_i^s=\frac{1}{2}\rho_i^s (V_i^s)^2,
+\end{equation}
+\begin{equation}
+\alpha_i^s=\arctan2\!\big(v_{h,i}^s,\,v_{a,i}^s\big),
+\qquad
+\beta_i^s=\arcsin\!\left(\frac{v_{b,i}^s}{V_i^s}\right),
+\end{equation}
+\begin{equation}
+T_i^s=q_i^s S c_\beta \beta_i^s,
+\qquad
+D_i^s=q_i^s S c_{d0},
+\qquad
+L_i^s=q_i^s S c_{l0},
+\qquad
+M_i^s=q_i^s S c_{m0}.
+\label{eq:aero_terms}
+\end{equation}
+
+\subsection{局部误差动力学与求和表示}
+
+先为每个追逐者--逃逸者对 $(j,i)$ 定义相对误差
+\begin{equation}
+\tilde x_{j,i}=x_j^p-x_i^e+r_{j,i}.
+\label{eq:pairwise_error}
+\end{equation}
+当 $r_{j,i}$ 为常量时，其动力学满足
+\begin{equation}
+\dot{\tilde x}_{j,i}
+=
+\mathcal F_{j,i}(x)+g_j^p(x_j^p)u_j^p-g_i^e(x_i^e)u_i^e,
+\label{eq:pairwise_error_dynamics}
+\end{equation}
+其中
+\begin{equation}
+\mathcal F_{j,i}(x)\triangleq f(x_j^p)-f(x_i^e).
+\label{eq:pairwise_drift}
+\end{equation}
+
+再引入分配系数
+\begin{equation}
+c_{j,i}\in\{0,1\},
+\qquad
+\sum_{i=1}^{N_e} c_{j,i}=1,
+\qquad
+c_{j,i}=1 \Longleftrightarrow \sigma(j)=i.
+\label{eq:assignment_indicator}
+\end{equation}
+于是，围绕逃逸者 $i$ 的局部聚合动力学右端可以写成
+\begin{equation}
+F_i(x,u)=
+\sum_{j=1}^{N_p}
+c_{j,i}
+\Big(
+\mathcal F_{j,i}(x)+g_j^p(x_j^p)u_j^p-g_i^e(x_i^e)u_i^e
+\Big).
+\label{eq:F_local_sum}
+\end{equation}
+
+因此，对应的 Hamiltonian 项可写为
+\begin{equation}
+\nabla V_i^*(x)^\top F_i(x,u)
+=
+\nabla V_i^*(x)^\top
+\sum_{j=1}^{N_p}
+c_{j,i}
+\Big(
+\mathcal F_{j,i}(x)+g_j^p u_j^p-g_i^e u_i^e
+\Big).
+\label{eq:hji_sum_term}
+\end{equation}
+$F_i(x,u)$ 的含义是：对固定逃逸者 $i$，将所有被分配到该局部子问题的 pursuer 动力学贡献按分配系数加总，从而得到该局部误差系统的右端项。
+
+在硬分配情形下，每个追逐者 $j$ 只与其当前被分配的逃逸者 $i=\sigma(j)$ 形成局部子问题，因此更直接使用的局部误差动力学为
+\begin{equation}
+F_j^{\mathrm{loc}}(x,u_j^p,u_{\sigma(j)}^e)
+\triangleq
+\mathcal F_{j,\sigma(j)}(x)
++
+g_j^p(x_j^p)u_j^p
+-
+g_{\sigma(j)}^e(x_{\sigma(j)}^e)u_{\sigma(j)}^e.
+\label{eq:F_local_assigned}
+\end{equation}
+为简洁起见，下文将其记为
+\begin{equation}
+F_j(x,u)\triangleq F_j^{\mathrm{loc}}(x,u_j^p,u_{\sigma(j)}^e).
+\label{eq:Fj_short}
+\end{equation}
+也就是说，下文采用的是局部求和表示在“硬分配、逐追逐者局部子问题”下的特化形式；多追逐者之间的合作效应不是通过把 tracking 动力学本身做全局求和来实现，而是通过后续解析协调项 $\Phi_j(x)$ 引入。
+
+\subsection{追踪误差与瞬时代价}
+
+对追逐者 $j$，设其当前被分配到的逃逸者为 $\sigma(j)$，期望围捕位移为 $r_{j,\sigma(j)}$，则基础追踪误差定义为
+\begin{equation}
+\tilde x_j = x_j^p - x_{\sigma(j)}^e + r_{j,\sigma(j)}.
+\label{eq:tracking_error}
+\end{equation}
+
+对应的瞬时代价取为
+\begin{equation}
+\ell_j(\tilde x_j,u_j^p,u_{\sigma(j)}^e)
+=
+\tilde x_j^\top Q\tilde x_j
++
+U(u_j^p)-W(u_{\sigma(j)}^e),
+\label{eq:stage_cost_original}
+\end{equation}
+其中 $U(\cdot)$ 与 $W(\cdot)$ 是用于处理输入饱和的非二次积分型代价。
+
+\section{精确值函数层的结构化分解}
+
+\subsection{原始精确 HJI}
+
+记追逐者 $j$ 的精确最优值函数为 $V_j^*(x)$，则对应的 Hamilton--Jacobi--Isaacs 方程写为
+\begin{equation}
+0=
+\min_{u_j^p}\max_{u_{\sigma(j)}^e}
+\left[
+\ell_j(\tilde x_j,u_j^p,u_{\sigma(j)}^e)
++
+\nabla V_j^*(x)^\top F_j(x,u)
+\right].
+\label{eq:hji_original}
+\end{equation}
+这一层尚未引入任何网络近似；$V_j^*$ 仍是理论上的精确最优值函数。
+
+\subsection{解析协调势函数}
+
+设同组追逐者的通信图邻接矩阵为 $A_p=[a_{jk}]$，则追逐者 $j$ 的组内度定义为
+\begin{equation}
+d_j=\sum_{k=1}^{N_p} a_{jk}.
+\end{equation}
+若 $d_j=0$，则说明追逐者 $j$ 当前没有同组通信邻居。
+
+定义相对位置、相对速度和期望相对位移为
+\begin{equation}
+\Delta p_{jk}=p_j-p_k,
+\qquad
+\Delta v_{jk}=v_j-v_k,
+\qquad
+\Delta_{jk}^{p}=r_{k,\sigma(k)}^{p}-r_{j,\sigma(j)}^{p}.
+\label{eq:relative_defs}
+\end{equation}
+注意这里的 $\Delta_{jk}^{p}$ 采用的是
+\(
+r_k-r_j
+\)
+而不是
+\(
+r_k-r_j
+\)。
+
+为在近距离时增强协调项，本文引入平滑 pairwise 放大因子
+\begin{equation}
+\rho_{jk}(x)=\frac{d_{\mathrm{safe}}^2}{\norm{\Delta p_{jk}}^2+\varepsilon_d},
+\qquad
+\alpha_{jk}(x)=
+1+\frac{1}{2}\left(
+\rho_{jk}(x)-1+\sqrt{\big(\rho_{jk}(x)-1\big)^2+\varepsilon_\alpha}
+\right),
+\label{eq:smooth_alpha}
+\end{equation}
+其中取
+\begin{equation}
+\varepsilon_d=10^{-8},
+\qquad
+\varepsilon_\alpha=10^{-4}.
+\end{equation}
+式 \eqref{eq:smooth_alpha} 是
+\[
+\max\!\left(1,\frac{d_{\mathrm{safe}}^2}{\norm{\Delta p_{jk}}^2}\right)
+\]
+的光滑近似：当距离远大于 $d_{\mathrm{safe}}$ 时，$\alpha_{jk}(x)\approx 1$；当距离接近或小于 $d_{\mathrm{safe}}$ 时，$\alpha_{jk}(x)$ 平滑增大，从而增强近距分离驱动。
+
+于是，追逐者 $j$ 的解析协调势函数定义为
+\begin{equation}
+\mathcal E_{jk}(x)
+\triangleq
+\frac{1}{2}\norm{\Delta v_{jk}}^2
++
+\frac{\big(\Delta p_{jk}-\Delta_{jk}^{p}\big)^\top v_j}{d_{\mathrm{ref}}},
+\label{eq:pair_energy}
+\end{equation}
+鍒欐湁
+\begin{equation}
+\Phi_j(x)=
+\frac{\gamma}{d_j}
+\sum_{k=1}^{N_p}
+a_{jk}\,\alpha_{jk}(x)\,\mathcal E_{jk}(x).
+\label{eq:phi_j}
+\end{equation}
+其含义可分为三部分：
+\begin{itemize}
+\item $\frac{1}{2}\norm{\Delta v_{jk}}^2$ 惩罚同组追逐者间过大的相对速度；
+\item $\big(\Delta p_{jk}-\Delta_{jk}^{p}\big)^\top v_j/d_{\mathrm{ref}}$ 刻画位置--速度耦合，惩罚会恶化相对间距误差的速度方向；
+\item $\alpha_{jk}(x)$ 在近距离时自适应放大整个 pairwise 协调项，因此当前方法应解释为带平滑安全增益的解析协调势函数，而不是硬约束避碰器。
+\end{itemize}
+
+\subsection{先分解精确值函数，再谈近似}
+
+关键步骤不是先修改近似值函数，而是先在精确值函数层做分解：
+\begin{equation}
+V_j^*(x)=\bar V_j^*(x)+\Phi_j(x),
+\label{eq:exact_decomposition}
+\end{equation}
+其中
+\begin{equation}
+\bar V_j^*(x)\triangleq V_j^*(x)-\Phi_j(x)
+\end{equation}
+称为残差值函数。
+
+将式 \eqref{eq:exact_decomposition} 代回原始 HJI \eqref{eq:hji_original}，得到
+\begin{equation}
+0=
+\min_{u_j^p}\max_{u_{\sigma(j)}^e}
+\left[
+\ell_j(\tilde x_j,u_j^p,u_{\sigma(j)}^e)
++
+\nabla\Phi_j(x)^\top F_j(x,u)
++
+\nabla\bar V_j^*(x)^\top F_j(x,u)
+\right].
+\label{eq:hji_with_phi}
+\end{equation}
+于是可定义修正后的瞬时代价
+\begin{equation}
+\ell_j^\Phi(x,u)
+\triangleq
+\ell_j(\tilde x_j,u_j^p,u_{\sigma(j)}^e)
++
+\nabla\Phi_j(x)^\top F_j(x,u),
+\label{eq:shaped_stage_cost}
+\end{equation}
+从而得到残差 HJI
+\begin{equation}
+0=
+\min_{u_j^p}\max_{u_{\sigma(j)}^e}
+\left[
+\ell_j^\Phi(x,u)
++
+\nabla\bar V_j^*(x)^\top F_j(x,u)
+\right].
+\label{eq:residual_hji}
+\end{equation}
+因此，解析项是在精确值函数层先进入 HJI，再由网络去逼近残差值函数；它不是在已经近似好的梯度外面再人工加一项偏置。
+
+\subsection{退化性质}
+
+当下列任一条件成立时，
+\begin{equation}
+\gamma=0,
+\qquad
+d_j=0,
+\qquad
+\text{comm\_mode}=\texttt{none},
+\end{equation}
+有 $\Phi_j(x)\equiv 0$，于是
+\begin{equation}
+V_j^*(x)=\bar V_j^*(x),
+\end{equation}
+残差 HJI \eqref{eq:residual_hji} 退化为原始 HJI \eqref{eq:hji_original}，方法也自然退化为原始 V-SNAC。
+
+\section{最优控制律先在精确层导出}
+
+\subsection{控制有效梯度}
+
+由式 \eqref{eq:g_single} 可知，输入矩阵只作用于速度通道。因此真正进入控制律的是
+\begin{equation}
+(g_j^p)^\top \nabla V_j^*
+=(g_j^p)^\top\big(\nabla\bar V_j^*+\nabla\Phi_j\big).
+\end{equation}
+于是定义控制有效梯度
+\begin{equation}
+\bar\nabla\Phi_j=
+\begin{bmatrix}
+0_3\\
+\nabla_{v_j}\Phi_j
+\end{bmatrix}.
+\end{equation}
+由式 \eqref{eq:phi_j} 可直接得到
+\begin{equation}
+\nabla_{v_j}\Phi_j
+=
+\frac{\gamma}{d_j}
+\sum_{k=1}^{N_p}
+a_{jk}\,\alpha_{jk}(x)
+\left[
+\Delta v_{jk}
++
+\frac{\Delta p_{jk}-\Delta_{jk}^{p}}{d_{\mathrm{ref}}}
+\right].
+\label{eq:phi_grad_v}
+\end{equation}
+由式 \eqref{eq:phi_grad_v} 可见，平滑因子 $\alpha_{jk}(x)$ 乘在整个 pairwise 项前面，而不只是乘在位置项上。
+
+\subsection{精确层的追逐者最优控制律}
+
+在非二次积分型输入代价下，对 Hamiltonian 关于追逐者控制求驻点，可得
+\begin{equation}
+u_j^{p*}
+=
+-\ubar_p
+\tanh\!\left(
+\frac{1}{2\ubar_p}
+R_1^{-1}
+(g_j^p)^\top
+\big(
+\nabla\bar V_j^*(x)+\bar\nabla\Phi_j(x)
+\big)
+\right).
+\label{eq:pursuer_ctrl_exact}
+\end{equation}
+因此，当前方法的逻辑顺序是
+\[
+\text{精确值函数分解}
+\;\Longrightarrow\;
+\text{残差 HJI}
+\;\Longrightarrow\;
+\text{精确控制律}
+\;\Longrightarrow\;
+\text{残差函数近似}.
+\]
+
+\subsection{逃逸者控制为何不变}
+
+在本文的解析项构造下，$\Phi_j(x)$ 只依赖同组追逐者状态，不直接依赖逃逸者控制，因此逃逸者的最坏情况控制保持原结构：
+\begin{equation}
+u_i^{e*}
+=
+-\ubar_e
+\tanh\!\left(
+\frac{1}{2\ubar_e}
+R_2^{-1}(g_i^e)^\top \bar g_i^*
+\right),
+\end{equation}
+其中 $\bar g_i^*$ 表示与逃逸者 $i$ 相关的值函数梯度聚合项。也就是说，解析协调项只改变追逐者侧的控制有效梯度，不改变逃逸者的最坏情况响应结构。
+
+\section{网络近似只作用于残差值函数}
+
+\subsection{残差值函数的参数化}
+
+完成精确层推导后，才引入网络近似。这里令 critic 只近似残差值函数：
+\begin{equation}
+\bar V_j^*(x)\approx \hat{\bar V}_j(x)=\hat W_j^\top \psi(\tilde x_j).
+\label{eq:residual_value_approx}
+\end{equation}
+因此，实际用于控制的总近似值函数为
+\begin{equation}
+\hat V_j^{\mathrm{tot}}(x)=\hat W_j^\top\psi(\tilde x_j)+\Phi_j(x).
+\end{equation}
+这意味着
+\begin{itemize}
+\item 分解发生在精确值函数层；
+\item 网络只负责逼近 $\bar V_j^*$；
+\item $\Phi_j$ 始终是解析已知项，不交给网络去学。
+\end{itemize}
+
+\subsection{当前 6 维 critic 特征}
+
+取 6 维 critic 基函数为
+\begin{equation}
+\psi(\tilde x)
+=
+g_\psi
+\begin{bmatrix}
+\tilde p_1\tilde v_1/s_1\\
+\tilde p_2\tilde v_2/s_2\\
+\tilde p_3\tilde v_3/s_3\\
+\frac{1}{2}\tilde v_1^2\\
+\frac{1}{2}\tilde v_2^2\\
+\frac{1}{2}\tilde v_3^2
+\end{bmatrix},
+\label{eq:feature_map}
+\end{equation}
+其中 $(s_1,s_2,s_3)$ 为位置缩放因子，$g_\psi$ 为特征增益。
+
+若记 $\hat W_j=[w_{j1},\dots,w_{j6}]^\top$，则残差值函数梯度为
+\begin{equation}
+\nabla_{\tilde x_j}\hat{\bar V}_j
+=
+g_\psi
+\begin{bmatrix}
+w_{j1}\tilde v_1/s_1\\
+w_{j2}\tilde v_2/s_2\\
+w_{j3}\tilde v_3/s_3\\
+w_{j1}\tilde p_1/s_1+w_{j4}\tilde v_1\\
+w_{j2}\tilde p_2/s_2+w_{j5}\tilde v_2\\
+w_{j3}\tilde p_3/s_3+w_{j6}\tilde v_3
+\end{bmatrix}.
+\label{eq:residual_grad}
+\end{equation}
+于是近似控制律写为
+\begin{equation}
+\hat u_j^p
+=
+-\ubar_p
+\tanh\!\left(
+\frac{1}{2\ubar_p}
+R_1^{-1}
+(g_j^p)^\top
+\big(
+\nabla\hat{\bar V}_j(x)+\bar\nabla\Phi_j(x)
+\big)
+\right).
+\label{eq:pursuer_ctrl_approx}
+\end{equation}
+
+\section{Bellman 关系也应先写成残差形式}
+
+\subsection{精确残差 Bellman 关系}
+
+在离散时间步长 $\Delta t$ 下，原始精确 Bellman 关系为
+\begin{equation}
+V_j^*(x_t)=\ell_{j,t}\Delta t+V_j^*(x_{t+1}).
+\label{eq:bellman_original}
+\end{equation}
+代入精确分解式 \eqref{eq:exact_decomposition}，可得
+\begin{equation}
+\bar V_j^*(x_t)+\Phi_{j,t}
+=
+\ell_{j,t}\Delta t+\bar V_j^*(x_{t+1})+\Phi_{j,t+1}.
+\end{equation}
+移项后得到精确残差 Bellman 关系
+\begin{equation}
+\bar V_j^*(x_t)
+=
+\Big(
+\ell_{j,t}\Delta t+\Phi_{j,t+1}-\Phi_{j,t}
+\Big)
++
+\bar V_j^*(x_{t+1}).
+\label{eq:bellman_residual_exact}
+\end{equation}
+也可以等价地写成
+\begin{equation}
+\bar V_j^*(x_t)=\ell_{j,t}^{\Phi}\Delta t+\bar V_j^*(x_{t+1}),
+\end{equation}
+其中
+\begin{equation}
+\ell_{j,t}^{\Phi}
+=
+\ell_{j,t}
++
+\frac{\Phi_{j,t+1}-\Phi_{j,t}}{\Delta t}.
+\label{eq:discrete_shaped_cost}
+\end{equation}
+这说明离散实现中的解析项同样是在网络近似之前就进入了 Bellman 右端。
+
+\subsection{最小二乘 critic 的近似方程}
+
+再将残差值函数近似式 \eqref{eq:residual_value_approx} 代入 \eqref{eq:bellman_residual_exact}，得到训练中实际拟合的线性方程：
+\begin{equation}
+\big(\psi_{j,t+1}-\psi_{j,t}\big)^\top \hat W_j
+=
+-\Big(
+\ell_{j,t}\Delta t+\Phi_{j,t+1}-\Phi_{j,t}
+\Big).
+\label{eq:bellman_ls}
+\end{equation}
+因此，离散训练方程中的
+\begin{equation}
+\texttt{known\_value\_delta}=\Phi_{j,t+1}-\Phi_{j,t}
+\end{equation}
+并不是在近似层额外补一项，而是精确残差 Bellman 右端离散化之后的显式写法。
+
+\section{解析项是否会使网络逼近更坏}
+
+\subsection{最小二乘 critic 的数值复杂度不变}
+
+对第 $j$ 个追逐者，记最小二乘设计矩阵为
+\begin{equation}
+X_j=
+\begin{bmatrix}
+\big(\psi_{j,1}-\psi_{j,0}\big)^\top\\
+\big(\psi_{j,2}-\psi_{j,1}\big)^\top\\
+\vdots\\
+\big(\psi_{j,T}-\psi_{j,T-1}\big)^\top
+\end{bmatrix}.
+\end{equation}
+不引入解析项时，目标向量为
+\begin{equation}
+y_j=
+\begin{bmatrix}
+-\ell_{j,0}\Delta t\\
+-\ell_{j,1}\Delta t\\
+\vdots\\
+-\ell_{j,T-1}\Delta t
+\end{bmatrix},
+\end{equation}
+对应最小二乘问题
+\begin{equation}
+\hat W_j^{(0)}=\arg\min_W \norm{X_jW-y_j}_2^2.
+\end{equation}
+引入解析项后，仅右端项改变为
+\begin{equation}
+y_j^{\Phi}=
+\begin{bmatrix}
+-\big(\ell_{j,0}\Delta t+\Phi_{j,1}-\Phi_{j,0}\big)\\
+-\big(\ell_{j,1}\Delta t+\Phi_{j,2}-\Phi_{j,1}\big)\\
+\vdots\\
+-\big(\ell_{j,T-1}\Delta t+\Phi_{j,T}-\Phi_{j,T-1}\big)
+\end{bmatrix},
+\end{equation}
+对应问题为
+\begin{equation}
+\hat W_j^{(\Phi)}=\arg\min_W \norm{X_jW-y_j^{\Phi}}_2^2.
+\label{eq:ls_phi}
+\end{equation}
+因此
+\begin{equation}
+\rank(X_j)\ \text{不变},\qquad
+X_j^\top X_j\ \text{不变},\qquad
+\kappa(X_j^\top X_j)\ \text{不变}.
+\end{equation}
+这说明对当前线性 least-squares critic 而言，解析项不会提高回归系统的条件数，也不会增加每次求解的渐近复杂度；它改变的是拟合目标，而不是数值求解难度本身。
+
+\subsection{残差逼近误差不增的一个充分条件}
+
+设 $\mathcal H=L_2(\mu)$，$\Pi_\psi$ 为到 critic 特征子空间
+\begin{equation}
+\mathcal S_\psi=\text{span}\{\psi_1,\dots,\psi_m\}
+\end{equation}
+的正交投影。定义不带解析项时的最优逼近误差
+\begin{equation}
+e_0\triangleq \inf_W \norm{V_j^*-W^\top\psi}_\mu
+=\norm{(I-\Pi_\psi)V_j^*}_\mu,
+\end{equation}
+以及引入解析项后残差值函数的最优逼近误差
+\begin{equation}
+e_\Phi\triangleq \inf_W \norm{\bar V_j^*-W^\top\psi}_\mu
+=\norm{(I-\Pi_\psi)\bar V_j^*}_\mu.
+\end{equation}
+由 $V_j^*=\bar V_j^*+\Phi_j$ 可得
+\begin{equation}
+(I-\Pi_\psi)V_j^*
+=(I-\Pi_\psi)\bar V_j^*+(I-\Pi_\psi)\Phi_j.
+\end{equation}
+于是
+\begin{align}
+e_0^2
+&=
+\norm{(I-\Pi_\psi)\bar V_j^*+(I-\Pi_\psi)\Phi_j}_\mu^2 \\
+&=
+e_\Phi^2
++
+\norm{(I-\Pi_\psi)\Phi_j}_\mu^2
++
+2\left\langle (I-\Pi_\psi)\bar V_j^*,(I-\Pi_\psi)\Phi_j \right\rangle_\mu.
+\label{eq:error_compare_expand}
+\end{align}
+因此，只要满足充分条件
+\begin{equation}
+\left\langle (I-\Pi_\psi)\bar V_j^*,(I-\Pi_\psi)\Phi_j \right\rangle_\mu \ge 0,
+\label{eq:sufficient_nonnegative_cross}
+\end{equation}
+就有
+\begin{equation}
+e_0^2 \ge e_\Phi^2,
+\qquad\Longrightarrow\qquad
+e_\Phi \le e_0.
+\label{eq:residual_error_not_worse}
+\end{equation}
+一个更强但更直观的特例是正交性：
+\begin{equation}
+\left\langle (I-\Pi_\psi)\bar V_j^*,(I-\Pi_\psi)\Phi_j \right\rangle_\mu =0,
+\end{equation}
+此时
+\begin{equation}
+e_0^2=e_\Phi^2+\norm{(I-\Pi_\psi)\Phi_j}_\mu^2.
+\end{equation}
+其含义是：如果解析项提取出的正是 critic 特征空间难以表示、但与残差未表示部分不相互抵消的那部分结构，那么网络只需要逼近一个更小的残差函数，最佳逼近误差不会增大。
+
+\subsection{控制误差不会因解析分解被额外放大}
+
+记精确控制与近似控制分别为
+\begin{equation}
+u_j^{p*}=-\ubar_p\tanh(z_j^*),
+\qquad
+\hat u_j^p=-\ubar_p\tanh(\hat z_j),
+\end{equation}
+其中
+\begin{equation}
+z_j^*=
+\frac{1}{2\ubar_p}
+R_1^{-1}(g_j^p)^\top
+\big(\nabla\bar V_j^*+\bar\nabla\Phi_j\big),
+\end{equation}
+\begin{equation}
+\hat z_j=
+\frac{1}{2\ubar_p}
+R_1^{-1}(g_j^p)^\top
+\big(\nabla\hat{\bar V}_j+\bar\nabla\Phi_j\big).
+\end{equation}
+由于逐分量 $\tanh(\cdot)$ 是 $1$-Lipschitz 映射，
+\begin{align}
+\norm{u_j^{p*}-\hat u_j^p}
+&\le
+\ubar_p \norm{z_j^*-\hat z_j}\\
+&\le
+\frac{1}{2}
+\norm{R_1^{-1}(g_j^p)^\top}
+\norm{\nabla\bar V_j^*-\nabla\hat{\bar V}_j}.
+\label{eq:control_error_bound}
+\end{align}
+因此，解析项不会在控制误差中额外引入新的网络逼近误差源；控制误差仍然只由残差值函数梯度的逼近精度决定。若引入解析项后残差梯度更容易逼近，则由式 \eqref{eq:control_error_bound} 可知其控制误差上界也不会更差。
+
+\subsection{不能过度宣称的边界}
+
+上述结果说明：
+\begin{itemize}
+\item 解析项不会增加当前 least-squares critic 的数值求解难度；
+\item 在式 \eqref{eq:sufficient_nonnegative_cross} 这类充分条件下，残差值函数的最佳逼近误差不会大于原始值函数的最佳逼近误差；
+\item 更小的残差梯度误差会通过 Lipschitz 控制律传导为不更大的控制误差上界。
+\end{itemize}
+但这并不等价于对所有场景都能证明闭环性能指标单调改进。尤其是，通常不能无条件宣称
+\begin{equation}
+J_j^{(\Phi)}\le J_j^{(0)}
+\qquad
+\text{对所有初值和所有任务指标都成立}.
+\end{equation}
+这是因为闭环表现还同时受到 $\gamma$、输入饱和、目标分配几何以及测试分布等因素影响。更准确的理论表述应当是：解析项在数值复杂度上不增加训练难度，并在合理结构假设下有助于把整体值函数逼近转化为更易处理的残差值函数逼近。
+
+\section{与原来“直接改近似梯度”的区别}
+
+若只在近似层写成
+\begin{equation}
+u_j \sim -\tanh\!\big((g_j^p)^\top(\nabla \hat V_j+\delta_j)\big),
+\end{equation}
+那么更像是在已近似好的值函数梯度外面再补一个控制层偏置。
+
+而当前方法采用的顺序是
+\begin{equation}
+V_j^*
+\xrightarrow{\text{精确分解}}
+\bar V_j^*+\Phi_j
+\xrightarrow{\text{得到残差 HJI/Bellman}}
+\text{只近似}\ \bar V_j^*.
+\end{equation}
+因此，更准确的理论表述应当是：
+\begin{itemize}
+\item 先在精确值函数层引入解析协调势函数 $\Phi_j$；
+\item 再得到对应的残差 HJI 和残差 Bellman 方程；
+\item 最后只用网络逼近残差值函数 $\bar V_j^*$。
+\end{itemize}
+
+\section{实现优势与边界}
+
+\subsection{实现优势}
+
+这种写法保留了原 V-SNAC 的主要工程优势：
+\begin{itemize}
+\item 不增加新的网络或 critic 数量，仍然只需要 $N_p$ 个 critic；
+\item $\Phi_j$ 是解析项，不需要把所有 pairwise 协调状态都交给网络去逼近；
+\item 由于通信图只在同组追逐者之间连边，额外在线复杂度更接近 $\sum_i n_i^2$，而不是全连接的 $N_p^2$；
+\item 由于输入矩阵只作用于速度通道，实现时只需构造控制有效梯度 $\nabla_{v_j}\Phi_j$。
+\end{itemize}
+
+\subsection{需要诚实说明的边界}
+
+这套方法把协调/分离偏好写进了精确值函数分解与 Bellman 结构中，因此比“单纯改近似梯度”更靠前一层；但它仍然是软协调，而不是硬约束安全控制。因此，合理的表述应当是：
+\begin{itemize}
+\item 协调项在值函数和 Bellman 构造层就已引入；
+\item 网络近似只作用于残差值函数；
+\item 但它并不提供“绝对不碰撞”的严格正向不变性证明。
+\end{itemize}
+若后续需要硬安全保证，则必须进一步引入状态约束 Hamiltonian、屏障函数或安全滤波器。
+
+\end{document}

@@ -1,0 +1,12 @@
+{
+  "d_safe_m": 500.0,
+  "gamma": 1.0,
+  "no_analytic": {
+    "min_d_min_m": 0.03879725739431095,
+    "time_below_d_safe_s": 15.600000000000001
+  },
+  "smooth_analytic": {
+    "min_d_min_m": 1743.0431401336527,
+    "time_below_d_safe_s": 0.0
+  }
+}

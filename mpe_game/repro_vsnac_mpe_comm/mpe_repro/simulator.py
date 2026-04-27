@@ -18,6 +18,8 @@ from .offpolicy_ls import ReplayLeastSquares
 class StepRecord:
     phi_t: List[np.ndarray]
     phi_tp1: List[np.ndarray]
+    value_terms_t: np.ndarray
+    value_terms_tp1: np.ndarray
     stage_costs: np.ndarray
     team_error: float
     pairwise_errors: np.ndarray
@@ -112,6 +114,7 @@ class MPECommSimulator:
         self.nu_display = np.array([1.0, 1.0, 1.0, 0.0, 0.0, 0.0], dtype=float)
         self.nu_graph = self.nu_display.copy()
         self.initial_assignment = scenario.initial_assignment.copy()
+        self._comm_structure_cache: dict[tuple[str, tuple[int, ...]], tuple[np.ndarray, np.ndarray]] = {}
 
     def _compute_d_min(self, pursuer_states: np.ndarray) -> float:
         """Minimum pairwise pursuer distance (position only)."""
@@ -119,13 +122,10 @@ class MPECommSimulator:
         if n_p < 2:
             return float("inf")
         pos = pursuer_states[:, :3]
-        d_min = float("inf")
-        for j in range(n_p):
-            for k in range(j + 1, n_p):
-                d = float(np.linalg.norm(pos[j] - pos[k]))
-                if d < d_min:
-                    d_min = d
-        return d_min
+        diff = pos[:, None, :] - pos[None, :, :]
+        dist = np.linalg.norm(diff, axis=2)
+        mask = np.triu(np.ones((n_p, n_p), dtype=bool), k=1)
+        return float(np.min(dist[mask]))
 
     def _compute_formation_error_norms(
         self,
@@ -134,16 +134,28 @@ class MPECommSimulator:
         delta_matrix: np.ndarray,
     ) -> np.ndarray:
         """Per-pursuer formation error norm: ||sum_k a_{jk} * [(x_j - x_k) - Delta_{jk}]||."""
-        n_p = pursuer_states.shape[0]
-        norms = np.zeros(n_p, dtype=float)
-        for j in range(n_p):
-            err = np.zeros(6, dtype=float)
-            for k in range(n_p):
-                if k == j or A_p[j, k] <= 0.0:
-                    continue
-                err += A_p[j, k] * ((pursuer_states[j] - pursuer_states[k]) - delta_matrix[j, k])
-            norms[j] = float(np.linalg.norm(err))
-        return norms
+        rel = pursuer_states[:, None, :] - pursuer_states[None, :, :] - delta_matrix
+        err = np.sum(A_p[:, :, None] * rel, axis=1)
+        return np.linalg.norm(err, axis=1)
+
+    def _comm_structures(
+        self,
+        comm_graph: CommunicationGraph,
+        assignment: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        key = (comm_graph.comm_mode, tuple(int(v) for v in assignment.tolist()))
+        cached = self._comm_structure_cache.get(key)
+        if cached is not None:
+            return cached
+
+        if comm_graph.comm_mode == "none":
+            adjacency = np.zeros((self.scenario.n_pursuers, self.scenario.n_pursuers), dtype=float)
+            delta_matrix = np.zeros((self.scenario.n_pursuers, self.scenario.n_pursuers, 6), dtype=float)
+        else:
+            adjacency = comm_graph.build_adjacency(assignment=assignment)
+            delta_matrix = comm_graph.compute_delta_matrix(self.displacements, assignment)
+        self._comm_structure_cache[key] = (adjacency, delta_matrix)
+        return adjacency, delta_matrix
 
     def _scripted_evader_input(self, step_idx: int, evader_idx: int) -> np.ndarray:
         t = float(step_idx) * self.learning.dt
@@ -319,12 +331,19 @@ class MPECommSimulator:
 
         assigned = graph.assignment.copy()
 
-        # Build communication adjacency and compute formation data
-        A_p = comm_graph.build_adjacency(pursuer_states, assigned)
+        # Build communication adjacency and structured value-function terms.
+        A_base, delta_matrix = self._comm_structures(comm_graph, assigned)
+        A_p = A_base
         if dropout_prob > 0.0 and dropout_rng is not None:
-            A_p = comm_graph.apply_dropout(A_p, dropout_rng, dropout_prob)
-        degree_vector, _ = comm_graph.laplacian_and_degree(A_p)
-        delta_matrix = comm_graph.compute_delta_matrix(self.displacements, assigned)
+            A_p = comm_graph.apply_dropout(A_base, dropout_rng, dropout_prob)
+        value_terms_t, coordination_grads = self.controller.coordination_terms(
+            pursuer_states=pursuer_states,
+            A_p=A_p,
+            delta_matrix=delta_matrix,
+            gamma=gamma,
+            formation_ref_dist=comm_graph.formation_ref_dist if comm_graph is not None else 500.0,
+            d_safe=comm_graph.d_safe if comm_graph is not None else 0.0,
+        )
 
         u_p, u_e_virtual, x_err, u_p_tanh, u_e_tanh = self.controller.policy(
             pursuer_states=pursuer_states,
@@ -339,6 +358,7 @@ class MPECommSimulator:
             delta_matrix=delta_matrix,
             formation_ref_dist=comm_graph.formation_ref_dist if comm_graph is not None else 500.0,
             d_safe=comm_graph.d_safe if comm_graph is not None else 0.0,
+            coordination_gradients=coordination_grads,
         )
         u_e_applied = self._applied_evader_inputs(
             step_idx=step_idx,
@@ -355,39 +375,32 @@ class MPECommSimulator:
             assignment=assigned,
         )
 
-        phi_t = [self.features.phi(x_err[j]) for j in range(self.scenario.n_pursuers)]
+        phi_t_arr = self.features.phi_batch(x_err)
+        phi_t = [phi_t_arr[j].copy() for j in range(self.scenario.n_pursuers)]
 
-        next_p = pursuer_states.copy()
-        next_e = evader_states.copy()
-        for j in range(self.scenario.n_pursuers):
-            next_p[j] = self.dynamics.rk4_step(pursuer_states[j], u_p[j], self.learning.dt)
-        for i in range(self.scenario.n_evaders):
-            next_e[i] = self.dynamics.rk4_step(evader_states[i], u_e_applied[i], self.learning.dt)
+        next_p = self.dynamics.rk4_step_batch(pursuer_states, u_p, self.learning.dt)
+        next_e = self.dynamics.rk4_step_batch(evader_states, u_e_applied, self.learning.dt)
 
-        # Compute next-step augmented errors for critic update
+        # Compute next-step structured value terms for critic update.
         next_assigned = graph.assignment.copy()
-        next_A_p = comm_graph.build_adjacency(next_p, next_assigned)
-        if dropout_prob > 0.0 and dropout_rng is not None:
-            next_A_p = comm_graph.apply_dropout(next_A_p, dropout_rng, dropout_prob)
-        next_delta_matrix = comm_graph.compute_delta_matrix(self.displacements, next_assigned)
+        next_A_base, next_delta_matrix = self._comm_structures(comm_graph, next_assigned)
+        next_A_p = A_p if dropout_prob > 0.0 and dropout_rng is not None else next_A_base
 
-        next_x_err = np.zeros((self.scenario.n_pursuers, 6), dtype=float)
-        for j in range(self.scenario.n_pursuers):
-            i = int(next_assigned[j])
-            next_x_err[j] = self.controller.individual_error(
-                pursuer_idx=j,
-                evader_idx=i,
-                pursuer_states=next_p,
-                evader_states=next_e,
-                displacements=self.displacements,
-            )
-        phi_tp1 = [self.features.phi(next_x_err[j]) for j in range(self.scenario.n_pursuers)]
+        next_x_err = next_p - next_e[next_assigned] + self.displacements[np.arange(self.scenario.n_pursuers), next_assigned]
+        phi_tp1_arr = self.features.phi_batch(next_x_err)
+        phi_tp1 = [phi_tp1_arr[j].copy() for j in range(self.scenario.n_pursuers)]
+        value_terms_tp1, _ = self.controller.coordination_terms(
+            pursuer_states=next_p,
+            A_p=next_A_p,
+            delta_matrix=next_delta_matrix,
+            gamma=gamma,
+            formation_ref_dist=comm_graph.formation_ref_dist if comm_graph is not None else 500.0,
+            d_safe=comm_graph.d_safe if comm_graph is not None else 0.0,
+        )
 
         pairwise = self._pairwise_errors(pursuer_states, evader_states)
-        assigned_errors = np.array([pairwise[j, assigned[j]] for j in range(self.scenario.n_pursuers)])
-        initial_errors = np.array(
-            [pairwise[j, self.initial_assignment[j]] for j in range(self.scenario.n_pursuers)]
-        )
+        assigned_errors = pairwise[np.arange(self.scenario.n_pursuers), assigned]
+        initial_errors = pairwise[np.arange(self.scenario.n_pursuers), self.initial_assignment]
         team_error = graph.team_error(
             pursuer_states=pursuer_states,
             evader_states=evader_states,
@@ -402,6 +415,8 @@ class MPECommSimulator:
         rec = StepRecord(
             phi_t=phi_t,
             phi_tp1=phi_tp1,
+            value_terms_t=value_terms_t,
+            value_terms_tp1=value_terms_tp1,
             stage_costs=stage_costs,
             team_error=team_error,
             pairwise_errors=pairwise,
@@ -418,11 +433,10 @@ class MPECommSimulator:
         return next_p, next_e, rec
 
     def train_policy(self, seed: int = 0, dynamic_graph: bool = True) -> TrainResult:
-        """Train with standard V-SNAC (gamma=0).  Communication coupling is
-        added only at evaluation time via the formation gradient."""
+        """Train the residual critic under the structured value decomposition."""
         rng = np.random.default_rng(seed)
         n_critics = self.scenario.n_pursuers
-        gamma = 0.0  # Training always uses standard tracking error
+        gamma = float(self.comm_params.gamma) if self.comm_params.comm_mode != "none" else 0.0
         comm_graph = self.comm_graph
 
         weights = self._init_weights(rng)
@@ -469,6 +483,7 @@ class MPECommSimulator:
                         phi_tp1=step.phi_tp1[j],
                         stage_cost=step.stage_costs[j],
                         dt=self.learning.dt,
+                        known_value_delta=float(step.value_terms_tp1[j] - step.value_terms_t[j]),
                     )
 
             solved_weights, stats = replay.solve(
@@ -558,14 +573,8 @@ class MPECommSimulator:
             if terminal_mode:
                 pairwise_now = self._pairwise_errors(p, e)
                 assigned_now = graph.assignment.copy()
-                assigned_errors_now = np.array(
-                    [pairwise_now[j, assigned_now[j]] for j in range(self.scenario.n_pursuers)],
-                    dtype=float,
-                )
-                initial_errors_now = np.array(
-                    [pairwise_now[j, self.initial_assignment[j]] for j in range(self.scenario.n_pursuers)],
-                    dtype=float,
-                )
+                assigned_errors_now = pairwise_now[np.arange(self.scenario.n_pursuers), assigned_now]
+                initial_errors_now = pairwise_now[np.arange(self.scenario.n_pursuers), self.initial_assignment]
                 team_error_now = graph.team_error(
                     pursuer_states=p,
                     evader_states=e,
@@ -575,13 +584,14 @@ class MPECommSimulator:
                 )
                 d_min_now = self._compute_d_min(p)
                 # Build adjacency for formation error computation even in terminal mode
-                A_p_now = eval_comm_graph.build_adjacency(p, assigned_now)
-                delta_now = eval_comm_graph.compute_delta_matrix(self.displacements, assigned_now)
+                A_p_now, delta_now = self._comm_structures(eval_comm_graph, assigned_now)
                 form_err_now = self._compute_formation_error_norms(p, A_p_now, delta_now)
 
                 rec = StepRecord(
                     phi_t=[np.zeros(self.features.n_features, dtype=float) for _ in range(self.scenario.n_pursuers)],
                     phi_tp1=[np.zeros(self.features.n_features, dtype=float) for _ in range(self.scenario.n_pursuers)],
+                    value_terms_t=np.zeros(self.scenario.n_pursuers, dtype=float),
+                    value_terms_tp1=np.zeros(self.scenario.n_pursuers, dtype=float),
                     stage_costs=np.zeros(self.scenario.n_pursuers, dtype=float),
                     team_error=team_error_now,
                     pairwise_errors=pairwise_now,

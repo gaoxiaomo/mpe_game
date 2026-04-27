@@ -1,0 +1,188 @@
+{
+  "case": {
+    "name": "8v4",
+    "n_pursuers": 8,
+    "n_evaders": 4,
+    "seed": 47,
+    "assignment_mode": "shifted",
+    "layout_mode": "structured"
+  },
+  "gamma": 0.3,
+  "d_safe": 100.0,
+  "pair_factor": "smooth_max",
+  "dropout_prob": 0.15,
+  "scenario": {
+    "name": "scenario_8v4_generalized",
+    "initial_assignment": [
+      1,
+      2,
+      3,
+      0,
+      1,
+      2,
+      3,
+      0
+    ],
+    "capture_radius": 220.0,
+    "swap_threshold": 5.0,
+    "t_final": 140.0
+  },
+  "train": {
+    "iterations": 35,
+    "final_weight_norms": [
+      0.713062418855651,
+      0.7830378479683329,
+      0.7026906705056768,
+      0.7298955251414331,
+      0.6929318591082568,
+      0.7637396062587151,
+      0.7254109883732892,
+      0.7434231798681739
+    ],
+    "final_weight_norm_squares": [
+      0.508458013184272,
+      0.613148271350878,
+      0.4937741784157177,
+      0.5327474776214883,
+      0.48015456136722506,
+      0.5832981861682172,
+      0.5262211020527123,
+      0.5526780243653071
+    ],
+    "final_weight_vectors": [
+      [
+        0.2795,
+        0.2801,
+        0.2637,
+        0.3402,
+        0.2923,
+        0.2849
+      ],
+      [
+        0.3458,
+        0.2861,
+        0.268,
+        0.3427,
+        0.28,
+        0.3796
+      ],
+      [
+        0.2687,
+        0.284,
+        0.2901,
+        0.2619,
+        0.2548,
+        0.351
+      ],
+      [
+        0.3859,
+        0.2481,
+        0.2719,
+        0.3378,
+        0.2686,
+        0.2492
+      ],
+      [
+        0.2802,
+        0.2916,
+        0.2911,
+        0.2783,
+        0.2788,
+        0.2769
+      ],
+      [
+        0.3657,
+        0.2537,
+        0.2614,
+        0.3859,
+        0.2939,
+        0.2857
+      ],
+      [
+        0.2753,
+        0.263,
+        0.3517,
+        0.2959,
+        0.2909,
+        0.2923
+      ],
+      [
+        0.3352,
+        0.2731,
+        0.3478,
+        0.326,
+        0.24,
+        0.2844
+      ]
+    ],
+    "final_delta_per_critic": [
+      9.062924373087777e-05,
+      7.208114135030439e-05,
+      7.633692386718734e-05,
+      7.3788238912429e-05,
+      9.901204773942127e-05,
+      7.84926211054203e-05,
+      8.127885313321925e-05,
+      7.068012403757242e-05
+    ],
+    "mean_residual_per_critic": [
+      30.9972755348033,
+      33.63335319631057,
+      30.974089251019333,
+      31.076097788356954,
+      31.85070378150669,
+      31.471985923958048,
+      31.997406634241372,
+      35.59142110764342
+    ]
+  },
+  "network": {
+    "v_snac_networks": 8,
+    "ac_networks_estimated": 24,
+    "network_reduction_percent": 66.66666666666667
+  },
+  "runtime": {
+    "wall_time_s": 17.003963099996326,
+    "train_wall_time_s": 10.131592799996724,
+    "eval_wall_times_s": {
+      "full_comm": 2.4001235000032466,
+      "no_comm": 2.0552727000031155,
+      "dropout": 2.416941899980884
+    },
+    "train_iterations": 35,
+    "simulated_steps_total": 18200,
+    "ms_per_step_total": 0.934283686812985,
+    "ms_per_step_train": 1.0338359999996658
+  },
+  "eval_full_comm": {
+    "capture_time_s": 37.1,
+    "final_team_error": 502.9088245742822,
+    "final_max_assigned_error": 85.17451356039581,
+    "mean_assigned_error": 558.1137159602291,
+    "min_d_min": 59.48122627562603,
+    "mean_formation_error": 120.08719484668535,
+    "comm_mode": "full_comm"
+  },
+  "eval_no_comm": {
+    "capture_time_s": 36.25,
+    "final_team_error": 502.55537779259896,
+    "final_max_assigned_error": 84.94660531670714,
+    "mean_assigned_error": 556.3685821320961,
+    "min_d_min": 58.70230553055227,
+    "mean_formation_error": 0.0,
+    "comm_mode": "no_comm"
+  },
+  "eval_dropout": {
+    "capture_time_s": 36.9,
+    "final_team_error": 502.6922164163488,
+    "final_max_assigned_error": 85.0082012353213,
+    "mean_assigned_error": 557.3036509121187,
+    "min_d_min": 62.93170939212874,
+    "mean_formation_error": 81.91039587021174,
+    "comm_mode": "dropout"
+  },
+  "dynamic_switch_times_s": [
+    0.0
+  ],
+  "dynamic_switch_count": 1
+}

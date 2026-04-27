@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="980" viewBox="0 0 1600 980">
+  <defs>
+    <style>
+      .title { font: 700 34px "Microsoft YaHei", "Segoe UI", sans-serif; fill: #16324f; }
+      .subtitle { font: 500 16px "Microsoft YaHei", "Segoe UI", sans-serif; fill: #46617a; }
+      .groupLabel { font: 700 18px "Microsoft YaHei", "Segoe UI", sans-serif; fill: #1d3557; }
+      .boxTitle { font: 700 20px "Microsoft YaHei", "Segoe UI", sans-serif; fill: #16324f; }
+      .boxText { font: 500 16px "Microsoft YaHei", "Segoe UI", sans-serif; fill: #24425f; }
+      .smallText { font: 500 14px "Microsoft YaHei", "Segoe UI", sans-serif; fill: #32516f; }
+      .arrow { stroke: #577590; stroke-width: 3; fill: none; marker-end: url(#arrowhead); }
+      .loop { stroke: #90be6d; stroke-width: 3; fill: none; stroke-dasharray: 8 6; marker-end: url(#arrowgreen); }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#577590"/>
+    </marker>
+    <marker id="arrowgreen" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#90be6d"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1600" height="980" fill="#f7fbff"/>
+  <text x="800" y="56" text-anchor="middle" class="title">2.1 系统建模与基线近似最优控制流程</text>
+  <text x="800" y="86" text-anchor="middle" class="subtitle">非线性动力学建模 → 局部追踪误差构造 → 控制问题建模 → 权重训练 → 闭环评估</text>
+
+  <text x="110" y="145" class="groupLabel">建模层</text>
+  <text x="110" y="405" class="groupLabel">训练层</text>
+  <text x="110" y="765" class="groupLabel">闭环层</text>
+
+  <rect x="90" y="165" rx="22" ry="22" width="300" height="120" fill="#dceefb" stroke="#5b8db8" stroke-width="2.5"/>
+  <text x="240" y="202" text-anchor="middle" class="boxTitle">六维状态与非线性动力学</text>
+  <text x="240" y="236" text-anchor="middle" class="boxText">定义追逐者与逃避者状态</text>
+  <text x="240" y="262" text-anchor="middle" class="smallText">建立六自由度非线性动力学模型</text>
+
+  <rect x="455" y="165" rx="22" ry="22" width="300" height="120" fill="#e8f1ff" stroke="#6887b8" stroke-width="2.5"/>
+  <text x="605" y="202" text-anchor="middle" class="boxTitle">局部追踪误差</text>
+  <text x="605" y="236" text-anchor="middle" class="boxText">构造相对目标的局部误差</text>
+  <text x="605" y="262" text-anchor="middle" class="smallText">将多智能体问题转化为局部追踪子问题</text>
+
+  <rect x="820" y="165" rx="22" ry="22" width="310" height="120" fill="#f3efff" stroke="#7f6aad" stroke-width="2.5"/>
+  <text x="975" y="202" text-anchor="middle" class="boxTitle">控制目标建模</text>
+  <text x="975" y="236" text-anchor="middle" class="boxText">构造局部性能指标</text>
+  <text x="975" y="262" text-anchor="middle" class="smallText">建立带输入约束的近似最优控制问题</text>
+
+  <rect x="1195" y="165" rx="22" ry="22" width="310" height="120" fill="#fff1e6" stroke="#c6854b" stroke-width="2.5"/>
+  <text x="1350" y="202" text-anchor="middle" class="boxTitle">基线控制结构</text>
+  <text x="1350" y="236" text-anchor="middle" class="boxText">根据值函数信息生成控制输入</text>
+  <text x="1350" y="262" text-anchor="middle" class="smallText">保持原有饱和控制结构</text>
+
+  <path class="arrow" d="M390 225 L455 225"/>
+  <path class="arrow" d="M755 225 L820 225"/>
+  <path class="arrow" d="M1130 225 L1195 225"/>
+
+  <rect x="90" y="430" rx="22" ry="22" width="300" height="140" fill="#e7f7ef" stroke="#5e9c76" stroke-width="2.5"/>
+  <text x="240" y="468" text-anchor="middle" class="boxTitle">值函数近似器</text>
+  <text x="240" y="502" text-anchor="middle" class="boxText">每个追逐者对应一个近似器</text>
+  <text x="240" y="528" text-anchor="middle" class="smallText">使用六维耦合特征进行表示</text>
+
+  <rect x="455" y="430" rx="22" ry="22" width="300" height="140" fill="#edf7da" stroke="#86a95a" stroke-width="2.5"/>
+  <text x="605" y="468" text-anchor="middle" class="boxTitle">轨迹采样</text>
+  <text x="605" y="502" text-anchor="middle" class="boxText">采集状态、控制、代价和特征样本</text>
+  <text x="605" y="528" text-anchor="middle" class="smallText">按策略迭代反复进行训练回放</text>
+
+  <rect x="820" y="430" rx="22" ry="22" width="310" height="140" fill="#fff8d6" stroke="#c6ad46" stroke-width="2.5"/>
+  <text x="975" y="468" text-anchor="middle" class="boxTitle">离散价值更新</text>
+  <text x="975" y="502" text-anchor="middle" class="boxText">根据相邻时刻样本构造训练目标</text>
+  <text x="975" y="528" text-anchor="middle" class="smallText">将多时刻数据整理为线性更新问题</text>
+
+  <rect x="1195" y="430" rx="22" ry="22" width="310" height="140" fill="#ffe9eb" stroke="#cc6f7f" stroke-width="2.5"/>
+  <text x="1350" y="468" text-anchor="middle" class="boxTitle">权重更新</text>
+  <text x="1350" y="502" text-anchor="middle" class="boxText">通过正则化回归求解权重</text>
+  <text x="1350" y="528" text-anchor="middle" class="smallText">结合阻尼更新保持迭代平滑</text>
+
+  <path class="arrow" d="M390 500 L455 500"/>
+  <path class="arrow" d="M755 500 L820 500"/>
+  <path class="arrow" d="M1130 500 L1195 500"/>
+  <path class="loop" d="M1350 570 C1350 640, 240 640, 240 570"/>
+
+  <rect x="190" y="740" rx="22" ry="22" width="410" height="130" fill="#eaf4ff" stroke="#4a7ca5" stroke-width="2.5"/>
+  <text x="395" y="778" text-anchor="middle" class="boxTitle">闭环控制输出</text>
+  <text x="395" y="812" text-anchor="middle" class="boxText">由当前权重生成追逐者控制输入</text>
+  <text x="395" y="838" text-anchor="middle" class="smallText">形成训练与评估的一致控制闭环</text>
+
+  <rect x="670" y="740" rx="22" ry="22" width="300" height="130" fill="#eef9e7" stroke="#7ba05a" stroke-width="2.5"/>
+  <text x="820" y="778" text-anchor="middle" class="boxTitle">闭环仿真与评估</text>
+  <text x="820" y="812" text-anchor="middle" class="boxText">训练、评估、统计与可视化</text>
+  <text x="820" y="838" text-anchor="middle" class="smallText">输出轨迹、捕获时间和团队误差等结果</text>
+
+  <rect x="1040" y="720" rx="22" ry="22" width="430" height="170" fill="#f6f1ff" stroke="#7d68ac" stroke-width="2.5"/>
+  <text x="1255" y="758" text-anchor="middle" class="boxTitle">收敛性与稳定性说明</text>
+  <text x="1255" y="792" text-anchor="middle" class="boxText">1. 每轮权重更新都存在稳定解</text>
+  <text x="1255" y="818" text-anchor="middle" class="boxText">2. 阻尼更新保证权重变化平滑且有界</text>
+  <text x="1255" y="844" text-anchor="middle" class="boxText">3. 训练误差逐步下降并保持稳定</text>
+  <text x="1255" y="870" text-anchor="middle" class="boxText">4. 闭环追踪过程保持收敛性</text>
+
+  <path class="arrow" d="M1350 570 L1350 720"/>
+  <path class="arrow" d="M600 805 L670 805"/>
+  <path class="arrow" d="M970 805 L1040 805"/>
+
+  <text x="1330" y="655" class="smallText">策略迭代与权重回代</text>
+</svg>

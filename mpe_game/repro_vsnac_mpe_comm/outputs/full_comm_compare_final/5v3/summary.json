@@ -1,0 +1,153 @@
+{
+  "generated_at": "2026-04-07T13:38:25",
+  "case": {
+    "name": "5v3",
+    "n_pursuers": 5,
+    "n_evaders": 3,
+    "seed": 27,
+    "assignment_mode": "shifted",
+    "layout_mode": "structured"
+  },
+  "scenario": {
+    "name": "scenario_5v3_generalized",
+    "capture_radius": 220.0,
+    "t_final": 140.0,
+    "initial_assignment": [
+      1,
+      2,
+      0,
+      1,
+      2
+    ]
+  },
+  "vsnac_full_comm": {
+    "train": {
+      "iterations": 35,
+      "final_weight_norms": [
+        0.7286919201291082,
+        0.6294623624169708,
+        0.7532623277450289,
+        0.6557702997107342,
+        0.785322723648614
+      ],
+      "final_weight_norm_squares": [
+        0.5309919144614466,
+        0.396222865699554,
+        0.5674041343998594,
+        0.4300346859827062,
+        0.6167317802788773
+      ],
+      "final_weight_vectors": [
+        [
+          0.3082,
+          0.255,
+          0.2909,
+          0.35,
+          0.2903,
+          0.2822
+        ],
+        [
+          0.2377,
+          0.2485,
+          0.2538,
+          0.291,
+          0.2601,
+          0.2475
+        ],
+        [
+          0.3835,
+          0.2889,
+          0.262,
+          0.3546,
+          0.2801,
+          0.253
+        ],
+        [
+          0.2822,
+          0.2628,
+          0.2741,
+          0.2882,
+          0.2388,
+          0.2572
+        ],
+        [
+          0.3783,
+          0.2714,
+          0.3407,
+          0.3757,
+          0.2925,
+          0.2391
+        ]
+      ],
+      "final_delta_per_critic": [
+        8.898000614558744e-05,
+        8.647832701351226e-05,
+        7.775971512637068e-05,
+        8.46053577338712e-05,
+        6.798587006645779e-05
+      ],
+      "mean_residual_per_critic": [
+        29.079896393639103,
+        31.33522975187002,
+        32.65475520377123,
+        33.65364278574808,
+        36.419779235136836
+      ]
+    },
+    "train_wall_time_s": 7.661020400002599,
+    "eval": {
+      "capture_time_s": 36.800000000000004,
+      "final_team_error": 270.3355686102835,
+      "final_max_assigned_error": 85.54306800815267,
+      "mean_assigned_error": 553.010017705652,
+      "min_d_min": 185.1293497664746,
+      "mean_formation_error": 356.2456593305153,
+      "comm_mode": "full_comm"
+    },
+    "eval_wall_time_s": 2.4103907000098843
+  },
+  "traditional_full_comm": {
+    "eval": {
+      "capture_time_s": null,
+      "final_team_error": 406269.7689560915,
+      "final_max_assigned_error": 118465.2513195924,
+      "mean_assigned_error": 38821.78367484698,
+      "min_d_min": 194.23357758697995,
+      "mean_formation_error": 27311.92459350082,
+      "comm_mode": "full_comm"
+    },
+    "eval_wall_time_s": 4.410402500012424,
+    "warmup_wall_time_s": 6.697354299976723,
+    "warmup_episodes": 2,
+    "network_summary": {
+      "pursuer_actors": 5,
+      "evader_actors": 3,
+      "pursuer_critics": 5,
+      "evader_critics": 3,
+      "actor_parameters_per_network": 18,
+      "critic_parameters_per_network": 78,
+      "total_networks": 16,
+      "total_scalar_parameters": 768,
+      "augmented_input_dim": 12,
+      "critic_basis_dim": 78
+    }
+  },
+  "timing_compare": {
+    "vsnac_full_comm_policy": {
+      "total_s": 17.097611099976348,
+      "ms_per_step": 0.5090392729539225,
+      "steps_per_s": 1964.484968315045
+    },
+    "traditional_full_comm_online": {
+      "total_s": 117.13882049999665,
+      "ms_per_step": 3.4875199624865028,
+      "steps_per_s": 286.7367099705512
+    },
+    "traditional_vs_vsnac_ratio": 6.851180543003385
+  },
+  "paths": {
+    "vsnac_dir": "outputs\\full_comm_compare_final\\5v3\\vsnac_full_comm",
+    "traditional_dir": "outputs\\full_comm_compare_final\\5v3\\traditional_ac_full_comm",
+    "compare_dir": "outputs\\full_comm_compare_final\\5v3\\compare"
+  }
+}

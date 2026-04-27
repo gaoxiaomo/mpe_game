@@ -1,0 +1,35 @@
+{
+  "scales_m": {
+    "3v1_standard_seed35": 320.257586558088,
+    "5v3_standard_seed27": 348.3366669701453,
+    "6v3_standard_seed37": 360.0,
+    "8v4_standard_seed25": 360.0,
+    "6v3_collision": 560.0
+  },
+  "ratios_percent": {
+    "3v1_standard_seed35": {
+      "full": 3.87,
+      "no": 4.61
+    },
+    "5v3_standard_seed27": {
+      "full": 2.92,
+      "no": 3.05
+    },
+    "6v3_standard_seed37": {
+      "full": 2.9,
+      "no": 2.85
+    },
+    "8v4_standard_seed25": {
+      "full": 4.33,
+      "no": 4.47
+    },
+    "6v3_collision_t160": {
+      "no": 0.09,
+      "smooth": 0.31
+    },
+    "6v3_collision_t80": {
+      "no": 2.78,
+      "smooth": 12.52
+    }
+  }
+}

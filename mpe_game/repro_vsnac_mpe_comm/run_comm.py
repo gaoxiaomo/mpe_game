@@ -190,6 +190,8 @@ def _write_case_report(path: Path, summary: dict[str, Any]) -> None:
         f"- Seed: {summary['case']['seed']}",
         f"- Assignment mode: `{summary['case']['assignment_mode']}`",
         f"- Gamma (training): {summary['gamma']}",
+        f"- d_safe: {summary['d_safe']}",
+        f"- Pair factor: `{summary['pair_factor']}`",
         "",
         "## Runtime",
         f"- Total wall time (s): {summary['runtime']['wall_time_s']:.3f}",
@@ -244,7 +246,7 @@ def _run_single_case(job: dict[str, Any]) -> dict[str, Any]:
     dynamic_graph_eval = scenario.n_evaders > 1
 
     # Train with full communication
-    train_comm = _comm_params(gamma=gamma, comm_mode="full")
+    train_comm = _comm_params(gamma=gamma, comm_mode="full", d_safe=d_safe)
     sim = MPECommSimulator(
         scenario=scenario,
         aircraft_params=AircraftParams(),
@@ -421,6 +423,8 @@ def _run_single_case(job: dict[str, Any]) -> dict[str, Any]:
             "layout_mode": case.layout_mode,
         },
         "gamma": gamma,
+        "d_safe": d_safe,
+        "pair_factor": "smooth_max",
         "dropout_prob": dropout_prob,
         "scenario": {
             "name": scenario.name,
@@ -549,9 +553,10 @@ def _batch_report(
     md.extend([
         "",
         "## Conclusions",
-        "- Training is performed ONCE with full communication (gamma > 0).",
+        "- Training is performed ONCE with the structured communication-aware value function (gamma > 0).",
+        "- The analytic pairwise term uses a smooth approximation of the previous hard max distance factor.",
         "- The same trained weights are evaluated under three modes: full_comm, no_comm, and dropout.",
-        "- full_comm should provide the best team error; no_comm degrades to MN-equivalent behavior.",
+        "- full_comm is expected to improve inter-pursuer separation while preserving tracking performance; no_comm degrades to the baseline behavior.",
         "- dropout tests robustness of the learned policy to intermittent communication failures.",
         "- d_min tracks minimum inter-pursuer distance to verify collision avoidance.",
     ])

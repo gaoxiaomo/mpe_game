@@ -1,0 +1,92 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.6 Chrome/144.0.7559.236 Electron/40.8.4 Safari/537.36" version="29.6.6">
+  <diagram id="baseline-flow" name="2.1流程图">
+    <mxGraphModel dx="1843" dy="1251" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="980" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="subtitle" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=22;fontColor=#46617A;" value="非线性动力学建模 → 局部追踪误差构造 → 控制问题建模 → 权重训练 → 闭环评估" vertex="1">
+          <mxGeometry height="30" width="880" x="370" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="label1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1D3557;" value="建模层" vertex="1">
+          <mxGeometry height="24" width="100" x="90" y="195" as="geometry" />
+        </mxCell>
+        <mxCell id="label2" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1D3557;" value="训练层" vertex="1">
+          <mxGeometry height="24" width="100" x="90" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="label3" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1D3557;" value="闭环层" vertex="1">
+          <mxGeometry height="24" width="100" x="90" y="630" as="geometry" />
+        </mxCell>
+        <mxCell id="g1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCEEFB;strokeColor=#5B8DB8;strokeWidth=2;fontSize=22;" value="&lt;b&gt;六维状态与非线性动力学&lt;/b&gt;&lt;br&gt;定义追逐者与逃避者状态&lt;br&gt;建立六自由度非线性动力学模型" vertex="1">
+          <mxGeometry height="120" width="320" x="70" y="225" as="geometry" />
+        </mxCell>
+        <mxCell id="g2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FF;strokeColor=#6887B8;strokeWidth=2;fontSize=22;" value="&lt;b&gt;局部追踪误差&lt;/b&gt;&lt;br&gt;构造相对目标的局部误差&lt;br&gt;将多智能体问题转化为局部追踪子问题" vertex="1">
+          <mxGeometry height="120" width="305" x="455" y="225" as="geometry" />
+        </mxCell>
+        <mxCell id="g3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3EFFF;strokeColor=#7F6AAD;strokeWidth=2;fontSize=22;" value="&lt;b&gt;控制目标建模&lt;/b&gt;&lt;br&gt;构造局部性能指标&lt;br&gt;建立带输入约束的近似最优控制问题" vertex="1">
+          <mxGeometry height="120" width="320" x="820" y="225" as="geometry" />
+        </mxCell>
+        <mxCell id="g4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF1E6;strokeColor=#C6854B;strokeWidth=2;fontSize=22;" value="&lt;b&gt;基线控制结构&lt;/b&gt;&lt;br&gt;根据值函数信息生成控制输入&lt;br&gt;保持原有饱和控制结构" vertex="1">
+          <mxGeometry height="120" width="310" x="1195" y="225" as="geometry" />
+        </mxCell>
+        <mxCell id="a1" edge="1" parent="1" source="g1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;fontSize=22;" target="g2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" edge="1" parent="1" source="g2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;fontSize=22;" target="g3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" edge="1" parent="1" source="g3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;fontSize=22;" target="g4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E7F7EF;strokeColor=#5E9C76;strokeWidth=2;fontSize=22;" value="&lt;b&gt;值函数近似器&lt;/b&gt;&lt;br&gt;每个追逐者对应一个近似器&lt;br&gt;使用六维耦合特征进行表示" vertex="1">
+          <mxGeometry height="140" width="320" x="70" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="l2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDF7DA;strokeColor=#86A95A;strokeWidth=2;fontSize=22;" value="&lt;b&gt;轨迹采样&lt;/b&gt;&lt;br&gt;采集状态、控制、代价和特征样本&lt;br&gt;按策略迭代反复进行训练回放" vertex="1">
+          <mxGeometry height="140" width="350" x="440" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="l3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8D6;strokeColor=#C6AD46;strokeWidth=2;fontSize=22;" value="&lt;b&gt;离散价值更新&lt;/b&gt;&lt;br&gt;根据相邻时刻样本构造训练目标&lt;br&gt;将多时刻数据整理为线性更新问题" vertex="1">
+          <mxGeometry height="140" width="340" x="820" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="TMd41c9-fLcRvbGWH7Ct-1" edge="1" parent="1" source="l4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=22;" target="c3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE9EB;strokeColor=#CC6F7F;strokeWidth=2;fontSize=22;" value="&lt;b&gt;权重更新&lt;/b&gt;&lt;br&gt;通过正则化回归求解权重&lt;br&gt;结合阻尼更新保持迭代平滑" vertex="1">
+          <mxGeometry height="140" width="310" x="1195" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="b1" edge="1" parent="1" source="l1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;fontSize=22;" target="l2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="b2" edge="1" parent="1" source="l2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;fontSize=22;" target="l3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="b3" edge="1" parent="1" source="l3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;fontSize=22;" target="l4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="b4" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;dashed=1;strokeColor=#90BE6D;fontColor=#4F772D;fontSize=22;" value="策略迭代与权重回代">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1330" y="620" />
+              <mxPoint x="220" y="620" />
+            </Array>
+            <mxPoint x="1329.996923076923" y="560" as="sourcePoint" />
+            <mxPoint x="219.99692307692288" y="560" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF4FF;strokeColor=#4A7CA5;strokeWidth=2;fontSize=22;" value="&lt;b&gt;闭环控制输出&lt;/b&gt;&lt;br&gt;由当前权重生成追逐者控制输入&lt;br&gt;形成训练与评估的一致控制闭环" vertex="1">
+          <mxGeometry height="130" width="430" x="70" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="c2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EEF9E7;strokeColor=#7BA05A;strokeWidth=2;fontSize=22;" value="&lt;b&gt;闭环仿真与评估&lt;/b&gt;&lt;br&gt;训练、评估、统计与可视化&lt;br&gt;输出轨迹、捕获时间和团队误差等结果" vertex="1">
+          <mxGeometry height="130" width="410" x="630" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="c3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F6F1FF;strokeColor=#7D68AC;strokeWidth=2;fontSize=22;" value="&lt;b&gt;收敛性与稳定性说明&lt;/b&gt;&lt;br&gt;1. 每轮权重更新都存在稳定解&lt;br&gt;2. 阻尼更新保证权重变化平滑且有界&lt;br&gt;3. 训练误差逐步下降并保持稳定&lt;br&gt;4. 闭环追踪过程保持收敛性" vertex="1">
+          <mxGeometry height="170" width="430" x="1135" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="c5" edge="1" parent="1" source="c1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;fontSize=22;" target="c2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c6" edge="1" parent="1" source="c2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;fontSize=22;" target="c3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,57 @@
+{
+  "note": "Same trained controller, longer evaluation horizon only.",
+  "seed": 9,
+  "horizons": [
+    {
+      "t_final_s": 80.0,
+      "no_analytic": {
+        "min_d_min_m": 0.9951084806638676,
+        "stable_capture_time_s": 61.050000000000004,
+        "final_relative_geometry_error_m": 14.367231353494764,
+        "last_5s_relative_geometry_error_mean_m": 15.036726568705541,
+        "final_max_assigned_error_m": 46.70055390330281
+      },
+      "smooth_analytic": {
+        "min_d_min_m": 82.40369299122763,
+        "stable_capture_time_s": 64.15,
+        "final_relative_geometry_error_m": 72.65872615990243,
+        "last_5s_relative_geometry_error_mean_m": 81.99430398456595,
+        "final_max_assigned_error_m": 68.03680004843747
+      }
+    },
+    {
+      "t_final_s": 120.0,
+      "no_analytic": {
+        "min_d_min_m": 0.9951084806638676,
+        "stable_capture_time_s": 61.050000000000004,
+        "final_relative_geometry_error_m": 4.744816912461271,
+        "last_5s_relative_geometry_error_mean_m": 4.6039971874254455,
+        "final_max_assigned_error_m": 35.836579382728004
+      },
+      "smooth_analytic": {
+        "min_d_min_m": 82.40369299122763,
+        "stable_capture_time_s": 64.15,
+        "final_relative_geometry_error_m": 11.256591898808324,
+        "last_5s_relative_geometry_error_mean_m": 12.523947428937612,
+        "final_max_assigned_error_m": 34.268606285083905
+      }
+    },
+    {
+      "t_final_s": 160.0,
+      "no_analytic": {
+        "min_d_min_m": 0.9951084806638676,
+        "stable_capture_time_s": 61.050000000000004,
+        "final_relative_geometry_error_m": 0.5289339625369008,
+        "last_5s_relative_geometry_error_mean_m": 0.5194268552776966,
+        "final_max_assigned_error_m": 12.035109467243347
+      },
+      "smooth_analytic": {
+        "min_d_min_m": 82.40369299122763,
+        "stable_capture_time_s": 64.15,
+        "final_relative_geometry_error_m": 1.7335054741419522,
+        "last_5s_relative_geometry_error_mean_m": 2.0279073167641637,
+        "final_max_assigned_error_m": 11.537394426536164
+      }
+    }
+  ]
+}

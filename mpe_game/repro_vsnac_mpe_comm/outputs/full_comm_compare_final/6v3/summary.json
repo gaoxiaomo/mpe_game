@@ -1,0 +1,166 @@
+{
+  "generated_at": "2026-04-07T13:41:12",
+  "case": {
+    "name": "6v3",
+    "n_pursuers": 6,
+    "n_evaders": 3,
+    "seed": 37,
+    "assignment_mode": "shifted",
+    "layout_mode": "structured"
+  },
+  "scenario": {
+    "name": "scenario_6v3_generalized",
+    "capture_radius": 220.0,
+    "t_final": 140.0,
+    "initial_assignment": [
+      1,
+      2,
+      0,
+      1,
+      2,
+      0
+    ]
+  },
+  "vsnac_full_comm": {
+    "train": {
+      "iterations": 35,
+      "final_weight_norms": [
+        0.703414399688178,
+        0.7894283322214674,
+        0.7192956338953501,
+        0.76149612000524,
+        0.704162939411829,
+        0.7510572437399233
+      ],
+      "final_weight_norm_squares": [
+        0.49479181768867986,
+        0.6231970917139674,
+        0.5173862089409136,
+        0.5798763407830348,
+        0.495845445241107,
+        0.5640869833742106
+      ],
+      "final_weight_vectors": [
+        [
+          0.2842,
+          0.2749,
+          0.2709,
+          0.3617,
+          0.2553,
+          0.2628
+        ],
+        [
+          0.3903,
+          0.2408,
+          0.3314,
+          0.2853,
+          0.2856,
+          0.3743
+        ],
+        [
+          0.2511,
+          0.2445,
+          0.3585,
+          0.2481,
+          0.2532,
+          0.3746
+        ],
+        [
+          0.338,
+          0.2548,
+          0.282,
+          0.3703,
+          0.2599,
+          0.3413
+        ],
+        [
+          0.281,
+          0.2374,
+          0.3391,
+          0.2382,
+          0.2852,
+          0.3278
+        ],
+        [
+          0.342,
+          0.2825,
+          0.3562,
+          0.3337,
+          0.252,
+          0.2561
+        ]
+      ],
+      "final_delta_per_critic": [
+        8.536168308702207e-05,
+        6.93121547173042e-05,
+        8.779035122011465e-05,
+        6.874416385646987e-05,
+        7.64638099034972e-05,
+        6.700438194333278e-05
+      ],
+      "mean_residual_per_critic": [
+        30.72231486965005,
+        33.02431986137992,
+        31.282905244581382,
+        32.456092846112725,
+        32.144983429237065,
+        36.184998304956686
+      ]
+    },
+    "train_wall_time_s": 39.2397282999882,
+    "eval": {
+      "capture_time_s": 36.9,
+      "final_team_error": 361.6629505780423,
+      "final_max_assigned_error": 85.49516210626955,
+      "mean_assigned_error": 572.0294381288409,
+      "min_d_min": 112.79812350966141,
+      "mean_formation_error": 404.45559762744824,
+      "comm_mode": "full_comm"
+    },
+    "eval_wall_time_s": 11.453023400012171
+  },
+  "traditional_full_comm": {
+    "eval": {
+      "capture_time_s": null,
+      "final_team_error": 448229.03628190863,
+      "final_max_assigned_error": 91737.53460711562,
+      "mean_assigned_error": 35840.71657791328,
+      "min_d_min": 427.3662245334649,
+      "mean_formation_error": 27681.757570760805,
+      "comm_mode": "full_comm"
+    },
+    "eval_wall_time_s": 18.871707600017544,
+    "warmup_wall_time_s": 34.000022300024284,
+    "warmup_episodes": 2,
+    "network_summary": {
+      "pursuer_actors": 6,
+      "evader_actors": 3,
+      "pursuer_critics": 6,
+      "evader_critics": 3,
+      "actor_parameters_per_network": 18,
+      "critic_parameters_per_network": 78,
+      "total_networks": 18,
+      "total_scalar_parameters": 864,
+      "augmented_input_dim": 12,
+      "critic_basis_dim": 78
+    }
+  },
+  "timing_compare": {
+    "vsnac_full_comm_policy": {
+      "total_s": 5.428622000006726,
+      "ms_per_step": 0.16162385375749452,
+      "steps_per_s": 6187.205519183024
+    },
+    "traditional_full_comm_online": {
+      "total_s": 30.12922709999839,
+      "ms_per_step": 0.8970235530546145,
+      "steps_per_s": 1114.7979298812413
+    },
+    "traditional_vs_vsnac_ratio": 5.550069078296676
+  },
+  "paths": {
+    "vsnac_dir": "outputs\\full_comm_compare_final\\6v3\\vsnac_full_comm",
+    "traditional_dir": "outputs\\full_comm_compare_final\\6v3\\traditional_ac_full_comm",
+    "compare_dir": "outputs\\full_comm_compare_final\\6v3\\compare"
+  }
+}

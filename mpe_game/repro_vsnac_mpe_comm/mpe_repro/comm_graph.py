@@ -16,7 +16,9 @@ class CommunicationGraph:
         self.d_safe = d_safe
 
     def build_adjacency(
-        self, pursuer_states: np.ndarray, assignment: np.ndarray | None = None,
+        self,
+        pursuer_states: np.ndarray | None = None,
+        assignment: np.ndarray | None = None,
     ) -> np.ndarray:
         """Build n_p x n_p adjacency matrix.
 
@@ -66,7 +68,7 @@ class CommunicationGraph:
         return d, L
 
     def compute_delta_matrix(self, displacements: np.ndarray, assignment: np.ndarray) -> np.ndarray:
-        """Compute Delta_{jk} = r_j - r_k where r_j = displacements[j, sigma(j)].
+        """Compute Delta_{jk} = r_k - r_j where r_j = displacements[j, sigma(j)].
 
         Parameters
         ----------
@@ -80,7 +82,10 @@ class CommunicationGraph:
         n_p = self.n_p
         # r_j = displacements[j, assignment[j], :]
         r = np.array([displacements[j, int(assignment[j])] for j in range(n_p)])  # (n_p, 6)
-        delta = r[:, None, :] - r[None, :, :]  # (n_p, n_p, 6)
+        # Tracking error is x̃_j = x_j^p - x_e + r_j, so x̃_j -> 0 implies
+        # p_j -> p_e - r_j. For two pursuers tracking the same evader,
+        # p_j - p_k -> r_k - r_j.
+        delta = r[None, :, :] - r[:, None, :]  # (n_p, n_p, 6), delta[j, k] = r_k - r_j
         return delta
 
     def augmented_error(
@@ -112,7 +117,7 @@ class CommunicationGraph:
         A : ndarray, shape (n_p, n_p)
             Adjacency matrix.
         delta_matrix : ndarray, shape (n_p, n_p, 6)
-            Desired inter-pursuer displacement.
+            Desired inter-pursuer displacement induced by the tracking offsets.
         gamma : float
             Formation coupling weight.
         b_j : float

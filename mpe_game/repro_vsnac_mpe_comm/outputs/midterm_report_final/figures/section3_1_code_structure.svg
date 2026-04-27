@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="1020" viewBox="0 0 1680 1020">
+  <defs>
+    <style>
+      .title { font: 700 34px "Microsoft YaHei", "Segoe UI", sans-serif; fill: #16324f; }
+      .subtitle { font: 500 16px "Microsoft YaHei", "Segoe UI", sans-serif; fill: #4a6277; }
+      .groupLabel { font: 700 18px "Microsoft YaHei", "Segoe UI", sans-serif; fill: #1d3557; }
+      .boxTitle { font: 700 19px "Microsoft YaHei", "Segoe UI", sans-serif; fill: #16324f; }
+      .boxText { font: 500 15px "Microsoft YaHei", "Segoe UI", sans-serif; fill: #274560; }
+      .smallText { font: 500 13px "Microsoft YaHei", "Segoe UI", sans-serif; fill: #45627d; }
+      .arrow { stroke: #567a99; stroke-width: 3; fill: none; marker-end: url(#arrowhead); }
+      .dash { stroke: #8aa7bf; stroke-width: 2.5; fill: none; stroke-dasharray: 8 6; marker-end: url(#arrowgray); }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#567a99"/>
+    </marker>
+    <marker id="arrowgray" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#8aa7bf"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1680" height="1020" fill="#f7fbff"/>
+  <text x="840" y="54" text-anchor="middle" class="title">3.1 基础代码结构与训练评估流程</text>
+  <text x="840" y="84" text-anchor="middle" class="subtitle">入口脚本组织实验，仿真器调度核心模块，最终完成训练、评估、统计与可视化输出</text>
+
+  <text x="90" y="145" class="groupLabel">入口层</text>
+  <text x="90" y="305" class="groupLabel">调度层</text>
+  <text x="90" y="505" class="groupLabel">核心模块层</text>
+  <text x="90" y="855" class="groupLabel">输出层</text>
+
+  <rect x="110" y="165" rx="22" ry="22" width="360" height="95" fill="#e7f1fb" stroke="#5d89b0" stroke-width="2.5"/>
+  <text x="290" y="198" text-anchor="middle" class="boxTitle">实验入口脚本</text>
+  <text x="290" y="225" text-anchor="middle" class="boxText">run_comm.py / 调试脚本 / 对比脚本</text>
+  <text x="290" y="248" text-anchor="middle" class="smallText">读取参数、选择场景、组织训练与评估任务</text>
+
+  <rect x="560" y="165" rx="22" ry="22" width="560" height="95" fill="#eef6e8" stroke="#7ea05b" stroke-width="2.5"/>
+  <text x="840" y="198" text-anchor="middle" class="boxTitle">配置与场景参数</text>
+  <text x="840" y="225" text-anchor="middle" class="boxText">config.py / general_scenarios.py</text>
+  <text x="840" y="248" text-anchor="middle" class="smallText">统一管理实验规模、动力学参数、布局与偏置设置</text>
+
+  <rect x="1210" y="165" rx="22" ry="22" width="360" height="95" fill="#fdf1e7" stroke="#c68856" stroke-width="2.5"/>
+  <text x="1390" y="198" text-anchor="middle" class="boxTitle">调试与展示入口</text>
+  <text x="1390" y="225" text-anchor="middle" class="boxText">run_debug_demo.py / 动画与案例脚本</text>
+  <text x="1390" y="248" text-anchor="middle" class="smallText">用于现场演示、日志检查和构造场景复查</text>
+
+  <rect x="420" y="330" rx="26" ry="26" width="840" height="120" fill="#f3efff" stroke="#7f6aad" stroke-width="3"/>
+  <text x="840" y="370" text-anchor="middle" class="boxTitle">仿真器主调度模块</text>
+  <text x="840" y="402" text-anchor="middle" class="boxText">simulator.py</text>
+  <text x="840" y="428" text-anchor="middle" class="smallText">统一调度动力学推进、目标分配、通信图更新、样本记录、权重训练、评估统计与结果导出</text>
+
+  <path class="arrow" d="M470 212 L560 212"/>
+  <path class="arrow" d="M1120 212 L1210 212"/>
+  <path class="arrow" d="M290 260 L530 330"/>
+  <path class="arrow" d="M840 260 L840 330"/>
+  <path class="arrow" d="M1390 260 L1150 330"/>
+
+  <rect x="90" y="540" rx="22" ry="22" width="300" height="120" fill="#dceefb" stroke="#5b8db8" stroke-width="2.5"/>
+  <text x="240" y="576" text-anchor="middle" class="boxTitle">动力学模块</text>
+  <text x="240" y="606" text-anchor="middle" class="boxText">dynamics.py</text>
+  <text x="240" y="632" text-anchor="middle" class="smallText">负责六自由度状态更新与数值积分</text>
+
+  <rect x="430" y="540" rx="22" ry="22" width="300" height="120" fill="#e8f1ff" stroke="#6887b8" stroke-width="2.5"/>
+  <text x="580" y="576" text-anchor="middle" class="boxTitle">控制与解析项模块</text>
+  <text x="580" y="606" text-anchor="middle" class="boxText">controller.py</text>
+  <text x="580" y="632" text-anchor="middle" class="smallText">生成基线控制、解析项梯度与闭环控制输入</text>
+
+  <rect x="770" y="540" rx="22" ry="22" width="300" height="120" fill="#e7f7ef" stroke="#5e9c76" stroke-width="2.5"/>
+  <text x="920" y="576" text-anchor="middle" class="boxTitle">训练更新模块</text>
+  <text x="920" y="606" text-anchor="middle" class="boxText">offpolicy_ls.py / features.py</text>
+  <text x="920" y="632" text-anchor="middle" class="smallText">构造特征、离散价值关系与权重回归更新</text>
+
+  <rect x="1110" y="540" rx="22" ry="22" width="300" height="120" fill="#fff8d6" stroke="#c6ad46" stroke-width="2.5"/>
+  <text x="1260" y="576" text-anchor="middle" class="boxTitle">协同与图结构模块</text>
+  <text x="1260" y="606" text-anchor="middle" class="boxText">comm_graph.py / graph_switch.py</text>
+  <text x="1260" y="632" text-anchor="middle" class="smallText">负责通信边、邻接关系与组内结构更新</text>
+
+  <rect x="690" y="700" rx="22" ry="22" width="300" height="110" fill="#fff1e6" stroke="#c6854b" stroke-width="2.5"/>
+  <text x="840" y="734" text-anchor="middle" class="boxTitle">目标分配与场景组织</text>
+  <text x="840" y="762" text-anchor="middle" class="boxText">assignment / scenarios</text>
+  <text x="840" y="786" text-anchor="middle" class="smallText">负责“谁追谁”与不同实验布局的统一组织</text>
+
+  <path class="arrow" d="M840 450 L240 540"/>
+  <path class="arrow" d="M840 450 L580 540"/>
+  <path class="arrow" d="M840 450 L920 540"/>
+  <path class="arrow" d="M840 450 L1260 540"/>
+  <path class="arrow" d="M840 450 L840 700"/>
+
+  <path class="dash" d="M240 660 L530 760"/>
+  <path class="dash" d="M580 660 L700 760"/>
+  <path class="dash" d="M920 660 L920 700"/>
+  <path class="dash" d="M1260 660 L980 760"/>
+
+  <rect x="220" y="885" rx="22" ry="22" width="380" height="95" fill="#eaf4ff" stroke="#4a7ca5" stroke-width="2.5"/>
+  <text x="410" y="918" text-anchor="middle" class="boxTitle">评估统计与报告</text>
+  <text x="410" y="945" text-anchor="middle" class="boxText">report.py / summary.json / REPORT.md</text>
+  <text x="410" y="968" text-anchor="middle" class="smallText">汇总捕获时间、误差指标、运行时间与对比结果</text>
+
+  <rect x="650" y="885" rx="22" ry="22" width="380" height="95" fill="#eef9e7" stroke="#7ba05a" stroke-width="2.5"/>
+  <text x="840" y="918" text-anchor="middle" class="boxTitle">图像与动画输出</text>
+  <text x="840" y="945" text-anchor="middle" class="boxText">plotting.py / GIF / 曲线图 / 轨迹图</text>
+  <text x="840" y="968" text-anchor="middle" class="smallText">用于论文插图、中期报告与答辩展示</text>
+
+  <rect x="1080" y="885" rx="22" ry="22" width="380" height="95" fill="#f6f1ff" stroke="#7d68ac" stroke-width="2.5"/>
+  <text x="1270" y="918" text-anchor="middle" class="boxTitle">调试与复查支撑</text>
+  <text x="1270" y="945" text-anchor="middle" class="boxText">日志、逐步输出与案例复现</text>
+  <text x="1270" y="968" text-anchor="middle" class="smallText">便于参数回溯、过程检查与结构扩展</text>
+
+  <path class="arrow" d="M840 810 L410 885"/>
+  <path class="arrow" d="M840 810 L840 885"/>
+  <path class="arrow" d="M840 810 L1270 885"/>
+</svg>

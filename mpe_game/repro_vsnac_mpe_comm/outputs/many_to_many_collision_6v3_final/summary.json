@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-04-13T01:18:53",
+  "scenario": {
+    "name": "crossing_6v3_fixed_groups",
+    "n_pursuers": 6,
+    "n_evaders": 3,
+    "initial_assignment": [
+      0,
+      0,
+      1,
+      1,
+      2,
+      2
+    ],
+    "t_final_s": 80.0,
+    "capture_radius_m": 180.0,
+    "description": "Each evader has two pursuers that start on opposite sides of their desired left/right offsets, forcing a lane-swap crossing near the evader."
+  },
+  "gamma": 0.3,
+  "d_safe_m": 50.0,
+  "no_analytic": {
+    "min_d_min": 0.9951084806638676,
+    "time_below_threshold_s": 1.5,
+    "longest_unsafe_streak_s": 1.5,
+    "capture_time_s": 61.050000000000004,
+    "first_hit_time_s": 33.25,
+    "mean_assigned_error": 1047.7838120073122,
+    "train_wall_time_s": 2.365017000003718
+  },
+  "smooth_analytic": {
+    "min_d_min": 82.40369299122763,
+    "time_below_threshold_s": 0.0,
+    "longest_unsafe_streak_s": 0.0,
+    "capture_time_s": 64.15,
+    "first_hit_time_s": 64.15,
+    "mean_assigned_error": 1118.4555639402167,
+    "train_wall_time_s": 2.6572500999900512
+  }
+}

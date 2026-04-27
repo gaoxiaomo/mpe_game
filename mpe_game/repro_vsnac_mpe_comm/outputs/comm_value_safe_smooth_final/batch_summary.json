@@ -1,0 +1,752 @@
+{
+  "generated_at": "2026-04-13T01:17:30",
+  "parallel_workers": 2,
+  "total_wall_time_s": 124.15814089999185,
+  "sum_case_wall_time_s": 70.31375649999245,
+  "estimated_parallel_speedup_vs_serial": 0.5663241732705186,
+  "cases": [
+    {
+      "case": {
+        "name": "3v1",
+        "n_pursuers": 3,
+        "n_evaders": 1,
+        "seed": 7,
+        "assignment_mode": "zero",
+        "layout_mode": "structured"
+      },
+      "gamma": 0.3,
+      "d_safe": 100.0,
+      "pair_factor": "smooth_max",
+      "dropout_prob": 0.15,
+      "scenario": {
+        "name": "scenario_3v1_generalized",
+        "initial_assignment": [
+          0,
+          0,
+          0
+        ],
+        "capture_radius": 180.0,
+        "swap_threshold": 1000000000.0,
+        "t_final": 90.0
+      },
+      "train": {
+        "iterations": 35,
+        "final_weight_norms": [
+          0.7988408175485916,
+          0.7297020578458172,
+          0.6642963691017373
+        ],
+        "final_weight_norm_squares": [
+          0.6381466517817022,
+          0.5324650932244204,
+          0.44128966600175157
+        ],
+        "final_weight_vectors": [
+          [
+            0.37,
+            0.2883,
+            0.3786,
+            0.25,
+            0.2542,
+            0.3842
+          ],
+          [
+            0.2374,
+            0.284,
+            0.3798,
+            0.2638,
+            0.2544,
+            0.3418
+          ],
+          [
+            0.2516,
+            0.2625,
+            0.2659,
+            0.2687,
+            0.294,
+            0.2824
+          ]
+        ],
+        "final_delta_per_critic": [
+          6.550694466952257e-05,
+          7.620517019473329e-05,
+          9.33661996823246e-05
+        ],
+        "mean_residual_per_critic": [
+          51.210053272272106,
+          52.53688048276991,
+          79.67384336264065
+        ]
+      },
+      "network": {
+        "v_snac_networks": 3,
+        "ac_networks_estimated": 8,
+        "network_reduction_percent": 62.5
+      },
+      "runtime": {
+        "wall_time_s": 10.531300000002375,
+        "train_wall_time_s": 6.327302199992118,
+        "eval_wall_times_s": {
+          "full_comm": 1.440784700011136,
+          "no_comm": 1.266594199987594,
+          "dropout": 1.496596299984958
+        },
+        "train_iterations": 35,
+        "simulated_steps_total": 12575,
+        "ms_per_step_total": 0.8374791252486978,
+        "ms_per_step_train": 0.8818539651556959
+      },
+      "eval_full_comm": {
+        "capture_time_s": 52.1,
+        "final_team_error": 292.9698647552593,
+        "final_max_assigned_error": 110.68481762518309,
+        "mean_assigned_error": 1734.1439271966944,
+        "min_d_min": 284.03749866137605,
+        "mean_formation_error": 1536.499345011989,
+        "comm_mode": "full_comm"
+      },
+      "eval_no_comm": {
+        "capture_time_s": 47.150000000000006,
+        "final_team_error": 296.6176784990117,
+        "final_max_assigned_error": 107.45216427866653,
+        "mean_assigned_error": 1693.242036834802,
+        "min_d_min": 135.30685896926676,
+        "mean_formation_error": 0.0,
+        "comm_mode": "no_comm"
+      },
+      "eval_dropout": {
+        "capture_time_s": 51.150000000000006,
+        "final_team_error": 293.5634849867388,
+        "final_max_assigned_error": 110.30323999152061,
+        "mean_assigned_error": 1728.2260796687149,
+        "min_d_min": 284.6566430554422,
+        "mean_formation_error": 1133.6547654660258,
+        "comm_mode": "dropout"
+      },
+      "dynamic_switch_times_s": [],
+      "dynamic_switch_count": 0
+    },
+    {
+      "case": {
+        "name": "3v3",
+        "n_pursuers": 3,
+        "n_evaders": 3,
+        "seed": 17,
+        "assignment_mode": "shifted",
+        "layout_mode": "structured"
+      },
+      "gamma": 0.3,
+      "d_safe": 100.0,
+      "pair_factor": "smooth_max",
+      "dropout_prob": 0.15,
+      "scenario": {
+        "name": "scenario_3v3_generalized",
+        "initial_assignment": [
+          1,
+          2,
+          0
+        ],
+        "capture_radius": 220.0,
+        "swap_threshold": 5.0,
+        "t_final": 140.0
+      },
+      "train": {
+        "iterations": 35,
+        "final_weight_norms": [
+          0.7555008320921264,
+          0.6457266571486339,
+          0.6645141029492377
+        ],
+        "final_weight_norm_squares": [
+          0.5707815072918954,
+          0.41696291575234934,
+          0.4415789930184302
+        ],
+        "final_weight_vectors": [
+          [
+            0.2854,
+            0.2463,
+            0.3619,
+            0.3553,
+            0.2494,
+            0.3305
+          ],
+          [
+            0.2615,
+            0.272,
+            0.2844,
+            0.238,
+            0.2516,
+            0.2716
+          ],
+          [
+            0.2419,
+            0.2941,
+            0.2921,
+            0.2544,
+            0.2695,
+            0.2719
+          ]
+        ],
+        "final_delta_per_critic": [
+          8.185146317507448e-05,
+          8.968805229177524e-05,
+          9.347042688167061e-05
+        ],
+        "mean_residual_per_critic": [
+          25.68872693488699,
+          28.525186096143653,
+          34.78981858225982
+        ]
+      },
+      "network": {
+        "v_snac_networks": 3,
+        "ac_networks_estimated": 12,
+        "network_reduction_percent": 75.0
+      },
+      "runtime": {
+        "wall_time_s": 12.17126279999502,
+        "train_wall_time_s": 5.896095699979924,
+        "eval_wall_times_s": {
+          "full_comm": 2.07091589999618,
+          "no_comm": 2.0466632999887224,
+          "dropout": 2.1575587000115775
+        },
+        "train_iterations": 35,
+        "simulated_steps_total": 15575,
+        "ms_per_step_total": 0.7814614959868391,
+        "ms_per_step_train": 0.8217554982550416
+      },
+      "eval_full_comm": {
+        "capture_time_s": 33.75,
+        "final_team_error": 192.85289478032652,
+        "final_max_assigned_error": 89.59655069962048,
+        "mean_assigned_error": 548.182263215614,
+        "min_d_min": 1361.290234320645,
+        "mean_formation_error": 0.0,
+        "comm_mode": "full_comm"
+      },
+      "eval_no_comm": {
+        "capture_time_s": 33.75,
+        "final_team_error": 192.85289478032652,
+        "final_max_assigned_error": 89.59655069962048,
+        "mean_assigned_error": 548.182263215614,
+        "min_d_min": 1361.290234320645,
+        "mean_formation_error": 0.0,
+        "comm_mode": "no_comm"
+      },
+      "eval_dropout": {
+        "capture_time_s": 33.75,
+        "final_team_error": 192.85289478032652,
+        "final_max_assigned_error": 89.59655069962048,
+        "mean_assigned_error": 548.182263215614,
+        "min_d_min": 1361.290234320645,
+        "mean_formation_error": 0.0,
+        "comm_mode": "dropout"
+      },
+      "dynamic_switch_times_s": [
+        0.0
+      ],
+      "dynamic_switch_count": 1
+    },
+    {
+      "case": {
+        "name": "5v3",
+        "n_pursuers": 5,
+        "n_evaders": 3,
+        "seed": 27,
+        "assignment_mode": "shifted",
+        "layout_mode": "structured"
+      },
+      "gamma": 0.3,
+      "d_safe": 100.0,
+      "pair_factor": "smooth_max",
+      "dropout_prob": 0.15,
+      "scenario": {
+        "name": "scenario_5v3_generalized",
+        "initial_assignment": [
+          1,
+          2,
+          0,
+          1,
+          2
+        ],
+        "capture_radius": 220.0,
+        "swap_threshold": 5.0,
+        "t_final": 140.0
+      },
+      "train": {
+        "iterations": 35,
+        "final_weight_norms": [
+          0.7286919201291082,
+          0.6294623624169708,
+          0.7525703224393057,
+          0.6558220583368027,
+          0.7853750371439853
+        ],
+        "final_weight_norm_squares": [
+          0.5309919144614466,
+          0.396222865699554,
+          0.5663620902164005,
+          0.43010257220112075,
+          0.6168139489689162
+        ],
+        "final_weight_vectors": [
+          [
+            0.3082,
+            0.255,
+            0.2909,
+            0.35,
+            0.2903,
+            0.2822
+          ],
+          [
+            0.2377,
+            0.2485,
+            0.2538,
+            0.291,
+            0.2601,
+            0.2475
+          ],
+          [
+            0.3835,
+            0.2889,
+            0.2606,
+            0.3546,
+            0.2801,
+            0.2524
+          ],
+          [
+            0.2822,
+            0.2628,
+            0.2741,
+            0.2882,
+            0.2388,
+            0.2573
+          ],
+          [
+            0.3783,
+            0.2714,
+            0.3407,
+            0.376,
+            0.2925,
+            0.2389
+          ]
+        ],
+        "final_delta_per_critic": [
+          8.898000614558744e-05,
+          8.647832701351226e-05,
+          7.757581873651846e-05,
+          8.979478612582125e-05,
+          6.790365721161173e-05
+        ],
+        "mean_residual_per_critic": [
+          29.079896393639103,
+          31.41454526221035,
+          32.5711111943823,
+          33.730456380536076,
+          36.38794242222374
+        ]
+      },
+      "network": {
+        "v_snac_networks": 5,
+        "ac_networks_estimated": 16,
+        "network_reduction_percent": 68.75
+      },
+      "runtime": {
+        "wall_time_s": 14.902402099978644,
+        "train_wall_time_s": 7.904289800004335,
+        "eval_wall_times_s": {
+          "full_comm": 2.451867299998412,
+          "no_comm": 2.1050048999895807,
+          "dropout": 2.441209600016009
+        },
+        "train_iterations": 35,
+        "simulated_steps_total": 16625,
+        "ms_per_step_total": 0.8963850887205199,
+        "ms_per_step_train": 0.9610078784199799
+      },
+      "eval_full_comm": {
+        "capture_time_s": 36.800000000000004,
+        "final_team_error": 272.01285287052406,
+        "final_max_assigned_error": 85.54306800815267,
+        "mean_assigned_error": 553.1264000840853,
+        "min_d_min": 190.44787645128272,
+        "mean_formation_error": 93.10144664599129,
+        "comm_mode": "full_comm"
+      },
+      "eval_no_comm": {
+        "capture_time_s": 36.800000000000004,
+        "final_team_error": 272.01329251549447,
+        "final_max_assigned_error": 85.54306800815267,
+        "mean_assigned_error": 552.1911824995293,
+        "min_d_min": 167.56400535249608,
+        "mean_formation_error": 0.0,
+        "comm_mode": "no_comm"
+      },
+      "eval_dropout": {
+        "capture_time_s": 36.800000000000004,
+        "final_team_error": 272.01092691778905,
+        "final_max_assigned_error": 85.54306800815267,
+        "mean_assigned_error": 552.6156054240594,
+        "min_d_min": 190.6906843882372,
+        "mean_formation_error": 61.434593406033905,
+        "comm_mode": "dropout"
+      },
+      "dynamic_switch_times_s": [
+        0.0
+      ],
+      "dynamic_switch_count": 1
+    },
+    {
+      "case": {
+        "name": "6v3",
+        "n_pursuers": 6,
+        "n_evaders": 3,
+        "seed": 37,
+        "assignment_mode": "shifted",
+        "layout_mode": "structured"
+      },
+      "gamma": 0.3,
+      "d_safe": 100.0,
+      "pair_factor": "smooth_max",
+      "dropout_prob": 0.15,
+      "scenario": {
+        "name": "scenario_6v3_generalized",
+        "initial_assignment": [
+          1,
+          2,
+          0,
+          1,
+          2,
+          0
+        ],
+        "capture_radius": 220.0,
+        "swap_threshold": 5.0,
+        "t_final": 140.0
+      },
+      "train": {
+        "iterations": 35,
+        "final_weight_norms": [
+          0.7003159021257581,
+          0.7914962796677917,
+          0.7206504121837497,
+          0.7622468973964622,
+          0.703875666488478,
+          0.7509825718347759
+        ],
+        "final_weight_norm_squares": [
+          0.49044236277021447,
+          0.6264663607279551,
+          0.5193370165806084,
+          0.5810203325905328,
+          0.49544095387459913,
+          0.5639748231995744
+        ],
+        "final_weight_vectors": [
+          [
+            0.2841,
+            0.2749,
+            0.2629,
+            0.3617,
+            0.2553,
+            0.2628
+          ],
+          [
+            0.3903,
+            0.2408,
+            0.3391,
+            0.282,
+            0.2856,
+            0.3743
+          ],
+          [
+            0.2511,
+            0.2445,
+            0.3613,
+            0.2481,
+            0.2532,
+            0.3746
+          ],
+          [
+            0.338,
+            0.2548,
+            0.2839,
+            0.3703,
+            0.2599,
+            0.3414
+          ],
+          [
+            0.281,
+            0.2374,
+            0.3385,
+            0.2382,
+            0.2852,
+            0.3278
+          ],
+          [
+            0.3422,
+            0.2825,
+            0.3562,
+            0.3333,
+            0.252,
+            0.2561
+          ]
+        ],
+        "final_delta_per_critic": [
+          8.40865191736438e-05,
+          6.854906169841612e-05,
+          8.767730111807849e-05,
+          6.896025874300412e-05,
+          7.648896541626942e-05,
+          6.702794722248119e-05
+        ],
+        "mean_residual_per_critic": [
+          30.577141531374725,
+          33.11851180375555,
+          31.454368928539278,
+          32.304744089787334,
+          32.15841505269847,
+          36.172129347527566
+        ]
+      },
+      "network": {
+        "v_snac_networks": 6,
+        "ac_networks_estimated": 18,
+        "network_reduction_percent": 66.66666666666667
+      },
+      "runtime": {
+        "wall_time_s": 15.704828500020085,
+        "train_wall_time_s": 8.565499899996212,
+        "eval_wall_times_s": {
+          "full_comm": 2.4755792999931145,
+          "no_comm": 2.1541238999925554,
+          "dropout": 2.509597299998859
+        },
+        "train_iterations": 35,
+        "simulated_steps_total": 17150,
+        "ms_per_step_total": 0.9157334402344073,
+        "ms_per_step_train": 0.9789142742852813
+      },
+      "eval_full_comm": {
+        "capture_time_s": 36.95,
+        "final_team_error": 363.69129662073755,
+        "final_max_assigned_error": 84.52288417468313,
+        "mean_assigned_error": 572.2579287118068,
+        "min_d_min": 110.852556843464,
+        "mean_formation_error": 114.09135195643377,
+        "comm_mode": "full_comm"
+      },
+      "eval_no_comm": {
+        "capture_time_s": 37.75,
+        "final_team_error": 363.47448892315964,
+        "final_max_assigned_error": 84.79276908071495,
+        "mean_assigned_error": 571.3483529525918,
+        "min_d_min": 110.47893484990593,
+        "mean_formation_error": 0.0,
+        "comm_mode": "no_comm"
+      },
+      "eval_dropout": {
+        "capture_time_s": 37.1,
+        "final_team_error": 363.50752063619825,
+        "final_max_assigned_error": 84.66800831305211,
+        "mean_assigned_error": 571.7383443198775,
+        "min_d_min": 94.45976727742138,
+        "mean_formation_error": 78.08360935644,
+        "comm_mode": "dropout"
+      },
+      "dynamic_switch_times_s": [
+        0.0
+      ],
+      "dynamic_switch_count": 1
+    },
+    {
+      "case": {
+        "name": "8v4",
+        "n_pursuers": 8,
+        "n_evaders": 4,
+        "seed": 47,
+        "assignment_mode": "shifted",
+        "layout_mode": "structured"
+      },
+      "gamma": 0.3,
+      "d_safe": 100.0,
+      "pair_factor": "smooth_max",
+      "dropout_prob": 0.15,
+      "scenario": {
+        "name": "scenario_8v4_generalized",
+        "initial_assignment": [
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0
+        ],
+        "capture_radius": 220.0,
+        "swap_threshold": 5.0,
+        "t_final": 140.0
+      },
+      "train": {
+        "iterations": 35,
+        "final_weight_norms": [
+          0.713062418855651,
+          0.7830378479683329,
+          0.7026906705056768,
+          0.7298955251414331,
+          0.6929318591082568,
+          0.7637396062587151,
+          0.7254109883732892,
+          0.7434231798681739
+        ],
+        "final_weight_norm_squares": [
+          0.508458013184272,
+          0.613148271350878,
+          0.4937741784157177,
+          0.5327474776214883,
+          0.48015456136722506,
+          0.5832981861682172,
+          0.5262211020527123,
+          0.5526780243653071
+        ],
+        "final_weight_vectors": [
+          [
+            0.2795,
+            0.2801,
+            0.2637,
+            0.3402,
+            0.2923,
+            0.2849
+          ],
+          [
+            0.3458,
+            0.2861,
+            0.268,
+            0.3427,
+            0.28,
+            0.3796
+          ],
+          [
+            0.2687,
+            0.284,
+            0.2901,
+            0.2619,
+            0.2548,
+            0.351
+          ],
+          [
+            0.3859,
+            0.2481,
+            0.2719,
+            0.3378,
+            0.2686,
+            0.2492
+          ],
+          [
+            0.2802,
+            0.2916,
+            0.2911,
+            0.2783,
+            0.2788,
+            0.2769
+          ],
+          [
+            0.3657,
+            0.2537,
+            0.2614,
+            0.3859,
+            0.2939,
+            0.2857
+          ],
+          [
+            0.2753,
+            0.263,
+            0.3517,
+            0.2959,
+            0.2909,
+            0.2923
+          ],
+          [
+            0.3352,
+            0.2731,
+            0.3478,
+            0.326,
+            0.24,
+            0.2844
+          ]
+        ],
+        "final_delta_per_critic": [
+          9.062924373087777e-05,
+          7.208114135030439e-05,
+          7.633692386718734e-05,
+          7.3788238912429e-05,
+          9.901204773942127e-05,
+          7.84926211054203e-05,
+          8.127885313321925e-05,
+          7.068012403757242e-05
+        ],
+        "mean_residual_per_critic": [
+          30.9972755348033,
+          33.63335319631057,
+          30.974089251019333,
+          31.076097788356954,
+          31.85070378150669,
+          31.471985923958048,
+          31.997406634241372,
+          35.59142110764342
+        ]
+      },
+      "network": {
+        "v_snac_networks": 8,
+        "ac_networks_estimated": 24,
+        "network_reduction_percent": 66.66666666666667
+      },
+      "runtime": {
+        "wall_time_s": 17.003963099996326,
+        "train_wall_time_s": 10.131592799996724,
+        "eval_wall_times_s": {
+          "full_comm": 2.4001235000032466,
+          "no_comm": 2.0552727000031155,
+          "dropout": 2.416941899980884
+        },
+        "train_iterations": 35,
+        "simulated_steps_total": 18200,
+        "ms_per_step_total": 0.934283686812985,
+        "ms_per_step_train": 1.0338359999996658
+      },
+      "eval_full_comm": {
+        "capture_time_s": 37.1,
+        "final_team_error": 502.9088245742822,
+        "final_max_assigned_error": 85.17451356039581,
+        "mean_assigned_error": 558.1137159602291,
+        "min_d_min": 59.48122627562603,
+        "mean_formation_error": 120.08719484668535,
+        "comm_mode": "full_comm"
+      },
+      "eval_no_comm": {
+        "capture_time_s": 36.25,
+        "final_team_error": 502.55537779259896,
+        "final_max_assigned_error": 84.94660531670714,
+        "mean_assigned_error": 556.3685821320961,
+        "min_d_min": 58.70230553055227,
+        "mean_formation_error": 0.0,
+        "comm_mode": "no_comm"
+      },
+      "eval_dropout": {
+        "capture_time_s": 36.9,
+        "final_team_error": 502.6922164163488,
+        "final_max_assigned_error": 85.0082012353213,
+        "mean_assigned_error": 557.3036509121187,
+        "min_d_min": 62.93170939212874,
+        "mean_formation_error": 81.91039587021174,
+        "comm_mode": "dropout"
+      },
+      "dynamic_switch_times_s": [
+        0.0
+      ],
+      "dynamic_switch_count": 1
+    }
+  ]
+}
