@@ -1,0 +1,149 @@
+{
+  "generated_at": "2026-04-27T16:39:02",
+  "case": "12v6",
+  "seed": 11,
+  "gamma": 1.5,
+  "d_safe_m": 150.0,
+  "offline_random_cost_matrix_summary": {
+    "n_trials": 50,
+    "case": "12v6",
+    "pairwise_mean_cost": 50540.775653900135,
+    "hungarian_mean_cost": 44859.250482529525,
+    "auction_mean_cost": 46446.46818263184,
+    "pairwise_mean_gap_pct": 13.032667946637421,
+    "pairwise_max_gap_pct": 44.31943023992344,
+    "auction_mean_gap_pct": 3.7393935447056754,
+    "auction_max_gap_pct": 22.904444901312047,
+    "pairwise_total_time_s": 0.015180452028289437,
+    "hungarian_total_time_s": 0.0038775831926614046,
+    "auction_total_time_s": 0.268699414213188,
+    "pairwise_mean_iterations": 3.12,
+    "auction_mean_iterations": 488.42
+  },
+  "live_mpe_rollout_summary": {
+    "pairwise_swap": {
+      "wall_s": 12.616403622028884,
+      "per_seed": [
+        {
+          "assigner": "pairwise_swap",
+          "mean_assigned_error": 1943.9680971653345,
+          "final_assigned_error": 151.75659184514737,
+          "min_d_min_m": 61.32592888813033,
+          "capture_time_s": null,
+          "switch_count": 1,
+          "solver_iterations_total": 2413
+        },
+        {
+          "assigner": "pairwise_swap",
+          "mean_assigned_error": 1943.9680971653345,
+          "final_assigned_error": 151.75659184514737,
+          "min_d_min_m": 61.32592888813033,
+          "capture_time_s": null,
+          "switch_count": 1,
+          "solver_iterations_total": 2413
+        },
+        {
+          "assigner": "pairwise_swap",
+          "mean_assigned_error": 1943.9680971653345,
+          "final_assigned_error": 151.75659184514737,
+          "min_d_min_m": 61.32592888813033,
+          "capture_time_s": null,
+          "switch_count": 1,
+          "solver_iterations_total": 2413
+        }
+      ],
+      "mean_assigned_error_avg": 1943.9680971653345,
+      "mean_assigned_error_std": 0.0,
+      "min_d_min_m_avg": 61.32592888813033,
+      "switch_count_avg": 1.0,
+      "capture_times_s": [
+        null,
+        null,
+        null
+      ]
+    },
+    "hungarian": {
+      "wall_s": 12.768760638020467,
+      "per_seed": [
+        {
+          "assigner": "hungarian",
+          "mean_assigned_error": 1614.848692928807,
+          "final_assigned_error": 89.591281553982,
+          "min_d_min_m": 66.26263867081816,
+          "capture_time_s": 105.15,
+          "switch_count": 2,
+          "solver_iterations_total": 2200
+        },
+        {
+          "assigner": "hungarian",
+          "mean_assigned_error": 1614.848692928807,
+          "final_assigned_error": 89.591281553982,
+          "min_d_min_m": 66.26263867081816,
+          "capture_time_s": 105.15,
+          "switch_count": 2,
+          "solver_iterations_total": 2200
+        },
+        {
+          "assigner": "hungarian",
+          "mean_assigned_error": 1614.848692928807,
+          "final_assigned_error": 89.591281553982,
+          "min_d_min_m": 66.26263867081816,
+          "capture_time_s": 105.15,
+          "switch_count": 2,
+          "solver_iterations_total": 2200
+        }
+      ],
+      "mean_assigned_error_avg": 1614.8486929288072,
+      "mean_assigned_error_std": 2.2737367544323206e-13,
+      "min_d_min_m_avg": 66.26263867081816,
+      "switch_count_avg": 2.0,
+      "capture_times_s": [
+        105.15,
+        105.15,
+        105.15
+      ]
+    },
+    "critic_warm_auction": {
+      "wall_s": 55.76545270299539,
+      "per_seed": [
+        {
+          "assigner": "critic_warm_auction",
+          "mean_assigned_error": 1639.379433689428,
+          "final_assigned_error": 102.05666234122339,
+          "min_d_min_m": 66.3690579798689,
+          "capture_time_s": null,
+          "switch_count": 1,
+          "solver_iterations_total": 1100000
+        },
+        {
+          "assigner": "critic_warm_auction",
+          "mean_assigned_error": 1639.379433689428,
+          "final_assigned_error": 102.05666234122339,
+          "min_d_min_m": 66.3690579798689,
+          "capture_time_s": null,
+          "switch_count": 1,
+          "solver_iterations_total": 1100000
+        },
+        {
+          "assigner": "critic_warm_auction",
+          "mean_assigned_error": 1639.379433689428,
+          "final_assigned_error": 102.05666234122339,
+          "min_d_min_m": 66.3690579798689,
+          "capture_time_s": null,
+          "switch_count": 1,
+          "solver_iterations_total": 1100000
+        }
+      ],
+      "mean_assigned_error_avg": 1639.379433689428,
+      "mean_assigned_error_std": 0.0,
+      "min_d_min_m_avg": 66.3690579798689,
+      "switch_count_avg": 1.0,
+      "capture_times_s": [
+        null,
+        null,
+        null
+      ]
+    }
+  },
+  "vsnac_training_wall_s": 7.042430143977981
+}

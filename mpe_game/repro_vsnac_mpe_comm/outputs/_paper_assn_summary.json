@@ -1,0 +1,44 @@
+{
+  "8v4 random": {
+    "pairwise_swap": {
+      "mean_team_err_over_episode_m": 18222.73458123172,
+      "std_over_seeds_m": 46.4757241948924
+    },
+    "hungarian": {
+      "mean_team_err_over_episode_m": 21422.16142317513,
+      "std_over_seeds_m": 122.43610583911716
+    },
+    "critic_warm_auction": {
+      "mean_team_err_over_episode_m": 20394.935194679332,
+      "std_over_seeds_m": 809.523790585986
+    }
+  },
+  "10v5 random": {
+    "pairwise_swap": {
+      "mean_team_err_over_episode_m": 23159.968767558377,
+      "std_over_seeds_m": 26.998631899065973
+    },
+    "hungarian": {
+      "mean_team_err_over_episode_m": 19522.1786418539,
+      "std_over_seeds_m": 317.13262132892044
+    },
+    "critic_warm_auction": {
+      "mean_team_err_over_episode_m": 19728.146144703896,
+      "std_over_seeds_m": 209.66298736267277
+    }
+  },
+  "12v6 random": {
+    "pairwise_swap": {
+      "mean_team_err_over_episode_m": 23313.490010915055,
+      "std_over_seeds_m": 26.685543458932322
+    },
+    "hungarian": {
+      "mean_team_err_over_episode_m": 19355.586938820878,
+      "std_over_seeds_m": 43.04945712277573
+    },
+    "critic_warm_auction": {
+      "mean_team_err_over_episode_m": 20138.77505585286,
+      "std_over_seeds_m": 180.13356828619115
+    }
+  }
+}
