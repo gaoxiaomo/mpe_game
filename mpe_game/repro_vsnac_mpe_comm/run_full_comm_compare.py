@@ -861,7 +861,7 @@ def main() -> None:
     parser.add_argument("--layout-mode", type=str, default="structured", choices=["structured", "random"])
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--gamma", type=float, default=0.3)
-    parser.add_argument("--d-safe", type=float, default=100.0)
+    parser.add_argument("--d-safe", type=float, default=150.0, help="Safety distance (m); default 150 m matches the FAA NMAC threshold (500 ft).")
     parser.add_argument("--warmup-passes", type=int, default=2)
     parser.add_argument("--timed-passes", type=int, default=12)
     parser.add_argument("--traditional-warmup-episodes", type=int, default=2)

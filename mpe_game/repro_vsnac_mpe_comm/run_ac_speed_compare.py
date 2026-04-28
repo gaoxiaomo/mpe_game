@@ -191,13 +191,13 @@ def _run_single_case(
         control_params=control,
         learning_params=learning,
         feature_params=feature,
-        comm_params=_comm_params(gamma=gamma, comm_mode="full", d_safe=100.0),
+        comm_params=_comm_params(gamma=gamma, comm_mode="full", d_safe=150.0),
     )
 
     dynamic_graph = scenario.n_evaders > 1
     train = sim.train_policy(seed=case.seed, dynamic_graph=dynamic_graph)
 
-    full_comm_cfg = CommParams(gamma=gamma, comm_mode="full", dropout_prob=0.0, d_safe=100.0)
+    full_comm_cfg = CommParams(gamma=gamma, comm_mode="full", dropout_prob=0.0, d_safe=150.0)
     full_comm_graph = CommunicationGraph(
         n_p=scenario.n_pursuers,
         comm_mode=full_comm_cfg.comm_mode,

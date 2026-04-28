@@ -244,7 +244,7 @@ def main() -> None:
 
     standard_payload: list[dict[str, Any]] = []
     for case, gamma in standard_cases:
-        item = run_standard_case(case, gamma=gamma, d_safe=100.0)
+        item = run_standard_case(case, gamma=gamma, d_safe=150.0)
         standard_payload.append(item)
         if case.name in {"3v1", "8v4"}:
             dt = item["dt"]

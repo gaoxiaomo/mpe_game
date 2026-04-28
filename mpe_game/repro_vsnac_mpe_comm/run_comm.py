@@ -606,7 +606,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=7, help="Base random seed")
     parser.add_argument("--parallel-workers", type=int, default=1, help="Parallel worker count for batch runs")
     parser.add_argument("--gamma", type=float, default=0.3, help="Formation coupling weight gamma")
-    parser.add_argument("--d-safe", type=float, default=100.0, help="Safety distance for adaptive gamma (m)")
+    parser.add_argument("--d-safe", type=float, default=150.0, help="Safety distance (m) for adaptive gamma; default 150 m matches the FAA NMAC threshold (500 ft).")
     parser.add_argument("--dropout-prob", type=float, default=0.15, help="Edge dropout probability for dropout eval")
     parser.add_argument(
         "--skip-plots",

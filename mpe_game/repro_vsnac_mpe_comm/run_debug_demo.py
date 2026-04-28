@@ -263,7 +263,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=7, help="Base random seed.")
     parser.add_argument("--quick", action="store_true", help="Use short training/eval settings for debugging.")
     parser.add_argument("--gamma", type=float, default=0.3, help="Communication coupling weight.")
-    parser.add_argument("--d-safe", type=float, default=100.0, help="Safety distance for the smooth pair factor.")
+    parser.add_argument("--d-safe", type=float, default=150.0, help="Safety distance (m) for the smooth pair factor; default 150 m matches the FAA NMAC threshold (500 ft).")
     parser.add_argument(
         "--assignment-mode",
         type=str,
