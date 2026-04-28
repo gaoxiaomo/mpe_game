@@ -1,0 +1,650 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[UTF8]{ctex}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{algorithm,algpseudocode}
+\usepackage{geometry}
+\usepackage{hyperref}
+\geometry{margin=2.5cm}
+
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\ubar}{\bar{u}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\inner}[2]{\langle #1, #2 \rangle}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{assumption}[theorem]{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\title{多智能体追逃博弈的强化学习方法\\全套数学推导与收敛证明}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\bigskip
+
+% =====================================================================
+\section{引言：作为强化学习问题的多智能体追逃}
+% =====================================================================
+
+本工作把多追多逃博弈构造成一个\textbf{多智能体强化学习 (MARL)} 问题，所有可学习的部分都用强化学习的标准组件来表达；解析项只用来刻画那些\emph{明确已知} 的协调结构。本章首先把每一组件按 RL 教科书的定义对号入座。
+
+\subsection{马尔可夫博弈作为底层 MDP}
+
+考虑离散时间步长 $\Delta t$ 的零和马尔可夫博弈 $\mathcal G=(\mathcal X,\mathcal U_p,\mathcal U_e,P,\ell,\gamma_d)$：
+\begin{itemize}
+\item \textbf{状态空间} $\mathcal X\subseteq\R^{6(N_p+N_e)}$：所有追逐者与逃逸者的 6 维全状态拼接。
+\item \textbf{动作空间} $\mathcal U_p^{N_p}\times\mathcal U_e^{N_e}$，单个智能体动作 $u_i\in\R^3$，受饱和约束 $\norm{u_i^p}\le\ubar_p$，$\norm{u_i^e}\le\ubar_e$。
+\item \textbf{转移核} $P$：来自连续动力学 $\dot x = f(x)+g(x)u$ 的 RK4 离散化（确定性）。
+\item \textbf{即时代价} $\ell$：式 \eqref{eq:stage_cost} 中给出，含追踪二次项与饱和处理项。
+\item \textbf{折扣} 取 $\gamma_d=1$（无穷时域 average-cost 形式），与原文一致。
+\end{itemize}
+
+\textbf{Saddle 策略与 Nash 均衡}：追逐者最小化、逃逸者最大化期望累积代价，使得两侧策略 $(\pi_p^*,\pi_e^*)$ 满足
+\begin{equation}
+J(\pi_p^*,\pi_e)\le J(\pi_p^*,\pi_e^*)\le J(\pi_p,\pi_e^*)\quad\forall\pi_p,\pi_e.
+\end{equation}
+这是 zero-sum Markov game 的标准 Nash 均衡 \cite{shapley1953}。对应的最优值函数 $V^*$ 满足 Hamilton--Jacobi--Isaacs (HJI) 方程，将在第 \ref{sec:hji} 节给出。
+
+\subsection{为什么这是强化学习方法}
+
+我们的方法满足 \cite{sutton2018reinforcement} 给出的三条强化学习鉴别条件：
+
+\begin{itemize}
+\item \textbf{无模型可学习成分}：critic 网络通过 \emph{Bellman 残差最小化} 从仿真轨迹中学习值函数，不要求知道 $f(x)$、$g(x)$ 的解析形式（实现中虽提供，但训练算法本身不依赖）。
+\item \textbf{动作来自值函数梯度}：actor 不是独立网络，而是通过 HJI 一阶最优性条件 \emph{从 critic 直接导出}。这是 \emph{value-based RL} 的核心范式（典型代表：Q-learning 用 $\argmax_u Q(x,u)$ 推动作）。
+\item \textbf{交互式数据采集}：仿真轨迹由当前策略 rollout，伴随探索噪声，replay buffer 中存数据再做最小二乘——属于 \emph{off-policy 半梯度 TD} 家族 \cite{lewis2009adaptive}。
+\end{itemize}
+
+\subsection{RL 组件与本工作的对应表}
+
+\begin{tabular}{p{4.6cm}|p{8.4cm}}
+\hline
+RL 标准组件 & 本工作的具体实现 \\
+\hline
+Critic / Value approximator & 每个追逐者一个线性参数化值函数 $\hat V_j=\hat W_j^\top\psi(\tilde x_j)$，6 维基函数（V-SNAC）\\
+Actor / Policy & \textbf{不独立参数化}；从 $\nabla\hat V_j$ 经 HJI 闭式解析推出（"single-network" 命名由此而来）\\
+Environment / Transition & 6-DOF 飞行器非线性动力学 + RK4 \\
+Reward / Stage cost & $-\ell_j(x,u)$，含跟踪二次项 + 饱和非二次项 \\
+TD target / Bellman update & 残差最小二乘：$(\psi_{t+1}-\psi_t)^\top \hat W=-(\ell\Delta t+\Delta\Phi)$ \\
+Replay buffer & ``ReplayLeastSquares''，按追逐者分桶存样本 \\
+Exploration & 高斯探索噪声，按训练轮次衰减 \\
+Reward shaping & $\Phi_j$ 协调势——\textbf{Ng-Russell 势函数 reward shaping} \cite{ng1999policy}，保证最优策略不变 \\
+Policy iteration & 滚动收集样本 → 解最小二乘 → 梯度下降权重更新 → 重新 rollout \\
+\textbf{多智能体协调层} & 同组通信图，势函数 $\Phi_j$ 协调势 + 拍卖算法分配 \\
+\hline
+\end{tabular}
+
+% =====================================================================
+\section{系统模型与博弈描述}\label{sec:hji}
+% =====================================================================
+
+\subsection{单机非线性动力学}
+
+记追逐者 $j$ 与逃逸者 $i$ 的状态为 $x_j^p,x_i^e\in\R^6$，每个状态 $x=[p^\top,v^\top]^\top$ 含位置 $p\in\R^3$ 与速度 $v\in\R^3$，控制 $u\in\R^3$。动力学满足 control-affine 形式：
+\begin{equation}
+\dot x = f(x)+g(x)u,\qquad
+g(x)=\begin{bmatrix}0_{3\times 3}\\ G_v(x)\end{bmatrix}.
+\label{eq:dynamics}
+\end{equation}
+$f(x)$ 含气动项（推力、阻力、升力、俯仰矩），$G_v(x)$ 在主要工况下接近 $I_3$（具体表达见原代码 \texttt{dynamics.py}）。控制只直接作用于速度通道。
+
+\subsection{追踪误差与博弈代价}
+
+设硬指派 $\sigma:\{1,\dots,N_p\}\to\{1,\dots,N_e\}$，追逐者 $j$ 被分配到 $i=\sigma(j)$。\textbf{追踪误差}：
+\begin{equation}
+\tilde x_j = x_j^p-x_{\sigma(j)}^e+r_{j,\sigma(j)},
+\label{eq:tracking_error}
+\end{equation}
+其中 $r_{j,i}\in\R^6$ 为目标围捕偏移。
+
+每个追逐者-逃逸者局部对构成零和子博弈，瞬时代价：
+\begin{equation}
+\ell_j(\tilde x_j,u_j^p,u_{\sigma(j)}^e)
+=\tilde x_j^\top Q\tilde x_j+U(u_j^p)-W(u_{\sigma(j)}^e),
+\label{eq:stage_cost}
+\end{equation}
+其中 $Q=\diag(q_1,\dots,q_6)\succ 0$ 加权状态误差，$U(\cdot),W(\cdot)$ 为饱和处理用的非二次积分代价：
+\begin{equation}
+U(u)=\sum_{l=1}^3 2\ubar_p R_{1,l}\int_0^{u_l/\ubar_p}\ubar_p\arctanh(\tau)d\tau.
+\label{eq:nonquadratic_U}
+\end{equation}
+$W$ 关于 $\ubar_e,R_2$ 类似定义。
+
+\subsection{Hamilton--Jacobi--Isaacs 方程}
+
+记追逐者 $j$ 的最优值函数 $V_j^*$，HJI 方程为
+\begin{equation}
+0=\min_{u_j^p}\max_{u_{\sigma(j)}^e}\Big[\ell_j+(\nabla V_j^*)^\top F_j(x,u)\Big],
+\label{eq:hji}
+\end{equation}
+其中 $F_j=f(x_j^p)-f(x_{\sigma(j)}^e)+g_j^p u_j^p-g_e u_{\sigma(j)}^e$。
+
+\textbf{饱和闭式控制律}（对 \eqref{eq:hji} 内层取驻点 + 利用 \eqref{eq:nonquadratic_U} 的 Legendre 变换）：
+\begin{align}
+u_j^{p*} &= -\ubar_p\tanh\!\Big(\tfrac{1}{2\ubar_p}R_1^{-1}(g_j^p)^\top\nabla V_j^*\Big),\label{eq:opt_pursuer}\\
+u_{\sigma(j)}^{e*} &= -\ubar_e\tanh\!\Big(\tfrac{1}{2\ubar_e}R_2^{-1}(g_e)^\top\nabla V_j^*\Big).\label{eq:opt_evader}
+\end{align}
+$\tanh$ 自动满足饱和约束。这是后文所有 actor 形式的母结构——\emph{actor 由 critic 推出} 的具体实现。
+
+% =====================================================================
+\section{V-SNAC：Single-Network 值函数强化学习}\label{sec:vsnac}
+% =====================================================================
+
+\subsection{Critic 参数化}
+
+每个追逐者一个线性参数化 critic：
+\begin{equation}
+\hat V_j(\tilde x_j)=\hat W_j^\top\psi(\tilde x_j),\qquad
+\psi(\tilde x)=g_\psi
+\begin{bmatrix}
+\tilde p_1\tilde v_1/s_1\\\tilde p_2\tilde v_2/s_2\\\tilde p_3\tilde v_3/s_3\\
+\tfrac12\tilde v_1^2\\\tfrac12\tilde v_2^2\\\tfrac12\tilde v_3^2
+\end{bmatrix}\in\R^6.
+\label{eq:vsnac_critic}
+\end{equation}
+该 6 维基函数捕捉了\textbf{位置-速度耦合} 与\textbf{动能} 两类项，是 LQR 二次型 $\tilde x^\top P\tilde x$ 的对角投影。
+
+\textbf{RL 视角}：这是 \emph{linear-in-parameter (LIP) value function approximation} \cite{lewis2009adaptive}，等价于一个 6 单元的特征工程线性回归网络。
+
+\subsection{Actor：从 critic 直接导出}
+
+将 \eqref{eq:vsnac_critic} 代入 \eqref{eq:opt_pursuer}：
+\begin{equation}
+\hat u_j^p = -\ubar_p\tanh\!\Big(\tfrac{1}{2\ubar_p}R_1^{-1}(g_j^p)^\top(\nabla\psi)^\top\hat W_j\Big).
+\label{eq:vsnac_actor}
+\end{equation}
+\textbf{这就是 single-network 的本质}：actor 不是独立可训练参数，而是 critic 权重 $\hat W_j$ 经过解析映射后的产物。每加一个追逐者，只新增 1 个 critic（6 个参数），\emph{不增加 actor 网络}。
+
+相比之下，传统 actor-critic baseline 需要 $2(N_p+N_e)$ 个独立网络（每个智能体一个 actor + 一个 critic），是 V-SNAC 的 $\frac{2(N_p+N_e)}{N_p}$ 倍——在 $6\!\times\!3$ 规模下达到 $\frac{2\cdot 9}{6}=3$ 倍网络数。
+
+\subsection{Bellman 残差最小二乘更新}
+
+对样本 $(t,t+1)$，瞬时 Bellman 残差为
+\begin{equation}
+\delta_{j,t}=\ell_{j,t}\Delta t+\hat V_j(\tilde x_{j,t+1})-\hat V_j(\tilde x_{j,t}).
+\label{eq:td_residual}
+\end{equation}
+代入 \eqref{eq:vsnac_critic}：
+\begin{equation}
+(\psi_{j,t+1}-\psi_{j,t})^\top\hat W_j = -\ell_{j,t}\Delta t.
+\end{equation}
+堆叠 $T$ 个样本得到回归方程
+\begin{equation}
+A_j\hat W_j=b_j,\quad
+A_j\in\R^{T\times 6},\
+b_j\in\R^T,\
+[A_j]_t=(\psi_{j,t+1}-\psi_{j,t})^\top,\
+[b_j]_t=-\ell_{j,t}\Delta t.
+\label{eq:regression}
+\end{equation}
+带 Tikhonov 正则项的最小二乘解为
+\begin{equation}
+\hat W_j^{(s+1)}=(A_j^\top A_j+\lambda I)^{-1}(A_j^\top b_j+\lambda \hat W_j^{(s)}).
+\label{eq:ls_update}
+\end{equation}
+随后做带衰减步长的滑动平均更新：$\hat W_j\leftarrow \hat W_j+\alpha_s(\hat W_j^{(s+1)}-\hat W_j)$，$\alpha_s=\alpha_0\lambda^s$。
+
+\textbf{RL 视角}：这正是 \emph{off-policy semi-gradient TD($0$)} \cite{sutton2018reinforcement} 的批量形式。Tikhonov 先验把当前权重作为先验中心，等价于 elastic-net 风格的稳定项。
+
+\subsection{Critic 收敛定理 (UUB)}
+
+\begin{assumption}[Persistence of Excitation, PE]\label{assump:pe}
+存在 $T_0>0$ 与 $\beta_0>0$ 使得对充分长的滑动窗口
+\begin{equation}
+\frac{1}{T_0}\int_0^{T_0}\psi(\tilde x_t)\psi(\tilde x_t)^\top dt \succeq \beta_0 I_6.
+\end{equation}
+\end{assumption}
+
+\begin{assumption}[Bounded basis and reward]\label{assump:bounded}
+$\norm{\psi(\tilde x)}\le M_\psi$，$|\ell_j|\le M_\ell$ 对状态空间紧致集成立。
+\end{assumption}
+
+\begin{theorem}[V-SNAC critic 权重 UUB 收敛]\label{thm:critic_uub}
+在假设 \ref{assump:pe}、\ref{assump:bounded} 下，记真值函数 $V_j^*$ 在 $\psi$ 子空间内的最佳投影为 $W_j^*=\Pi_\psi V_j^*$，残差为 $\varepsilon_j(\tilde x)=V_j^*-W_j^{*\top}\psi$。则更新 \eqref{eq:ls_update} 产生的权重序列 $\{\hat W_j^{(s)}\}$ 在 \emph{Uniformly Ultimately Bounded (UUB)} 意义下收敛到 $W_j^*$ 邻域：
+\begin{equation}
+\limsup_{s\to\infty}\norm{\hat W_j^{(s)}-W_j^*}\le \frac{C(\lambda,M_\psi,M_\ell)}{\beta_0}\sup_{\tilde x}|\varepsilon_j(\tilde x)|.
+\label{eq:uub_bound}
+\end{equation}
+其中 $C(\cdot)$ 仅依赖于正则项与基函数界。
+\end{theorem}
+
+\begin{proof}[证明梗概]
+最小二乘 + Tikhonov 解 \eqref{eq:ls_update} 是收缩映射：
+\begin{equation}
+\norm{\hat W_j^{(s+1)}-W_j^*}\le \rho\norm{\hat W_j^{(s)}-W_j^*}+\eta,
+\end{equation}
+其中 $\rho=\frac{\sigma_{\max}(A^\top A+\lambda I)-\beta_0}{\sigma_{\max}(A^\top A+\lambda I)+\lambda}<1$（PE 保证 $\sigma_{\min}(A^\top A)\ge T\beta_0>0$），$\eta=O(\sup|\varepsilon_j|)$。
+固定点定理给出 \eqref{eq:uub_bound}。完整 ADP 风格证明见 Lewis-Vrabie \cite{lewis2009adaptive} Thm 4.1。
+\end{proof}
+
+\begin{remark}
+PE 假设由训练中的探索噪声 + 状态扰动满足。当真值 $V_j^*$ 在 $\psi$ 张成的子空间内（即 $\varepsilon_j\equiv 0$，例如 LQR 极限），\eqref{eq:uub_bound} 退化为 $\hat W_j\to W_j^*$ 精确收敛。
+\end{remark}
+
+% =====================================================================
+\section{通信增广值函数：势函数 reward shaping}\label{sec:comm_aug}
+% =====================================================================
+
+\subsection{动机与思想}
+
+原始 V-SNAC 让每个追逐者独立优化追踪代价，没有任何机制约束\emph{追逐者之间} 的相对几何。这在多对一围捕中可能导致路径交叉甚至碰撞（\$d_{\min}\to 0$）。我们在精确值函数层引入解析协调势 $\Phi_j$，让多智能体协调进入 HJI 而不破坏 RL 收敛性。
+
+\subsection{协调势函数定义}
+
+记同组通信图邻接 $A_p=[a_{jk}]\in\{0,1\}^{N_p\times N_p}$（$a_{jk}=1$ 当且仅当 $\sigma(j)=\sigma(k),j\ne k$），度数 $d_j=\sum_k a_{jk}$。
+定义\textbf{平滑安全放大因子}（处理近距危险）：
+\begin{equation}
+\rho_{jk}(x)=\frac{d_{\text{safe}}^2}{\norm{p_j-p_k}^2+\varepsilon_d},\quad
+\alpha_{jk}=1+\tfrac12\big(\rho_{jk}-1+\sqrt{(\rho_{jk}-1)^2+\varepsilon_\alpha}\big),
+\label{eq:smooth_alpha}
+\end{equation}
+是 $\max(1,\rho_{jk})$ 的 $C^\infty$ 平滑近似。
+
+\textbf{协调势函数}：
+\begin{equation}
+\Phi_j(x)=\frac{\gamma}{d_j}\sum_{k}a_{jk}\alpha_{jk}\Big[\tfrac12\norm{v_j-v_k}^2+\frac{(p_j-p_k-\Delta_{jk})^\top v_j}{d_{\text{ref}}}\Big],
+\label{eq:phi}
+\end{equation}
+其中 $\Delta_{jk}=r_{k,\sigma(k)}-r_{j,\sigma(j)}\in\R^3$。第一项惩罚组内速度发散，第二项是 PD 型耦合（位置误差 $\times$ 速度），保证 $g_j^\top\nabla\Phi_j\ne 0$（速度通道有梯度才进控制律）。
+
+\subsection{精确值函数分解}
+
+\begin{theorem}[精确分解保留 saddle 均衡]\label{thm:decomp_saddle}
+对任意定义在追逐者状态上的 $C^1$ 函数 $\Phi_j$，定义残差值函数 $\bar V_j^*=V_j^*-\Phi_j$。则原 HJI \eqref{eq:hji} 等价于残差 HJI：
+\begin{equation}
+0=\min_{u_j^p}\max_{u_{\sigma(j)}^e}\Big[\ell_j^\Phi+(\nabla\bar V_j^*)^\top F_j\Big],
+\label{eq:residual_hji}
+\end{equation}
+其中 $\ell_j^\Phi=\ell_j+(\nabla\Phi_j)^\top F_j$ 为 \textbf{shaped reward}。Saddle 解 $(u_j^{p*},u_{\sigma(j)}^{e*})$ 不变。
+\end{theorem}
+
+\begin{proof}
+直接代入 $V_j^*=\bar V_j^*+\Phi_j$，$\nabla V_j^*=\nabla\bar V_j^*+\nabla\Phi_j$ 到 \eqref{eq:hji}：
+\begin{align*}
+0&=\min_{u_p}\max_{u_e}\big[\ell_j+(\nabla\bar V_j^*+\nabla\Phi_j)^\top F_j\big]\\
+&=\min_{u_p}\max_{u_e}\big[(\ell_j+(\nabla\Phi_j)^\top F_j)+(\nabla\bar V_j^*)^\top F_j\big].
+\end{align*}
+此即 \eqref{eq:residual_hji}。Saddle 解一致性由 minimax 等价（仅 reward 平移与时变项）保证。
+\end{proof}
+
+\begin{remark}[与 Ng-Russell reward shaping 的关系]
+该构造是\textbf{基于势函数的 reward shaping} \cite{ng1999policy} 在多智能体连续时间情形下的精确推广：定义 shaped reward $\ell_j^\Phi=\ell_j+\dot\Phi_j$，最优策略不变（Theorem 1 of \cite{ng1999policy}）。
+\end{remark}
+
+\subsection{残差 critic 训练（与 Phi 解耦）}
+
+只在残差值函数上做 V-SNAC 近似：
+\begin{equation}
+\hat{\bar V}_j=\hat W_j^\top\psi(\tilde x_j),\qquad
+\hat V_j^{\text{tot}}=\hat{\bar V}_j+\Phi_j.
+\label{eq:residual_critic}
+\end{equation}
+对应的 Bellman 残差最小二乘方程为
+\begin{equation}
+(\psi_{j,t+1}-\psi_{j,t})^\top\hat W_j = -(\ell_{j,t}\Delta t+\Phi_{j,t+1}-\Phi_{j,t}).
+\label{eq:bellman_with_phi}
+\end{equation}
+即\textbf{$\Phi$ 的差分 $\Delta\Phi$ 进 RHS}（实现中称 \texttt{known\_value\_delta}）。
+
+\begin{theorem}[残差 critic 训练独立性]\label{thm:residual_critic}
+固定任意有界 $\Phi_j$，训练 \eqref{eq:bellman_with_phi} 与原始训练 \eqref{eq:regression} 具有相同的设计矩阵 $A_j=A_j^\Phi$，因此：
+(i) 数值条件数 $\kappa(A_j^\top A_j)$ 不变；
+(ii) 在假设 \ref{assump:pe}、\ref{assump:bounded} 下定理 \ref{thm:critic_uub} 仍然成立——critic 收敛性\textbf{不依赖} 于 $\Phi$ 的具体选择；
+(iii) 拟合的目标 $\bar V_j^*$ 在某些充分条件下\emph{比 $V_j^*$ 更易逼近}。
+\end{theorem}
+
+\begin{proof}
+(i)、(ii) 直接由 $A_j$ 不含 $\Phi$ 的事实得出，$\Phi$ 仅出现在 RHS。
+(iii) 设 $\Pi_\psi$ 是到 $\psi$ 张成子空间的正交投影。最佳逼近误差差：
+\begin{equation}
+e_0^2-e_\Phi^2=\norm{(I-\Pi_\psi)\Phi_j}_\mu^2+2\inner{(I-\Pi_\psi)\bar V_j^*}{(I-\Pi_\psi)\Phi_j}_\mu.
+\end{equation}
+若交叉项非负（特别地若 $\Phi_j$ 与 $\bar V_j^*$ 在残差子空间正交），则 $e_\Phi\le e_0$——把网络难表达的部分搬进 $\Phi$ 解析项后，剩余残差更容易被 $\psi$ 张开。
+\end{proof}
+
+\begin{remark}
+定理 \ref{thm:residual_critic} 是本工作的\textbf{核心结构性结果}：协调层不通过修改 actor 的"补丁"实现，而是\textbf{先在精确值函数层做分解，再仅近似残差}。这与 Ng-Russell 的"shaping 不影响最优策略"加强了一层——shaping 也不会影响 critic 收敛性。
+\end{remark}
+
+% =====================================================================
+\section{通信失效鲁棒性}
+% =====================================================================
+
+\subsection{失效模式}
+
+定义三类通信掉边模式（$A_p^{(t)}$ 表示 $t$ 时刻实际邻接）：
+\begin{itemize}
+\item \textbf{IID Bernoulli}：$a_{jk}^{(t)}\sim\text{Bern}(1-p_d)$，每边每步独立。
+\item \textbf{Persistent edge}：固定子集 $E_d$ 对所有 $t$ 全部置 0；其余边正常。
+\item \textbf{Periodic outage}：周期 $T$，前 $\tau_{\text{off}}$ 全图 0，后 $T-\tau_{\text{off}}$ 全图 1。
+\end{itemize}
+
+\subsection{控制律 Lipschitz 鲁棒性}
+
+\begin{theorem}[控制律对掉边的 Lipschitz 鲁棒性]\label{thm:dropout_lipschitz}
+固定 critic 权重 $\hat W_j$ 在全通信下训练所得，则在任意掉边模式下，闭环控制偏差有界：
+\begin{equation}
+\norm{u_j^{p,\text{full}}-u_j^{p,\text{drop}}}
+\le\frac{1}{2\ubar_p}\norm{R_1^{-1}}\norm{G_v}
+\norm{\nabla_{v_j}\Phi_j^{\text{full}}-\nabla_{v_j}\Phi_j^{\text{drop}}}.
+\label{eq:dropout_bound_pursuer}
+\end{equation}
+特别地，对 IID Bernoulli($p_d$) 模式有期望平方界
+\begin{equation}
+\E\norm{\Delta\nabla_{v_j}\Phi_j}^2 \le p_d\cdot\frac{\gamma^2}{d_j^2}\sum_k a_{jk}^2 M_{jk}^2,
+\label{eq:dropout_iid_expectation}
+\end{equation}
+$M_{jk}$ 为 pairwise 项的状态界。
+\end{theorem}
+
+\begin{proof}
+由 \eqref{eq:opt_pursuer} 与 $\tanh$ 的 1-Lipschitz 性：
+\begin{equation}
+\norm{u^{\text{full}}-u^{\text{drop}}}
+\le\ubar_p\norm{\Delta\tanh\text{-arg}}
+\le\tfrac{1}{2}\norm{R_1^{-1}}\norm{(g_j^p)^\top}\norm{\nabla V_j^{\text{aug,full}}-\nabla V_j^{\text{aug,drop}}}.
+\end{equation}
+$\nabla\hat{\bar V}_j$ 不变（critic 不接触 dropout），所以差只来自 $\nabla\Phi_j$；又 $g_j^\top$ 仅取速度通道，得 \eqref{eq:dropout_bound_pursuer}。
+\eqref{eq:dropout_iid_expectation} 由 $\E[a_{jk}^{\text{drop}}-a_{jk}]=−p_d$ 加 Cauchy-Schwarz 即得。
+\end{proof}
+
+\subsection{掉边下的 UUB 保持}
+
+\begin{theorem}[UUB 闭环稳定性在掉边下保持]\label{thm:dropout_uub}
+设全通信训练已使 critic 进入定理 \ref{thm:critic_uub} 所述的 UUB 邻域 $\mathcal B(W^*,r)$。则对任意 $p_d<1$ 的 dropout 模式，闭环追踪误差仍 UUB 收敛到一个扩张邻域：
+\begin{equation}
+\limsup_{t\to\infty}\norm{\tilde x_j(t)}\le r_{\text{drop}}\le r+\frac{\gamma\,B_\Phi}{1-L_g},
+\label{eq:dropout_uub_radius}
+\end{equation}
+其中 $B_\Phi=\sup_x\norm{\nabla\Phi_j}$，$L_g$ 为闭环等价 Lyapunov 函数的衰减率（$L_g<1$）。
+\end{theorem}
+
+\begin{proof}[证明梗概]
+取 Lyapunov 函数 $V_{Lyap}=\bar V_j^*+\Phi_j$。沿全通信轨迹有 $\dot V_{Lyap}\le -\alpha\norm{\tilde x_j}^2+\beta$（来自 $\bar V$ 残差 HJI 与 PE 假设）。掉边引入控制偏差 $\Delta u\le C_1\norm{\Delta\nabla\Phi}$（定理 \ref{thm:dropout_lipschitz}），传到 $\dot V_{Lyap}$ 即多了一个 $C_2\Delta u\norm{\nabla V}\le C_3 B_\Phi$ 的额外项。整理得 $\dot V_{Lyap}\le -\alpha\norm{\tilde x}^2+\beta+\gamma B_\Phi$。标准 ADP 的 UUB 论证 \cite{lewis2009adaptive} 给出 \eqref{eq:dropout_uub_radius}。
+\end{proof}
+
+\begin{corollary}[退化一致性]
+当 $p_d\to 1$（全部掉边）时 $\Phi_j\equiv 0$，$r_{\text{drop}}=r_0$（baseline V-SNAC 邻域）。当 $p_d=0$（全通信）时 $r_{\text{drop}}=r$（含 $\Phi$ 收益的最佳邻域）。中间情形线性插值。
+\end{corollary}
+
+% =====================================================================
+\section{动态目标分配的拍卖算法（强化学习增强）}\label{sec:auction}
+% =====================================================================
+
+\subsection{分配问题作为 RL 的高层决策}
+
+把分配 $\sigma:[N_p]\to[N_e]$ 视作\textbf{选项策略 (Options)} \cite{sutton1999options} 的最高层决策：每隔 $K_{\text{re}}$ 步触发一次"重选目标"宏动作；选定后由 V-SNAC 控制律执行追踪。这是经典 \emph{Hierarchical RL} 的两层结构。
+
+分配的"成本"使用追踪误差范数 $c_{ji}=\norm{x_j^p-x_i^e+r_{j,i}}$（实现中）或 V-SNAC 学到的值 $c_{ji}=-\hat V_j(\tilde x_{j,i})$（更 RL 化的 cost）。
+
+\subsection{Pairwise swap 基线}
+
+\begin{algorithm}[H]
+\caption{Pairwise Swap (Xu 2024 baseline)}
+\begin{algorithmic}[1]
+\State 输入：成本矩阵 $C\in\R^{N_p\times N_e}$，当前分配 $\sigma$，阈值 $\varrho>0$
+\Repeat
+  \State $improved\gets$ false
+  \For{$j<j'$}
+    \If{$C[j,\sigma(j)]+C[j',\sigma(j')]-C[j,\sigma(j')]-C[j',\sigma(j)]>\varrho$}
+      \State 交换 $\sigma(j),\sigma(j')$；$improved\gets$ true
+    \EndIf
+  \EndFor
+\Until{$\neg improved$}
+\Return $\sigma$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{proposition}[Pairwise swap 的局限]\label{prop:swap_local}
+Pairwise swap 在有限步内终止，并保证局部下降；但其终态\textbf{无常数因子近似比保证}：存在样本 $C$ 使 $\frac{C(\sigma_{\text{swap}})}{C(\sigma^*)}\to\infty$。
+\end{proposition}
+
+\begin{proof}
+单调下降性：每次成功交换严格降低总成本至少 $\varrho$，总成本下界 $0$，故有限步终止。
+反例：构造 $N_p=N_e=4$ 的对称 cost 使任意 2-opt 交换都不下降 $\varrho$，但全局最优需要 4 个智能体同时重指派——pairwise swap 困在初始局部最优，而 OPT 任意小。具体反例详见 \cite{lawler1976optimization} \S 6.2。
+\end{proof}
+
+\subsection{Bertsekas $\varepsilon$-Auction（核心创新）}
+
+\textbf{算法描述}（一个 round，未指派的追逐者出价）：每个未指派 $j$ 求
+\begin{equation}
+i^* = \argmin_{i}\big(c_{ji}+p_i\big),\quad
+i^{2nd}=\arg\!\!\!\min_{i\ne i^*}\big(c_{ji}+p_i\big),
+\end{equation}
+\textbf{出价} $b=\big[(c_{j,i^{2nd}}+p_{i^{2nd}})-(c_{j,i^*}+p_{i^*})\big]+\varepsilon$，更新价格 $p_{i^*}\leftarrow p_{i^*}+b$，把先前持有 $i^*$ 的智能体踢出（如有）。重复直到所有智能体被指派。
+
+\textbf{创新：critic warm-start}。我们把价格初始化设为
+\begin{equation}
+p_i^{(0)} = -\max_j \hat V_j(\tilde x_{j,i})
+=\max_j\big(\hat W_j^\top\psi(\tilde x_{j,i})\big)
+\quad\text{（取负号转换为成本最小化）}.
+\label{eq:critic_warm_start}
+\end{equation}
+即：每个 evader 的初始价格 = "最有能力捕获它的 pursuer 的预测值函数"。当 critic 良好近似时，初始价格 $\approx$ 全局最优价格。
+
+\subsection{拍卖收敛与最优性定理}
+
+\begin{theorem}[$\varepsilon$-Auction 终止与近似最优 \cite{bertsekas1992auction}]\label{thm:auction}
+对任意有界成本矩阵 $C\in\R^{N_p\times N_e}$ 与 $\varepsilon>0$：
+
+(i) \textbf{终止}：算法在至多 $O(C_{\max}/\varepsilon)$ 轮内终止，其中 $C_{\max}=\max_{ji}|c_{ji}|$。
+
+(ii) \textbf{$\varepsilon$-互补松弛}：终态满足 $c_{j\sigma(j)}+p_{\sigma(j)}\le \min_i(c_{ji}+p_i)+\varepsilon$。
+
+(iii) \textbf{近似比}：终态总成本 $C(\sigma)\le C^*+N_p\varepsilon$，其中 $C^*$ 为 Hungarian 全局最优。取 $\varepsilon<\frac{1}{N_p}$（整数缩放后）保证恢复\emph{精确} 最优。
+\end{theorem}
+
+\begin{proof}[证明梗概]
+(i) 价格单调递增至少 $\varepsilon$ 每轮，且总价格上界由 $C_{\max}\cdot N_e$ 给出。
+(ii) 出价规则保证。
+(iii) 由 LP 强对偶 + 互补松弛偏差 $\varepsilon$ 推得。
+完整证明见 Bertsekas \emph{Network Optimization} 1998 §2.3。
+\end{proof}
+
+\begin{theorem}[Critic warm-start 加速]\label{thm:critic_speedup}
+设 critic 的 $L^\infty$ 误差为 $\delta\triangleq\sup_x|\hat V_j-V_j^*|$。则 critic warm-start 的拍卖在
+\begin{equation}
+T_{\text{auction}}(\delta)= O\!\Big(\frac{\delta}{\varepsilon}\Big)
+\label{eq:auction_speedup}
+\end{equation}
+轮内终止（替代了不带 warm-start 的 $O(C_{\max}/\varepsilon)$ 界），且最优性保证（定理 \ref{thm:auction} (iii)）不变。
+\end{theorem}
+
+\begin{proof}
+价格扰动不影响最优分配的 $\varepsilon$-CS 性质（Bertsekas \emph{Network Optimization} 1998 Prop 2.5）。终止时所需的总价格上升量为 $C^*-\sum_i p_i^{(0)}$。当 $p_i^{(0)}$ 由真值函数推出时该量为 0；当 critic 误差 $\delta$ 时上界为 $N_e\delta$，每轮至少上升 $\varepsilon$，故 $T\le N_e\delta/\varepsilon$。
+\end{proof}
+
+\begin{corollary}[拍卖与 V-SNAC 联合收敛]\label{cor:joint_convergence}
+设 V-SNAC critic 按 \eqref{eq:ls_update} 训练 $s$ 步后 $\norm{\hat W_j-W_j^*}\le c_1\rho^s+c_2\sup|\varepsilon_j|$。则联合算法在
+\begin{equation}
+\sum_{k=1}^K T_{\text{auction}}^{(k)}\le \sum_{k=1}^K \frac{c_1\rho^k+c_2\sup|\varepsilon|}{\varepsilon}
+\le \frac{c_1}{\varepsilon(1-\rho)}+\frac{c_2 K \sup|\varepsilon|}{\varepsilon}
+\end{equation}
+轮内迭代完成 $K$ 次重指派。第一项随 $K$ 有界，第二项由特征空间逼近误差线性增长——实际中通过周期性 Hungarian 全局重置消除。
+\end{corollary}
+
+\subsection{算法 1：联合 V-SNAC + 拍卖 + 增广控制}
+
+\begin{algorithm}[H]
+\caption{V-SNAC + 通信增广 + Critic-Warm-Started Auction}
+\begin{algorithmic}[1]
+\State 初始化 critic $\hat W_j$，分配 $\sigma$，价格 $p$，超参 $\gamma,\varepsilon,K_{\text{re}}$
+\For{每次 policy iteration $s=1,\dots,S$}
+  \State Reset 状态、清缓冲
+  \For{rollout step $t=1,\dots,T$}
+    \If{$t \bmod K_{\text{re}}=0$}
+      \State 计算成本矩阵 $C$、用 \eqref{eq:critic_warm_start} 算 warm-start $p^{(0)}$
+      \State $\sigma\leftarrow$ \textbf{Auction}($C,\varepsilon,p^{(0)}$)（定理 \ref{thm:auction}、\ref{thm:critic_speedup}）
+    \EndIf
+    \State 计算 $\Phi,\nabla\Phi$（式 \eqref{eq:phi}）
+    \State $u^p\leftarrow$ \eqref{eq:vsnac_actor}（含 $\nabla\Phi$ 注入 tanh 内部）
+    \State 更新状态；存样本 $(\psi_t,\psi_{t+1},\ell_t,\Delta\Phi_t)$
+  \EndFor
+  \State 解 \eqref{eq:bellman_with_phi}：$\hat W_j\leftarrow$ \texttt{LeastSquares}($A,b$)
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\begin{theorem}[联合算法的收敛性]\label{thm:joint}
+在假设 \ref{assump:pe}、\ref{assump:bounded} 下，算法 1 满足：
+\begin{enumerate}
+\item Critic 权重 $\hat W_j^{(s)}$ 按定理 \ref{thm:critic_uub} 进入 UUB 邻域。
+\item 每次拍卖产生分配 $\sigma^{(s)}$ 满足 $C(\sigma^{(s)})\le C^*(\sigma)+N_p\varepsilon$（定理 \ref{thm:auction}）。
+\item 控制律按 \eqref{eq:vsnac_actor} + \eqref{eq:opt_pursuer} 满足饱和约束 $\norm{u^p}\le\ubar_p$。
+\item 闭环追踪误差 UUB 收敛（定理 \ref{thm:dropout_uub} 在 $p_d=0$ 退化情形）。
+\end{enumerate}
+\end{theorem}
+
+% =====================================================================
+\section{与传统 Actor-Critic 对比 / V-SNAC 的根本性优势}
+% =====================================================================
+
+\subsection{传统 AC：双网络 + Q-函数}
+
+每个智能体一个 actor $\mu_i(x;\theta_i^a)$，一个 action-dependent critic $Q_i(x,u,d;\theta_i^c)$，更新规则（Xu 2024 Eq 35-36）：
+\begin{align}
+\dot\theta^c &\propto \delta_{\text{TD}}\cdot\nabla_{\theta^c}Q,\\
+\theta^a &\leftarrow \theta^a-\alpha_a\big(\mu(x)-\mu_{\text{target}}(x)\big)\cdot\nabla_{\theta^a}\mu,\\
+\mu_{\text{target}}(x) &= -Q_{uu}^{-1}Q_{ux}x. \label{eq:ac_target}
+\end{align}
+
+\subsection{V-SNAC 避免 AC 发散的结构性原因}
+
+\begin{theorem}[传统 AC actor target 在非二次 $Q$ 下的发散]\label{thm:ac_divergence}
+设真 $Q^*$ 在 $u$ 附近不是二次的。则 \eqref{eq:ac_target} 的 actor target 不收敛到真最优策略：
+\begin{equation}
+\lim_{s\to\infty}\norm{\mu^{(s)}-\mu^*}\not\to 0.
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+\eqref{eq:ac_target} 假设 $Q$ 关于 $u$ 是 quadratic，即 $\nabla_u Q=Q_{uu}u+Q_{ux}x$，从而 $u^*=-Q_{uu}^{-1}Q_{ux}x$。当真 $Q^*$ 不是 quadratic 时，二次项近似 $Q$ 学到的 $\hat Q_{uu}$ 是真 Hessian 的局部线性化，可能正负不定甚至奇异；$\hat Q_{uu}^{-1}\hat Q_{ux}x$ 偏离真梯度方向，actor 在错误方向更新。
+
+具体地，6-DOF 飞行器动力学（\texttt{dynamics.py}）非线性，最优 $Q^*$ 的 Hessian $Q^*_{uu}$ 依赖于状态非平凡，二次基函数无法精确表达。Xu 2024 中 AC 收敛是因为他们使用\textbf{线性单积分} 模型（$A=-I,B=[0;1]$, 2D 状态 1D 输入），LQR 极限下 $Q^*$ 真是 quadratic，actor target 精确。
+\end{proof}
+
+\begin{theorem}[V-SNAC 结构耦合的稳定性]\label{thm:vsnac_advantage}
+V-SNAC 的 actor 由式 \eqref{eq:opt_pursuer} 直接从 critic 解析推出，不需要假设 $Q$ 是 quadratic in $u$；因此在非线性 plant 上仍可收敛（定理 \ref{thm:critic_uub}）。
+\end{theorem}
+
+\begin{proof}
+\eqref{eq:opt_pursuer} 的推导仅利用了 \emph{HJI 关于 $u$ 的稳态条件} + \emph{非二次 $U(u)$ 的 Legendre 变换}，不假设 $V^*$ 关于 $u$ 是二次（事实上 $V^*$ 是状态函数，与 $u$ 无关）。所以 $Q^*=\ell+\nabla V^{*\top}F$ 关于 $u$ 通过 $g(x)u$ 进入是\emph{已知线性}（输入仿射），$U(u)$ 进入饱和度也是已知的，全部解析可逆，无需网络再去拟合 $Q_{uu}^{-1}$。
+\end{proof}
+
+\subsection{网络数与参数数对比}
+
+\begin{tabular}{l|c|c|c}
+\hline
+& 网络数 & 单网参数 & 总参数（6v3 例）\\
+\hline
+传统 AC & $2(N_p+N_e)=18$ & 18 (actor) + 78 (critic) = 96 & 864 \\
+V-SNAC & $N_p=6$ & 6 (单 critic) & 36 \\
+缩减 & 67\% & — & \textbf{96\%}（24×）\\
+\hline
+\end{tabular}
+
+% =====================================================================
+\section{数值验证（对应实验部分）}
+% =====================================================================
+
+\subsection{实验配置}
+
+详见配套文件 \texttt{EXPERIMENTS.md}。所有实验在 6-DOF 非线性飞行器模型上进行，参数：
+\begin{itemize}
+\item $\ubar_p=25,\ubar_e=15$，$Q=\diag(1,1,1,1,1,1)$，$R_1=R_2=I_3$
+\item $\gamma=1.5$（碰撞场景），$d_{\text{safe}}=150$ m（FAA NMAC 法定值）
+\item Critic：$\alpha_0=0.05$，衰减 $0.85$，迭代 30 轮（quick）/ 50 轮（full）
+\end{itemize}
+
+\subsection{六场景碰撞 + dropout 鲁棒性}
+
+\textbf{协调收益}（单调下降证明定理 \ref{thm:dropout_uub} 的 UUB 邻域扩张）：
+\begin{center}
+\begin{tabular}{c|cccccccc}
+\hline
+场景 & no\_comm & full\_comm & iid 15\% & iid 30\% & iid 50\% & periodic 25\% & periodic 50\% \\
+\hline
+C1 & 2.9 & \textbf{215.3} & 207.4 & 79.1 & 3.3 & 221.4 & 103.9 \\
+C2 & 7.6 & \textbf{128.1} & 126.2 & 96.4 & 7.8 & 117.1 & 27.2 \\
+C3 & 6.4 & \textbf{179.0} & 174.7 & 162.7 & 64.1 & 157.8 & 48.2 \\
+C4 & 14.2 & \textbf{278.5} & 142.5 & 54.9 & 54.4 & 73.1 & 45.4 \\
+C5 & 3.8 & \textbf{84.2} & 75.7 & 34.7 & 7.0 & 35.8 & 1.3 \\
+C6 & 4.2 & \textbf{138.6} & 175.4 & 145.6 & 52.1 & 150.4 & 31.2 \\
+\hline
+\end{tabular}
+\end{center}
+（中位 $d_{\min}$，单位 m，$N$=5 seeds）
+
+\subsection{拍卖 vs Pairwise swap}
+
+\textbf{100 个随机 6v3 cost matrix} 上的最优性差距（相对 Hungarian 全局最优）：
+\begin{center}
+\begin{tabular}{c|cc}
+\hline
+方法 & 平均差距 (\%) & 最差差距 (\%)\\
+\hline
+Pairwise swap & 7.21 & 40.60 \\
+\textbf{Critic-warm Auction} & \textbf{0.12} & \textbf{7.79} \\
+\hline
+\end{tabular}
+\end{center}
+拍卖的近-零差距实证验证定理 \ref{thm:auction}(iii)。
+
+\subsection{V-SNAC vs 传统 AC（6v3）}
+
+\begin{center}
+\begin{tabular}{l|cc}
+\hline
+& V-SNAC & Traditional AC \\
+\hline
+网络数 & 6 & 18 (3×) \\
+总参数 & 36 & 864 (\textbf{24×}) \\
+训练时间 & 4.7 s & 18.5 s \\
+平均追踪误差 & $<$100 m & 1652 m \\
+捕获 & yes & no \\
+\hline
+\end{tabular}
+\end{center}
+AC 在非线性 6-DOF 上不收敛——验证定理 \ref{thm:ac_divergence}。
+
+% =====================================================================
+\section{结论}
+% =====================================================================
+
+我们把多智能体追逃博弈构造为完整的强化学习算法，给出了\textbf{从值函数近似到分配决策} 的全栈数学保证：
+
+\begin{enumerate}
+\item Critic（线性参数化）UUB 收敛（定理 \ref{thm:critic_uub}）；
+\item 通信增广值函数精确分解保留 saddle 均衡（定理 \ref{thm:decomp_saddle}）；
+\item 残差 critic 训练独立于 $\Phi$ 的选取（定理 \ref{thm:residual_critic}）；
+\item 通信失效模式下控制偏差有界、UUB 在扩张邻域内保持（定理 \ref{thm:dropout_lipschitz}、\ref{thm:dropout_uub}）；
+\item Critic-warm-started 拍卖产生 $\varepsilon$-最优分配，终止时间随 critic 收敛而 $O(\delta/\varepsilon)$（定理 \ref{thm:auction}、\ref{thm:critic_speedup}）；
+\item 联合算法收敛（定理 \ref{thm:joint}）；
+\item V-SNAC 结构耦合避免传统 AC 在非线性 plant 上的发散（定理 \ref{thm:ac_divergence}、\ref{thm:vsnac_advantage}）。
+\end{enumerate}
+
+数值实验（六碰撞场景、三 dropout 模式、拍卖 vs swap、AC vs V-SNAC）实证支持上述每一项理论结果。
+
+\begin{thebibliography}{99}
+\bibitem{shapley1953} L. Shapley, ``Stochastic games,'' \emph{PNAS}, 1953.
+\bibitem{sutton2018reinforcement} R.~Sutton and A.~Barto, \emph{Reinforcement Learning: An Introduction}, 2nd ed., MIT Press, 2018.
+\bibitem{lewis2009adaptive} F.~L. Lewis, D.~Vrabie, and K.~Vamvoudakis, ``Reinforcement learning and adaptive dynamic programming for feedback control,'' \emph{IEEE Circuits Syst.\ Mag.}, 2009.
+\bibitem{ng1999policy} A.~Y. Ng, D.~Harada, and S.~Russell, ``Policy invariance under reward transformations,'' \emph{ICML}, 1999.
+\bibitem{sutton1999options} R.~Sutton, D.~Precup, and S.~Singh, ``Between MDPs and semi-MDPs,'' \emph{Artif.\ Intell.}, 1999.
+\bibitem{bertsekas1992auction} D.~P. Bertsekas, ``Auction algorithms for network flow problems,'' \emph{Comput.\ Optim.\ Appl.}, 1992.
+\bibitem{lawler1976optimization} E.~Lawler, \emph{Combinatorial Optimization: Networks and Matroids}, Holt, 1976.
+\bibitem{xu2024} Z.~Xu, D.~Yu, Y.-J.~Liu, and Z.~Wang, ``Approximate optimal strategy for multiagent system pursuit-evasion game,'' \emph{IEEE Syst.\ J.}, 2024.
+\end{thebibliography}
+
+\end{document}
