@@ -329,9 +329,183 @@ Xu 2024 的 AC 在论文中收敛——但**plant 是 2D 线性单积分** ($A=-
 
 ---
 
-## 6. 限制与后续
+## 6. 全面局限性、未解决问题、待办清单
 
-1. **C2/C5/C6 未达 d_safe=150m**：受限于度数归一化的 γ 分摊。后续可加 \textbf{γ adaptive}（按 $d_j$ 缩放，$\gamma_{\text{eff}}=\gamma\cdot\sqrt{d_j}$）让大群体也能达到目标分离。
-2. **AC end-to-end 发散是固有的**：可作为毕设论点（V-SNAC 结构耦合是改进方向），不是 bug 需修。
-3. **拍卖创新点已立**：但闭环里 cost matrix 用静态距离，下一步换成 V-SNAC 值可让拍卖直接优化动态目标。
-4. **动态图算法的更多扩展方向**：见研究代理给出的 7 个 frontier（auction warm-start, 残差 Bellman + value, Sinkhorn soft assignment 等）。
+本节诚实交代当前所有不成熟的地方、过度宣称、统计可信度问题、未完成工作。**写论文时必须配套这些 caveat，不能只报 §1–§5 的正面数字**。
+
+### 6.1 Dropout 实验局限
+
+| 问题 | 现状 | 修复路径 | 优先级 |
+|---|---|---|---|
+| **5-seed 统计变异性大** | C6 iid_15 (175m) > full_comm (138m)、C4 persistent_30 (308m) > full_comm (278m)。这些"反常"很可能是 5-seed 噪声，不是 persistent 真的优于 full | 跑 20+ seed，做 95% CI；用 paired Wilcoxon 检验 full_comm vs dropout 是否真显著 | 高 |
+| **不能宣称 "persistent 比 iid 友好"** | 现有数据看似支持，但 sample size 不足 | 同上 | 高 |
+| **C2/C5/C6 没过 d_safe** | 之前归因于"度数稀释"，实际是混合：度数稀释 + V-SNAC 训练时 Φ 干扰 + vertical channel feature 各向异性 | (i) 单独 ablate 度数稀释（degree_norm="none"）；(ii) 看是否需要 critic 重训 | 中 |
+| **periodic_off50 数据噪声** | C5 periodic_off50 (1.3m) 比 no_comm (3.8m) 还低 | 这是 5-seed median 的统计噪声，需要更多 seed | 中 |
+| **Φ 训练时干扰** | 训练阶段使用 gamma=1.5 + 完整通信，Φ 已经"压扁"了部分 critic 学习能力。如果训练用 no-comm critic，再外挂 Φ 评估，d_min 可能更高 | 加一组 ablation：训 no-comm critic + 评估时 hot-swap Φ | 中 |
+| **场景设计偏构造** | 6 个场景都是手工设计**强制 path crossing**。现实任务里碰撞风险是几何分布的连续函数，不是二元的 | 用 risk-index 扫描（之前 user 拒绝过的方案，现在是局限） | 低 |
+
+### 6.2 动态目标分配的局限
+
+| 问题 | 现状 | 修复路径 | 优先级 |
+|---|---|---|---|
+| **静态 vs 动态目标不一致** | Auction 解的是 LSAP（瞬时距离和），不是积分跟踪误差。8v4 上连 Hungarian 也比 pairwise 差 17%——这是问题表述本身的局限 | (i) **Dwell-time gating**（最有前景的 thesis 章节）：用 V-SNAC critic 估计切换 transient 上界，只在静态收益 > transient 代价时 commit。Hespanha-Morse average dwell time 给 O(1/T_avg) 闭环界。(ii) Receding-horizon LSAP with V-SNAC terminal cost。(iii) Online matching with regret bounds | **最高**（这是真正的论文级别 gap） |
+| **Auction 与 Hungarian 残留 1.5% gap** | 12v6 random 实测 auction 1639m vs Hungarian 1614m，差距来自 n_p > n_e padding 投影或 ε-CS 数值精度 | 调试 padding 处理；epsilon scaling（多轮 ε 从粗到细） | 中 |
+| **闭环 hysteresis 是启发式** | 当前用 max(5m, 5%·current_cost) 作为 commit 门，没有理论根据。Pairwise 的 swap_threshold=5m 也是经验值 | dwell-time 理论界给出严格 ϱ 选取方法 | 中 |
+| **critic warm-start 的实际加速** | Theorem 8 给出 O(δ/ε) 终止界，但 100 random matrix 上 auction 平均 491 迭代 vs Hungarian 1 步——warm-start 没体现速度优势 | 设计 ablation：critic warm-start vs zero init，对比迭代数 | 低 |
+| **8v4 上 auction 输给 pairwise** | Hungarian 也输 17%，归因于"static-dynamic mismatch"问题表述局限 | 见上 dwell-time 修复 | 已合并到上 |
+
+### 6.3 传统 AC 对比的公平性边界
+
+**最关键的诚实声明**：之前的"AC 不收敛非线性"表述**过度笼统，不严谨**。
+
+正确的限定声明：
+
+> 我们对比的是 **Xu 2024 论文中那个特定的 AC 架构**：
+> - Critic：z = [x, u, d] 上的二次基（78 项 quadratic 多项式）
+> - Actor target：indirect form $\mu^* = -Q_{uu}^{-1} Q_{ux} x$
+>
+> 这种"二次 critic + indirect target"的组合**只在 LQR 极限下数学上精确**——LQR 下真 $Q^*$ 严格 quadratic in u。
+>
+> 在 6-DOF 非线性飞行器上，$Q^*$ 不再 quadratic，二次基不足以表达，$\hat Q_{uu}$ 学成奇异/非正定，indirect target 失稳。**这是 Xu 那个架构的设计限制，不是所有 AC 都不收敛**。
+>
+> **现代 AC**（DDPG / TD3 / SAC）用 NN critic + direct policy gradient $\nabla_\theta Q(x, \pi_\theta(x))$，在非线性 plant 上**毫无问题地收敛**。这是经典深度 RL 任务，整个领域建立在这上面。
+
+**所以正确的对比立场**：
+
+| 命题 | 对错 |
+|---|:---:|
+| "Xu 2024's specific quadratic-Q + indirect-target AC 在非线性 plant 上发散" | ✓（我们实证） |
+| "AC 一般性方法在非线性上发散" | ✗（错误！DDPG/TD3/SAC 都行） |
+| "V-SNAC 用 6 个网络达到 Xu's reported AC 用 18 网络的能力" | ✓（在 Xu 的 LQR plant 上） |
+| "V-SNAC 比 modern AC (DDPG) 更省参数" | 部分对，需要严格对比 NN AC |
+
+**待办：实现两个公平对比**
+
+1. **DDPG-direct-gradient AC baseline**（NumPy 内）
+   - 把 `ac_equivalent.py` 的 `_actor_targets` 替换为 direct policy gradient
+   - 仍用 quadratic critic basis（保持公平），actor 由 chain rule 更新
+   - 预期：在 6-DOF 非线性 plant 上 AC 不发散但有限性能（受限于 quadratic basis）
+
+2. **Linear plant Xu 2024 reproduction**（已写 `linear_dynamics.py` 但**未集成**）
+   - 提供 6-D 单积分 plant: $\dot x = -\alpha x + B u$, $B = [0; I_3]$
+   - 在线性 plant 上跑 AC，预期收敛（reproduce Xu 论文）
+   - 同 plant 上跑 V-SNAC，证明它也收敛 → "V-SNAC 不仅能 reproduce Xu，还能扩展到非线性"
+
+3. **NN-based DDPG/TD3 baseline**（需要 PyTorch）
+   - 真正现代 AC 的对比
+   - 标准 deep RL pipeline
+   - 远超本毕设范围，列入 future work
+
+### 6.4 V-SNAC 单步时间被误读
+
+之前在表格中报告 "V-SNAC ms/step 0.22ms vs AC 0.12ms"，**让 V-SNAC 看起来更慢**。这是 misleading：
+
+- AC `policy_only` 只做 `W @ x → tanh`：纯前向 actor，**不算协调、不算 evader minimax、不算 g(x)^T 投影**
+- V-SNAC `policy()` 做 `value_gradient → coordination_terms → g_transpose_dot → tanh`：包含 HJI 推导出的 actor 形式 + pairwise 协调 + minimax evader
+
+公平比较应该看"完整训练步":
+
+| 维度 | V-SNAC | AC | 含义 |
+|---|---:|---:|---|
+| 网络数 | 6 | 18 | 模型规模 3× 缩减 |
+| 参数总数 | 36 | 864 | **24×** 缩减 |
+| 训练总时间 | 4.7s | 18.5s | **4×** 加速 |
+| 训练后追踪误差 | <100m | 1652m | V-SNAC 收敛，AC（在 Xu 架构下）不收敛于 6-DOF |
+| 单步含协调 (V-SNAC) / 单步含学习 (AC) | 0.43ms | 1.70ms | V-SNAC 单步**协调+控制** vs AC 单步**学习+actor 更新** |
+| 单步纯 forward | 0.22ms | 0.12ms | AC 简单（不协调）所以快 |
+
+**毕设里应该用前 5 行**，避免最后一行单步 forward 引发误解。已在 §3 修正过。
+
+### 6.5 几何 / 控制器超参的偶然依赖
+
+| 现象 | 原因 |
+|---|---|
+| γ=1.5 在 C1/C3/C4 工作好，γ=2.5 时 C1 反而崩 | γ 与 d_safe_amp 的乘积决定 Φ 强度，与 controller saturation 间存在脆弱平衡 |
+| d_safe_amp=150m 是 ad-hoc 选择 | 应该独立调参或固定为 NMAC=150m 并接受 |
+| Pairwise threshold=5m 是经验值 | 没有理论根据，dwell-time 分析能给原则性选取 |
+| AC critic_lr=0.05 是 trial-and-error | Xu 论文的 1.1 在我们 plant 上炸；改 0.1 还炸；0.05 才稳。这条说明 Xu 的超参不能直接搬过来 |
+
+### 6.6 仍在仓库里但未集成的代码
+
+| 代码 | 状态 | 问题 |
+|---|---|---|
+| `mpe_repro/linear_dynamics.py` | 已写 | 未在任何 run 脚本里调用，`run_ac_train_compare.py` 没接 `--linear-plant` flag |
+| `degree_norm` 选项（"linear"/"sqrt"/"none"） | 已通过 `CommParams`、`controller.py`、`comm_graph.py`、`simulator.__init__` plumb | `simulator._step` 中的 `coordination_terms` 调用**未传** `degree_norm` 参数 → 主流程仍走 "linear" |
+| `mpe_repro/comm_graph.augmented_error()` | 已存在 | 未被主流程调用，是历史遗留死代码 |
+
+### 6.7 结构性技术债务
+
+| 项 | 描述 |
+|---|---|
+| **训练-评估解耦不严** | V-SNAC 训练用 gamma>0 + 通信全开，但评估用 gamma 和 dropout pattern 可变。Φ 已经塞进 Bellman 训练（`known_value_delta`），所以 critic 是"含 Φ 训练"的。但论文叙事经常说"训练 baseline、评估 augment"，与代码不一致 |
+| **dropout 训练阶段未启用** | 训练总是用 full comm。如果训练就模拟 dropout（domain randomization），critic 可能更鲁棒 → 这是一个 thesis chapter |
+| **dynamic_graph 在训练时**会触发 swap | 训练时切换可能造成 V-SNAC 的目标不稳定。当前用 swap_threshold=1e9 disable，但工程性 ad-hoc |
+| **scenario evader 用 scripted 模式** | 给定 seed 完全确定，5-seed 实验的 seed-variation 仅来自评估 RNG。真实跨 seed 多样性弱 |
+| **没有 Lipschitz / IPM 严格证明** | MASTER_DERIVATION 给出"梗概"，详细 ε-δ 证明只对 V-SNAC critic UUB（沿用 Lewis-Vrabie）和 auction ε-CS（Bertsekas 经典）。Theorem 4 (dropout Lipschitz) 的具体常数没有计算 |
+
+---
+
+## 7. 不应该宣称的清单（avoid these in thesis）
+
+按风险从高到低：
+
+| ❌ 不能说 | ✓ 应该说 |
+|---|---|
+| "AC 在非线性 plant 上不收敛" | "Xu 2024 的 quadratic-Q + indirect-target 架构在我们 6-DOF plant 上发散" |
+| "V-SNAC 比 AC 单步更快" | "V-SNAC 比 AC 训练总时间快 4×、参数少 24×；单步前向 V-SNAC 含协调更复杂" |
+| "Persistent dropout 比 IID 更友好" | "5-seed 实验中观察到 persistent 在 C4/C6 上更高，但样本不足以做总体论断" |
+| "Auction 在闭环上全面打败 pairwise" | "auction 在 10v5+ random 场景下平均 mean team_error 降低 14–15%，在 8v4 小场景下因 static-dynamic mismatch 反而劣于 pairwise（Hungarian 同样劣）" |
+| "通信协调把所有场景的 d_min 推过 d_safe" | "C1/C3/C4 三场景 full_comm 超过 d_safe=150m；C2/C5/C6 提升 17–33×但低于 d_safe，受度数稀释 + 训练时 Φ 干扰 + 垂直 feature 各向异性的混合影响" |
+| "我们方法是当前 SOTA" | "我们与 Xu 2024 baseline 对比，在大规模随机几何上有显著改善；与现代 deep RL（DDPG/TD3/SAC）的对比尚未做" |
+
+---
+
+## 8. 待办优先级清单（TODO）
+
+按 thesis-impact 从高到低：
+
+### P0：必须做（影响论文可信度）
+- [ ] **AC 非线性发散问题的限定声明**：所有 EXPERIMENTS.md / MASTER_DERIVATION.tex / 毕设正文里把"AC 不收敛"修订为"Xu 2024 specific architecture 不收敛"
+- [ ] **DDPG-direct-gradient AC baseline**：实现 NumPy 版 direct policy gradient，证明 indirect target 是问题，不是 AC 整体的问题
+- [ ] **Linear plant Xu reproduction**：用 `linear_dynamics.py` 跑通 AC + V-SNAC 都收敛，作为 reproduce Xu 论文的检验
+
+### P1：应该做（thesis chapter 级别）
+- [ ] **Dwell-time gating with V-SNAC Lyapunov bound**：解决 static-vs-dynamic mismatch，给 closed-loop 严格 O(1/T) 界
+- [ ] **多 seed (20+) dropout 重做**：让 persistent vs iid 的对比有统计意义
+- [ ] **degree_norm 完整 plumb 到 _step**：给 C2/C5/C6 一个真正修复尝试
+
+### P2：可以做（增强故事）
+- [ ] **训练阶段 dropout 注入（domain randomization）**：使 critic 在 dropout 下更鲁棒
+- [ ] **Auction n_p > n_e padding 修正**：消除 1.5% gap
+- [ ] **Critic-warm-start ablation**：证明 warm-start 有实际加速
+
+### P3：可选 / future work
+- [ ] **NN-based DDPG/TD3 baseline**（需要 PyTorch）
+- [ ] **Risk-index 连续场景扫描**
+- [ ] **现实空中交通数据 plant validation**
+
+---
+
+## 9. 当前数据安全可信的范围
+
+**可以放心写进 thesis 的事实**：
+
+1. ✓ V-SNAC 在 6-DOF 非线性 plant 上 UUB 收敛（Theorem 1，已实测）
+2. ✓ 协调势函数在 6/6 碰撞场景下相比 no_comm 提升 17–75× min(d_min)
+3. ✓ Critic-Warm Auction 在 100 个随机 LSAP 实例上平均 0.12% gap to Hungarian
+4. ✓ 在 10v5/12v6 random 场景闭环下 auction 比 pairwise 减少 14–15% mean team_error
+5. ✓ V-SNAC 网络数 6 vs Xu 2024's reported AC 18，参数 36 vs 864（24× 缩减）
+6. ✓ V-SNAC 训练时间 4.7s vs Xu 2024's reported AC（重构后） 18.5s（4× 加速）
+7. ✓ 在 6-DOF 非线性下 Xu 2024's specific AC 架构发散（实证 mean_err 6962→53407m）
+
+**统计上还需要补样本才敢写的事实**：
+
+8. ⚠ Persistent vs IID dropout 谁更鲁棒（5 seeds 不够）
+9. ⚠ C2/C5/C6 是否能通过参数调整过 d_safe（需 ablation）
+10. ⚠ Auction warm-start 的实际加速量（理论已证）
+
+**不该写或必须重新表述的**：
+
+11. ❌ "AC 一般性不收敛于非线性" → 改为限定 Xu 架构
+12. ❌ "V-SNAC 单步比 AC 快" → 改为参数 / 训练时间比较
+13. ❌ "我们方法 SOTA" → 改为 "vs Xu 2024 baseline"

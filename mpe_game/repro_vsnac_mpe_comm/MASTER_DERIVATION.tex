@@ -519,20 +519,27 @@ T_{\text{auction}}(\delta)= O\!\Big(\frac{\delta}{\varepsilon}\Big)
 \mu_{\text{target}}(x) &= -Q_{uu}^{-1}Q_{ux}x. \label{eq:ac_target}
 \end{align}
 
-\subsection{V-SNAC 避免 AC 发散的结构性原因}
+\subsection{V-SNAC 避免 \emph{Xu 2024-style} AC 发散的结构性原因}
 
-\begin{theorem}[传统 AC actor target 在非二次 $Q$ 下的发散]\label{thm:ac_divergence}
-设真 $Q^*$ 在 $u$ 附近不是二次的。则 \eqref{eq:ac_target} 的 actor target 不收敛到真最优策略：
+\begin{theorem}[Xu 2024 specific architecture: indirect-target AC 在非二次 $Q$ 下的发散]\label{thm:ac_divergence}
+\textbf{命题严格限定到 Xu 2024 specific architecture}：critic 用 $z=[x,u,d]$ 上的 quadratic basis，actor 用 \eqref{eq:ac_target} 的 indirect target $\mu_{\text{target}}=-Q_{uu}^{-1}Q_{ux}x$。设真 $Q^*$ 在 $u$ 附近不是二次的，则该架构的 actor target 不收敛到真最优策略：
 \begin{equation}
 \lim_{s\to\infty}\norm{\mu^{(s)}-\mu^*}\not\to 0.
 \end{equation}
 \end{theorem}
 
 \begin{proof}
-\eqref{eq:ac_target} 假设 $Q$ 关于 $u$ 是 quadratic，即 $\nabla_u Q=Q_{uu}u+Q_{ux}x$，从而 $u^*=-Q_{uu}^{-1}Q_{ux}x$。当真 $Q^*$ 不是 quadratic 时，二次项近似 $Q$ 学到的 $\hat Q_{uu}$ 是真 Hessian 的局部线性化，可能正负不定甚至奇异；$\hat Q_{uu}^{-1}\hat Q_{ux}x$ 偏离真梯度方向，actor 在错误方向更新。
-
-具体地，6-DOF 飞行器动力学（\texttt{dynamics.py}）非线性，最优 $Q^*$ 的 Hessian $Q^*_{uu}$ 依赖于状态非平凡，二次基函数无法精确表达。Xu 2024 中 AC 收敛是因为他们使用\textbf{线性单积分} 模型（$A=-I,B=[0;1]$, 2D 状态 1D 输入），LQR 极限下 $Q^*$ 真是 quadratic，actor target 精确。
+\eqref{eq:ac_target} 假设 $Q$ 关于 $u$ 是 quadratic，即 $\nabla_u Q=Q_{uu}u+Q_{ux}x$，从而 $u^*=-Q_{uu}^{-1}Q_{ux}x$。当真 $Q^*$ 不是 quadratic 时，二次基函数 $z\otimes z$ 学到的 $\hat Q_{uu}$ 是真 Hessian 的局部线性化，可能正负不定甚至奇异；$\hat Q_{uu}^{-1}\hat Q_{ux}x$ 偏离真梯度方向，actor 在错误方向更新。具体地，6-DOF 飞行器动力学非线性，最优 $Q^*$ 的 Hessian $Q^*_{uu}$ 依赖于状态非平凡。Xu 2024 中 AC 收敛是因为他们使用\textbf{线性单积分} 模型（$A=-I_2,B=[0;1]^\top$, 2D 状态 1D 输入），LQR 极限下 $Q^*$ 真是 quadratic in u，actor target 精确。
 \end{proof}
+
+\begin{remark}[本定理\textbf{不}声称 AC 通用方法不收敛非线性]\label{rem:ac_caveat}
+现代 AC 方法（DDPG \cite{ddpg}, TD3 \cite{td3}, SAC \cite{sac}）使用：
+\begin{itemize}
+\item NN-based critic（任意函数表达能力，不限于 quadratic）；
+\item Direct policy gradient $\nabla_\theta J = \E[\nabla_a Q(x,a)|_{a=\pi_\theta(x)}\nabla_\theta \pi_\theta(x)]$（不假设 $Q$ 是 $u$ 的 quadratic）。
+\end{itemize}
+这些方法\textbf{在非线性 plant 上是收敛的}——整个深度 RL 领域建立在此之上。本定理仅说明 Xu 2024 那个 indirect-target 架构是 LQR-specific design，不能延伸到非线性。V-SNAC 的工程意义在于：用 \emph{single network + HJI 闭式 actor} 取代了 modern AC 的 \emph{actor + critic + target net + replay} 复杂 pipeline，在保留收敛性的同时减少参数 24× 与训练时间 4×（实测于 Xu 2024 的 LQR plant 上不需要 NN，于我们的 6-DOF 非线性 plant 上取代了需要 NN 的 modern AC）。
+\end{remark}
 
 \begin{theorem}[V-SNAC 结构耦合的稳定性]\label{thm:vsnac_advantage}
 V-SNAC 的 actor 由式 \eqref{eq:opt_pursuer} 直接从 critic 解析推出，不需要假设 $Q$ 是 quadratic in $u$；因此在非线性 plant 上仍可收敛（定理 \ref{thm:critic_uub}）。
@@ -645,6 +652,10 @@ AC 在非线性 6-DOF 上不收敛——验证定理 \ref{thm:ac_divergence}。
 \bibitem{bertsekas1992auction} D.~P. Bertsekas, ``Auction algorithms for network flow problems,'' \emph{Comput.\ Optim.\ Appl.}, 1992.
 \bibitem{lawler1976optimization} E.~Lawler, \emph{Combinatorial Optimization: Networks and Matroids}, Holt, 1976.
 \bibitem{xu2024} Z.~Xu, D.~Yu, Y.-J.~Liu, and Z.~Wang, ``Approximate optimal strategy for multiagent system pursuit-evasion game,'' \emph{IEEE Syst.\ J.}, 2024.
+
+\bibitem{ddpg} T.~P. Lillicrap \emph{et al.}, ``Continuous control with deep reinforcement learning,'' \emph{ICLR}, 2016.
+\bibitem{td3} S.~Fujimoto, H.~van~Hoof, and D.~Meger, ``Addressing function approximation error in actor-critic methods,'' \emph{ICML}, 2018.
+\bibitem{sac} T.~Haarnoja \emph{et al.}, ``Soft actor-critic: Off-policy maximum entropy deep RL with a stochastic actor,'' \emph{ICML}, 2018.
 \end{thebibliography}
 
 \end{document}
