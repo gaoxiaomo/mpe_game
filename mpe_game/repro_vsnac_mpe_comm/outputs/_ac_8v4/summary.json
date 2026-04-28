@@ -1,0 +1,589 @@
+{
+  "generated_at": "2026-04-27T12:40:46",
+  "case": "8v4",
+  "seed": 11,
+  "scenario": {
+    "name": "scenario_8v4_generalized",
+    "n_pursuers": 8,
+    "n_evaders": 4,
+    "t_final_s": 110.0
+  },
+  "ac_hyperparams": {
+    "episodes": 60,
+    "steps": 100,
+    "critic_lr": 0.05,
+    "actor_lr": 0.0
+  },
+  "network_inventory": {
+    "pursuer_actors": 8,
+    "evader_actors": 4,
+    "pursuer_critics": 8,
+    "evader_critics": 4,
+    "actor_parameters_per_network": 18,
+    "critic_parameters_per_network": 78,
+    "total_networks": 24,
+    "total_scalar_parameters": 1152,
+    "augmented_input_dim": 12,
+    "critic_basis_dim": 78
+  },
+  "vsnac_critics": 8,
+  "vsnac_critic_features": 6,
+  "vsnac_critic_params_total": 48,
+  "training_walls_s": {
+    "vsnac": 5.824029747047462,
+    "ac": 21.340360670001246
+  },
+  "ac_eval": {
+    "mean_assigned_error": 1515.9881245547513,
+    "min_d_min_m": 88.46906662427556,
+    "capture_time_s": null
+  },
+  "ac_history": [
+    {
+      "episode": 0,
+      "mean_assigned_error": 4381.676414257572,
+      "final_assigned_error": 4308.515030940414,
+      "pursuer_critic_norm": 1.259276615657328,
+      "evader_critic_norm": 0.8913515203802309,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 1,
+      "mean_assigned_error": 4376.715867585459,
+      "final_assigned_error": 4303.264492427088,
+      "pursuer_critic_norm": 1.2666086913255734,
+      "evader_critic_norm": 0.8907031254368146,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 2,
+      "mean_assigned_error": 4411.432381986953,
+      "final_assigned_error": 4337.352437274968,
+      "pursuer_critic_norm": 1.2797797630436583,
+      "evader_critic_norm": 0.8901472075496544,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 3,
+      "mean_assigned_error": 4395.6884630841705,
+      "final_assigned_error": 4321.4576519932625,
+      "pursuer_critic_norm": 1.298154932462585,
+      "evader_critic_norm": 0.8896926670997598,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 4,
+      "mean_assigned_error": 4387.51387472065,
+      "final_assigned_error": 4313.436368419551,
+      "pursuer_critic_norm": 1.321170447771978,
+      "evader_critic_norm": 0.8893262469802112,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 5,
+      "mean_assigned_error": 4430.910575616782,
+      "final_assigned_error": 4355.940644834851,
+      "pursuer_critic_norm": 1.348743440260269,
+      "evader_critic_norm": 0.8890445907668432,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 6,
+      "mean_assigned_error": 4417.940315931139,
+      "final_assigned_error": 4346.800649224377,
+      "pursuer_critic_norm": 1.3797969667370997,
+      "evader_critic_norm": 0.8888461164215208,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 7,
+      "mean_assigned_error": 4389.60384211743,
+      "final_assigned_error": 4317.708890089549,
+      "pursuer_critic_norm": 1.4136045227607676,
+      "evader_critic_norm": 0.8887265409871111,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 8,
+      "mean_assigned_error": 4433.807825591171,
+      "final_assigned_error": 4357.788511572793,
+      "pursuer_critic_norm": 1.4512406558659534,
+      "evader_critic_norm": 0.8887349859172033,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 9,
+      "mean_assigned_error": 4430.460241540895,
+      "final_assigned_error": 4359.049152198742,
+      "pursuer_critic_norm": 1.492152567008993,
+      "evader_critic_norm": 0.8888259006551128,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 10,
+      "mean_assigned_error": 4393.5227846427315,
+      "final_assigned_error": 4318.65112000618,
+      "pursuer_critic_norm": 1.5335563446812421,
+      "evader_critic_norm": 0.8890149711226506,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 11,
+      "mean_assigned_error": 4404.931117624985,
+      "final_assigned_error": 4329.830971741049,
+      "pursuer_critic_norm": 1.577689656731008,
+      "evader_critic_norm": 0.8892877274358774,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 12,
+      "mean_assigned_error": 4426.801256480211,
+      "final_assigned_error": 4352.05466425194,
+      "pursuer_critic_norm": 1.622728480915244,
+      "evader_critic_norm": 0.8896624261939003,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 13,
+      "mean_assigned_error": 4432.035415586701,
+      "final_assigned_error": 4357.549540944996,
+      "pursuer_critic_norm": 1.670284652944036,
+      "evader_critic_norm": 0.8901276944230377,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 14,
+      "mean_assigned_error": 4383.444476828489,
+      "final_assigned_error": 4311.663035300459,
+      "pursuer_critic_norm": 1.7171129071186264,
+      "evader_critic_norm": 0.8906752470778558,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 15,
+      "mean_assigned_error": 4468.204051390081,
+      "final_assigned_error": 4392.027871453054,
+      "pursuer_critic_norm": 1.7677803845628481,
+      "evader_critic_norm": 0.8913377922844571,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 16,
+      "mean_assigned_error": 4476.626683891868,
+      "final_assigned_error": 4402.233549269544,
+      "pursuer_critic_norm": 1.8193110832465103,
+      "evader_critic_norm": 0.8921433676214708,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 17,
+      "mean_assigned_error": 4420.965476238118,
+      "final_assigned_error": 4345.6668403411095,
+      "pursuer_critic_norm": 1.8701231198920392,
+      "evader_critic_norm": 0.8929774377885201,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 18,
+      "mean_assigned_error": 4439.380169417207,
+      "final_assigned_error": 4366.363459343648,
+      "pursuer_critic_norm": 1.9210187927296245,
+      "evader_critic_norm": 0.8939496506263627,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 19,
+      "mean_assigned_error": 4391.264994975011,
+      "final_assigned_error": 4318.190558502668,
+      "pursuer_critic_norm": 1.9733611032877632,
+      "evader_critic_norm": 0.8949444905580377,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 20,
+      "mean_assigned_error": 4445.925669461176,
+      "final_assigned_error": 4372.382434979014,
+      "pursuer_critic_norm": 2.024963177044381,
+      "evader_critic_norm": 0.8961274250445406,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 21,
+      "mean_assigned_error": 4470.418169816757,
+      "final_assigned_error": 4394.814303702618,
+      "pursuer_critic_norm": 2.0783538886340946,
+      "evader_critic_norm": 0.8974057280716458,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 22,
+      "mean_assigned_error": 4419.645799435713,
+      "final_assigned_error": 4344.298484602492,
+      "pursuer_critic_norm": 2.1308258263043593,
+      "evader_critic_norm": 0.8986829104550925,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 23,
+      "mean_assigned_error": 4458.419322451065,
+      "final_assigned_error": 4383.4445831094,
+      "pursuer_critic_norm": 2.1839066657584723,
+      "evader_critic_norm": 0.9001288116651542,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 24,
+      "mean_assigned_error": 4420.319446313543,
+      "final_assigned_error": 4346.206029694258,
+      "pursuer_critic_norm": 2.2347964120109793,
+      "evader_critic_norm": 0.9016168295115038,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 25,
+      "mean_assigned_error": 4411.338920139942,
+      "final_assigned_error": 4335.749006633607,
+      "pursuer_critic_norm": 2.2859425262858184,
+      "evader_critic_norm": 0.9031718633660536,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 26,
+      "mean_assigned_error": 4447.001389025915,
+      "final_assigned_error": 4372.257955041387,
+      "pursuer_critic_norm": 2.3390185366015683,
+      "evader_critic_norm": 0.9048317411249194,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 27,
+      "mean_assigned_error": 4451.099454198928,
+      "final_assigned_error": 4374.237378931355,
+      "pursuer_critic_norm": 2.393491331667554,
+      "evader_critic_norm": 0.9065815495433167,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 28,
+      "mean_assigned_error": 4401.525782964547,
+      "final_assigned_error": 4329.113848407178,
+      "pursuer_critic_norm": 2.445040591442444,
+      "evader_critic_norm": 0.9084029551896613,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 29,
+      "mean_assigned_error": 4405.854719709433,
+      "final_assigned_error": 4332.822330695886,
+      "pursuer_critic_norm": 2.494192920819623,
+      "evader_critic_norm": 0.9103060810122905,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 30,
+      "mean_assigned_error": 4411.505547979311,
+      "final_assigned_error": 4338.762583940664,
+      "pursuer_critic_norm": 2.5454563557402725,
+      "evader_critic_norm": 0.9122584550749008,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 31,
+      "mean_assigned_error": 4453.398102904198,
+      "final_assigned_error": 4380.261462431443,
+      "pursuer_critic_norm": 2.59717167767598,
+      "evader_critic_norm": 0.9144363934470007,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 32,
+      "mean_assigned_error": 4393.367705549339,
+      "final_assigned_error": 4319.9419613988775,
+      "pursuer_critic_norm": 2.6489969742414887,
+      "evader_critic_norm": 0.9165308195388849,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 33,
+      "mean_assigned_error": 4428.38351588656,
+      "final_assigned_error": 4354.753303806627,
+      "pursuer_critic_norm": 2.7004169111850933,
+      "evader_critic_norm": 0.9187327308247943,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 34,
+      "mean_assigned_error": 4437.207723791831,
+      "final_assigned_error": 4361.4665683676685,
+      "pursuer_critic_norm": 2.751266476902861,
+      "evader_critic_norm": 0.9210615810655227,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 35,
+      "mean_assigned_error": 4415.082750565541,
+      "final_assigned_error": 4340.937423313692,
+      "pursuer_critic_norm": 2.798849955769139,
+      "evader_critic_norm": 0.9234460571727015,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 36,
+      "mean_assigned_error": 4462.598179169111,
+      "final_assigned_error": 4385.748740922451,
+      "pursuer_critic_norm": 2.847467975168176,
+      "evader_critic_norm": 0.9259452020710278,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 37,
+      "mean_assigned_error": 4378.206514206022,
+      "final_assigned_error": 4306.746687364119,
+      "pursuer_critic_norm": 2.895426335333577,
+      "evader_critic_norm": 0.9283518730526081,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 38,
+      "mean_assigned_error": 4450.653074515321,
+      "final_assigned_error": 4376.32786904668,
+      "pursuer_critic_norm": 2.9435110555709887,
+      "evader_critic_norm": 0.9310047494730063,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 39,
+      "mean_assigned_error": 4444.060226297558,
+      "final_assigned_error": 4369.674501079531,
+      "pursuer_critic_norm": 2.993549980940986,
+      "evader_critic_norm": 0.9337017208535561,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 40,
+      "mean_assigned_error": 4454.076629573297,
+      "final_assigned_error": 4379.150059680083,
+      "pursuer_critic_norm": 3.041590438250623,
+      "evader_critic_norm": 0.9365482251826655,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 41,
+      "mean_assigned_error": 4376.275896703696,
+      "final_assigned_error": 4304.315478638329,
+      "pursuer_critic_norm": 3.0875219866969164,
+      "evader_critic_norm": 0.9392827792550891,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 42,
+      "mean_assigned_error": 4395.052395763723,
+      "final_assigned_error": 4321.6562735962425,
+      "pursuer_critic_norm": 3.1312702347512316,
+      "evader_critic_norm": 0.9421637704883705,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 43,
+      "mean_assigned_error": 4423.148152533498,
+      "final_assigned_error": 4350.223575084408,
+      "pursuer_critic_norm": 3.17834195296868,
+      "evader_critic_norm": 0.9451370591138417,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 44,
+      "mean_assigned_error": 4377.727925708135,
+      "final_assigned_error": 4304.208855193953,
+      "pursuer_critic_norm": 3.221298121392466,
+      "evader_critic_norm": 0.948035131102659,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 45,
+      "mean_assigned_error": 4418.929224965554,
+      "final_assigned_error": 4345.5406348994975,
+      "pursuer_critic_norm": 3.267613628439088,
+      "evader_critic_norm": 0.951149252724645,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 46,
+      "mean_assigned_error": 4443.523852432348,
+      "final_assigned_error": 4369.693389372724,
+      "pursuer_critic_norm": 3.3124570241118945,
+      "evader_critic_norm": 0.9543299239019546,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 47,
+      "mean_assigned_error": 4466.233984738537,
+      "final_assigned_error": 4391.284501367196,
+      "pursuer_critic_norm": 3.3586162249316875,
+      "evader_critic_norm": 0.957635338853141,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 48,
+      "mean_assigned_error": 4435.2137808095695,
+      "final_assigned_error": 4362.945817018522,
+      "pursuer_critic_norm": 3.4022790564623175,
+      "evader_critic_norm": 0.9610650710649191,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 49,
+      "mean_assigned_error": 4380.700061855391,
+      "final_assigned_error": 4308.8783505091715,
+      "pursuer_critic_norm": 3.446400821078785,
+      "evader_critic_norm": 0.9643230515232138,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 50,
+      "mean_assigned_error": 4427.557476639461,
+      "final_assigned_error": 4351.634311210816,
+      "pursuer_critic_norm": 3.4912540714448883,
+      "evader_critic_norm": 0.9677463577034586,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 51,
+      "mean_assigned_error": 4443.706494889658,
+      "final_assigned_error": 4368.408056910048,
+      "pursuer_critic_norm": 3.5363275787821844,
+      "evader_critic_norm": 0.9712572315493527,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 52,
+      "mean_assigned_error": 4399.711622494834,
+      "final_assigned_error": 4324.050296523072,
+      "pursuer_critic_norm": 3.5769343275336385,
+      "evader_critic_norm": 0.9747094882506092,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 53,
+      "mean_assigned_error": 4410.046854670934,
+      "final_assigned_error": 4336.660868760379,
+      "pursuer_critic_norm": 3.6188520737501326,
+      "evader_critic_norm": 0.9782723726484551,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 54,
+      "mean_assigned_error": 4414.245866117227,
+      "final_assigned_error": 4339.973300328806,
+      "pursuer_critic_norm": 3.660755478010303,
+      "evader_critic_norm": 0.9819510677319433,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 55,
+      "mean_assigned_error": 4434.726165973651,
+      "final_assigned_error": 4360.399548878796,
+      "pursuer_critic_norm": 3.702565196811832,
+      "evader_critic_norm": 0.9856392659417214,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 56,
+      "mean_assigned_error": 4436.9749867323235,
+      "final_assigned_error": 4362.991342620227,
+      "pursuer_critic_norm": 3.7453934995324185,
+      "evader_critic_norm": 0.9894237978979684,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 57,
+      "mean_assigned_error": 4404.897182396659,
+      "final_assigned_error": 4331.913558541461,
+      "pursuer_critic_norm": 3.7856329396961272,
+      "evader_critic_norm": 0.9931927885977131,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 58,
+      "mean_assigned_error": 4458.522319874639,
+      "final_assigned_error": 4382.486630287438,
+      "pursuer_critic_norm": 3.827475841612151,
+      "evader_critic_norm": 0.9971928775934653,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    },
+    {
+      "episode": 59,
+      "mean_assigned_error": 4409.0223418133955,
+      "final_assigned_error": 4335.162455820812,
+      "pursuer_critic_norm": 3.8654891473762696,
+      "evader_critic_norm": 1.001114495457414,
+      "pursuer_actor_norm": 6.805879810869421,
+      "evader_actor_norm": 0.7042503475993752
+    }
+  ],
+  "timings_ms_per_step": {
+    "ac_policy_ms_per_step": 0.12402919577046607,
+    "ac_online_ms_per_step": 2.2368659207131714,
+    "vsnac_no_comm_ms_per_step": 0.22938269588242596,
+    "vsnac_full_comm_ms_per_step": 0.41416381670084473
+  }
+}
