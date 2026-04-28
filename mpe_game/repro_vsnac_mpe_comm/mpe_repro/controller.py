@@ -40,6 +40,7 @@ def coordination_potential_and_gradient(
     gamma: float,
     ref_dist: float = 500.0,
     d_safe: float = 0.0,
+    degree_norm: str = "linear",
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return per-pursuer coordination potential and its state gradient.
 
@@ -47,20 +48,30 @@ def coordination_potential_and_gradient(
 
         V_j^*(x) = Vbar_j^*(x) + Phi_j(x),
 
-    and only approximate the residual value Vbar_j^* with the critic. The
-    implemented total approximate value is therefore
+    and only approximate the residual value Vbar_j^* with the critic.
 
-        Vhat_j(x) = W_j^T psi(x_tilde_j) + Phi_j(x),
+    The coordination potential is
 
-    with the analytical coordination term
-
-        Phi_j = gamma / d_j * sum_k a_jk * amp_jk *
+        Phi_j = (gamma / norm(d_j)) * sum_k a_jk * amp_jk *
                 [0.5 ||v_j - v_k||^2 +
                  ((p_j - p_k) - Delta_jk)^T v_j / ref_dist].
 
-    Because g(x)^T extracts only the velocity-space component, the resulting
-    control law only needs the velocity part of the gradient. The returned
-    gradient is therefore zero on the position channels and nonzero on the
+    The ``degree_norm`` argument controls how the per-agent group size
+    ``d_j`` enters the prefactor:
+
+    - ``"linear"`` (default): ``Phi_j ∝ 1/d_j``. Coordination strength is
+      *per-pair*, group-size-invariant. This is the original Xu-style
+      averaging that was found to under-coordinate larger groups
+      (degree-dilution).
+    - ``"sqrt"``: ``Phi_j ∝ 1/sqrt(d_j)``. Sublinear scaling (Olfati-Saber
+      consensus convention) that partially compensates for dilution while
+      avoiding tanh saturation in very large groups.
+    - ``"none"``: no degree normalisation. ``Phi_j ∝ 1`` (sums all pair
+      contributions). Strongest coordination, may saturate tanh in groups
+      with d_j > ~5 but works very well for d_j <= 4.
+
+    Because g(x)^T extracts only the velocity-space component, the
+    returned gradient is zero on the position channels and nonzero on the
     velocity channels.
     """
     n_p = pursuer_states.shape[0]
@@ -73,6 +84,15 @@ def coordination_potential_and_gradient(
     valid = degree > 0.0
     if not np.any(valid):
         return potentials, gradients
+
+    if degree_norm == "linear":
+        norm_factor = degree[valid]
+    elif degree_norm == "sqrt":
+        norm_factor = np.sqrt(degree[valid])
+    elif degree_norm == "none":
+        norm_factor = np.ones_like(degree[valid])
+    else:
+        raise ValueError(f"unknown degree_norm: {degree_norm!r}")
 
     pos = pursuer_states[:, :3]
     vel = pursuer_states[:, 3:]
@@ -89,10 +109,10 @@ def coordination_potential_and_gradient(
 
     pair_grad = dv + pos_err / ref_dist
     grad_v = np.sum(pair_weight[:, :, None] * pair_grad, axis=1)
-    gradients[valid, 3:] = gamma * grad_v[valid] / degree[valid, None]
+    gradients[valid, 3:] = gamma * grad_v[valid] / norm_factor[:, None]
 
     pair_energy = 0.5 * np.sum(dv * dv, axis=2) + np.sum(pos_err * vel[:, None, :], axis=2) / ref_dist
-    potentials[valid] = gamma * np.sum(pair_weight * pair_energy, axis=1)[valid] / degree[valid]
+    potentials[valid] = gamma * np.sum(pair_weight * pair_energy, axis=1)[valid] / norm_factor
     return potentials, gradients
 
 
@@ -196,6 +216,7 @@ class CommVSNACController:
         gamma: float,
         formation_ref_dist: float = 500.0,
         d_safe: float = 0.0,
+        degree_norm: str = "linear",
     ) -> tuple[np.ndarray, np.ndarray]:
         return coordination_potential_and_gradient(
             pursuer_states=pursuer_states,
@@ -204,6 +225,7 @@ class CommVSNACController:
             gamma=gamma,
             ref_dist=formation_ref_dist,
             d_safe=d_safe,
+            degree_norm=degree_norm,
         )
 
     def policy(
@@ -221,6 +243,7 @@ class CommVSNACController:
         formation_ref_dist: float = 500.0,
         d_safe: float = 0.0,
         coordination_gradients: np.ndarray | None = None,
+        degree_norm: str = "linear",
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         n_p = pursuer_states.shape[0]
         n_e = evader_states.shape[0]
@@ -239,6 +262,7 @@ class CommVSNACController:
                 gamma=gamma,
                 formation_ref_dist=formation_ref_dist,
                 d_safe=d_safe,
+                degree_norm=degree_norm,
             )
         if coordination_gradients is not None:
             total_grad += coordination_gradients

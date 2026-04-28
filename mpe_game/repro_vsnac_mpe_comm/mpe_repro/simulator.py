@@ -5,7 +5,7 @@ from typing import Any, List, Optional
 
 import numpy as np
 
-from .comm_graph import CommunicationGraph
+from .comm_graph import CommunicationGraph, DropoutPattern, IIDBernoulliDropout
 from .config import AircraftParams, CommParams, ControlParams, FeatureParams, LearningParams, ScenarioConfig
 from .controller import CommVSNACController
 from .dynamics import AircraftDynamics
@@ -108,6 +108,7 @@ class MPECommSimulator:
             comm_mode=comm_params.comm_mode,
             formation_ref_dist=comm_params.formation_ref_dist,
             d_safe=comm_params.d_safe,
+            degree_norm=getattr(comm_params, "degree_norm", "linear"),
         )
 
         self.displacements = scenario.displacement_matrix.copy()
@@ -315,6 +316,7 @@ class MPECommSimulator:
         comm_graph: CommunicationGraph,
         dropout_rng: np.random.Generator | None = None,
         dropout_prob: float = 0.0,
+        dropout_pattern: DropoutPattern | None = None,
     ) -> tuple[np.ndarray, np.ndarray, StepRecord]:
         start_step = max(int(self.learning.graph_update_start_step), 0)
         interval = max(int(self.learning.graph_update_interval), 1)
@@ -334,7 +336,9 @@ class MPECommSimulator:
         # Build communication adjacency and structured value-function terms.
         A_base, delta_matrix = self._comm_structures(comm_graph, assigned)
         A_p = A_base
-        if dropout_prob > 0.0 and dropout_rng is not None:
+        if dropout_pattern is not None:
+            A_p = dropout_pattern.apply(A_base, step_idx, self.learning.dt, dropout_rng)
+        elif dropout_prob > 0.0 and dropout_rng is not None:
             A_p = comm_graph.apply_dropout(A_base, dropout_rng, dropout_prob)
         value_terms_t, coordination_grads = self.controller.coordination_terms(
             pursuer_states=pursuer_states,
@@ -384,7 +388,12 @@ class MPECommSimulator:
         # Compute next-step structured value terms for critic update.
         next_assigned = graph.assignment.copy()
         next_A_base, next_delta_matrix = self._comm_structures(comm_graph, next_assigned)
-        next_A_p = A_p if dropout_prob > 0.0 and dropout_rng is not None else next_A_base
+        if dropout_pattern is not None:
+            next_A_p = A_p
+        elif dropout_prob > 0.0 and dropout_rng is not None:
+            next_A_p = A_p
+        else:
+            next_A_p = next_A_base
 
         next_x_err = next_p - next_e[next_assigned] + self.displacements[np.arange(self.scenario.n_pursuers), next_assigned]
         phi_tp1_arr = self.features.phi_batch(next_x_err)
@@ -529,8 +538,15 @@ class MPECommSimulator:
         zero_tail_after_capture: bool = False,
         record_logs: bool = False,
         comm_params_override: CommParams | None = None,
+        dropout_pattern: DropoutPattern | None = None,
     ) -> EvalResult:
-        """Evaluate with optional comm_params override for different eval modes."""
+        """Evaluate with optional comm_params override for different eval modes.
+
+        ``dropout_pattern``, when provided, overrides the default
+        per-edge IID Bernoulli model implied by ``cp.dropout_prob`` and is
+        used to drive the communication-graph mask at every step. When None,
+        legacy behaviour is preserved.
+        """
         rng = np.random.default_rng(seed)
         p, e = self._reset_states(rng, perturb_scale=0.0)
         graph = self._new_graph()
@@ -545,7 +561,15 @@ class MPECommSimulator:
             d_safe=cp.d_safe,
         )
         eval_dropout_prob = cp.dropout_prob
-        dropout_rng = np.random.default_rng(cp.dropout_seed) if eval_dropout_prob > 0.0 else None
+        # Always provide a dropout RNG when a pattern is supplied so iid
+        # variants behave deterministically per dropout_seed; the pattern
+        # itself decides whether to consume the RNG.
+        if dropout_pattern is not None:
+            dropout_rng = np.random.default_rng(cp.dropout_seed)
+        elif eval_dropout_prob > 0.0:
+            dropout_rng = np.random.default_rng(cp.dropout_seed)
+        else:
+            dropout_rng = None
 
         steps = int(self.scenario.t_final / self.learning.dt)
 
@@ -619,6 +643,7 @@ class MPECommSimulator:
                     comm_graph=eval_comm_graph,
                     dropout_rng=dropout_rng,
                     dropout_prob=eval_dropout_prob,
+                    dropout_pattern=dropout_pattern,
                 )
             p_traj.append(p.copy())
             e_traj.append(e.copy())

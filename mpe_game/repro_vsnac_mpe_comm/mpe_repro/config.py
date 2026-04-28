@@ -124,6 +124,7 @@ class CommParams:
     dropout_prob: float = 0.0         # per-edge dropout probability during eval
     dropout_seed: int = 99
     d_safe: float = 0.0              # safety reference distance for smooth pair amplification
+    degree_norm: str = "linear"      # "linear" | "sqrt" | "none" -- Phi prefactor scaling
 
 
 def _build_displacements(n_p: int, n_e: int, per_pursuer: List[List[float]]) -> np.ndarray:
